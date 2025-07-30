@@ -1,0 +1,122 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Tài liệu yêu thích - STEMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/home/favorites.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="favorites-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb breadcrumb-custom">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'home' %}" class="text-white-50">
+                                <i class="fas fa-home"></i> Trang chủ
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">
+                            Tài liệu yêu thích
+                        </li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="fas fa-heart me-3"></i>Tài liệu yêu thích
+                </h1>
+                <p class="lead mb-0">
+                    Tổng cộng {{ favorite_files|length }} tài liệu đã lưu
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="favorites-container">
+        {% if favorite_files %}
+            {% for file in favorite_files %}
+            <div class="favorite-item" id="favorite-{{ file.id }}">
+                <div class="favorite-item-content">
+                    <div class="favorite-item-header">
+                        <a href="{% url 'file_detail' file.title %}" class="favorite-item-title">
+                            {{ file.title }}
+                        </a>
+                    </div>
+                    
+                    <div class="favorite-item-meta">
+                        <span><i class="fas fa-user"></i> {{ file.author.username }}</span>
+                        <span><i class="fas fa-calendar"></i> {{ file.created_at|date:"d/m/Y" }}</span>
+                        <span><i class="fas fa-heart text-danger"></i> {{ file.get_favorites_count|default:0 }} yêu thích</span>
+                        <span><i class="fas fa-download text-success"></i> {{ file.file_downloads|default:0 }} tải xuống</span>
+                        <span>
+                            {% if file.file_status == 0 %}
+                                <span class="badge bg-success">Miễn phí</span>
+                            {% else %}
+                                <span class="badge bg-warning">{{ file.file_price|floatformat:0 }} VNĐ</span>
+                            {% endif %}
+                        </span>
+                        {% if file.category %}
+                        <span><i class="fas fa-tag"></i> {{ file.category.category_name }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if file.file_description %}
+                    <div class="favorite-item-description">
+                        {{ file.file_description|linebreaksbr|truncatewords:30 }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="favorite-item-actions">
+                        <a href="{% url 'file_detail' file.title %}" class="btn btn-primary">
+                            <i class="fas fa-eye me-1"></i>Xem chi tiết
+                        </a>
+                        <a href="{% url 'download_file' file.id %}" class="btn btn-success">
+                            <i class="fas fa-download me-1"></i>Tải xuống
+                        </a>
+                        <button onclick="removeFavorite({{ file.id }})" class="btn btn-outline-danger">
+                            <i class="fas fa-heart-broken me-1"></i>Bỏ yêu thích
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-favorites">
+                <div class="empty-favorites-icon">
+                    <i class="fas fa-heart-broken"></i>
+                </div>
+                <h3>Chưa có tài liệu yêu thích</h3>
+                <p class="lead">
+                    Bạn chưa thêm tài liệu nào vào danh sách yêu thích.<br>
+                    Hãy khám phá và lưu những tài liệu hữu ích!
+                </p>
+                <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i>Khám phá tài liệu
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+{% if messages %}
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'script/home/favorites.js' %}"></script>
+{% endblock %} 

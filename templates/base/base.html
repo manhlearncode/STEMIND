@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="STEMind - Nền tảng chia sẻ tài liệu giáo dục STEM hàng đầu Việt Nam">
+    <meta name="author" content="STEMind Team">
+    <title>{% block title %}STEMIND - Chia sẻ tài liệu STEM{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="{% static 'style/base/base1.css' %}" rel="stylesheet">
+    <link href="{% static 'style/base/base2.css' %}" rel="stylesheet">
+    <link href="{% static 'style/base/footer.css' %}" rel="stylesheet">
+
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    <!-- Skip to main content for accessibility -->
+    <a class="visually-hidden-focusable" href="#main-content">Bỏ qua để đến nội dung chính</a>
+
+    <!-- Header -->
+    {% include "./header.html" %}
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-grow-1 page-transition">
+        {% block content %}
+        {% endblock content %}
+    </main>
+    
+    <!-- Footer -->
+    {% include "./footer.html" %}
+
+    <!-- SVG Icons -->
+    {% include "./svg_icons.html" %}
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static "script/base/base.js" %}"></script>
+    <script src="{% static "script/base/footer.js" %}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

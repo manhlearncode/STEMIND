@@ -1,0 +1,118 @@
+{% extends "auth/auth_base.html" %}
+{% load static %}
+
+{% block title %}STEMind - Đăng nhập{% endblock %}
+
+{% block content %}
+<!-- Auth Brand -->
+<div class="auth-brand">
+    <h1>
+        <a href="{% url 'home' %}">STEMind</a>
+    </h1>
+    <p class="subtitle">Chào mừng trở lại! Đăng nhập để tiếp tục</p>
+</div>
+
+<!-- Login Form -->
+<form method="post" id="loginForm" novalidate>
+    {% csrf_token %}
+    
+    <!-- Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Username Field -->
+    <div class="form-floating">
+        <input type="text" 
+               class="form-control" 
+               id="username" 
+               name="username" 
+               placeholder="Tên đăng nhập"
+               required
+               autocomplete="username">
+        <label for="username">
+            <i class="fas fa-user me-2"></i>Tên đăng nhập
+        </label>
+        <div class="invalid-feedback">
+            Vui lòng nhập tên đăng nhập
+        </div>
+    </div>
+    
+    <!-- Password Field -->
+    <div class="form-floating">
+        <input type="password" 
+               class="form-control" 
+               id="password" 
+               name="password" 
+               placeholder="Mật khẩu"
+               required
+               autocomplete="current-password">
+        <label for="password">
+            <i class="fas fa-lock me-2"></i>Mật khẩu
+        </label>
+        <div class="password-toggle">
+            <button type="button" class="btn-password-toggle" onclick="togglePassword('password')">
+                <i class="fas fa-eye" id="passwordToggleIcon"></i>
+            </button>
+        </div>
+        <div class="invalid-feedback">
+            Vui lòng nhập mật khẩu
+        </div>
+    </div>
+    
+    <!-- Remember Me & Forgot Password -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="remember-me" id="rememberMe">
+            <label class="form-check-label" for="rememberMe">
+                Nhớ tôi
+            </label>
+        </div>
+        <a href="#" class="forgot-password-link">Quên mật khẩu?</a>
+    </div>
+    
+    <!-- Login Button -->
+    <button class="btn btn-primary w-100 mb-3" type="submit">
+        <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
+    </button>
+</form>
+
+<!-- Social Login Divider -->
+<div class="social-divider">
+    <span>hoặc đăng nhập với</span>
+</div>
+
+<!-- Social Login Buttons -->
+<div class="social-login">
+    <button class="btn btn-social" onclick="socialLogin('google')">
+        <i class="fab fa-google" style="color: #db4437;"></i>
+        <span>Đăng nhập với Google</span>
+    </button>
+    
+    <button class="btn btn-social" onclick="socialLogin('facebook')">
+        <i class="fab fa-facebook-f" style="color: #4267B2;"></i>
+        <span>Đăng nhập với Facebook</span>
+    </button>
+</div>
+
+<!-- Register Link -->
+<div class="text-center mt-4">
+    <p class="mb-0">
+        Chưa có tài khoản? 
+        <a href="{% url 'register' %}" class="fw-semibold">Đăng ký ngay</a>
+    </p>
+</div>
+
+<!-- Footer -->
+<div class="auth-footer">
+    <p class="mb-0">&copy; 2025 STEMind. Tất cả quyền được bảo lưu.</p>
+</div>
+<link rel="stylesheet" href="{% static 'style/auth/enter.css' %}">
+<script src="{% static 'script/auth/enter.js' %}"></script>
+{% endblock content %}
+

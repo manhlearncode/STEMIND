@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot - STEMind</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link href="{% static "style/chatbot.css" %}" rel="stylesheet">
+</head>
+<body>
+    <div class="chatbot-container">
+        <!-- Sidebar -->
+        <div class="chatbot-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-section">
+                    <a href="{% url 'home' %}"><img src="{% static 'images/Logo_noback_color.png' %}" alt="Logo" class="logo-image" style="width: 120px; height: 100px;"></a>
+                </div>
+                <button class="new-chat-btn" onclick="startNewChat()">
+                    <i class="fas fa-plus"></i>
+                    New Chat
+                </button>
+            </div>
+            
+            <div class="chat-history" id="chatHistory">
+                <!-- Chat history items will be loaded here -->
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {% if user.is_authenticated %}
+                            {{ user.username|slice:":1"|upper }}
+                        {% else %}
+                            G
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">
+                            {% if user.is_authenticated %}
+                                {{ user.get_full_name|default:user.username }}
+                            {% else %}
+                                Guest
+                            {% endif %}
+                        </div>
+                        <div class="user-status">
+                            <div class="status-dot"></div>
+                            Online
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="chatbot-main">
+            <div class="chat-header">
+                <div style="display: flex; align-items: center;">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="chat-title" id="chatTitle">New Chat</div>
+                </div>
+                <div class="chat-actions">
+                    <button class="action-btn" onclick="clearChat()" title="Clear Chat">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="action-btn" onclick="exportChat()" title="Export Chat">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="welcome-container" id="welcomeMessage">
+                    <div class="welcome-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h1 class="welcome-title">How can I help you today?</h1>
+                    <p class="welcome-subtitle">
+                        I'm your AI assistant. I can help you with questions, provide information, 
+                        and assist with various tasks. Feel free to ask me anything!
+                    </p>
+                    
+                    <div class="suggestion-grid">
+                        <div class="suggestion-card" onclick="sendSuggestion('Tell me about STEM education')">
+                            <div class="suggestion-title">STEM Education</div>
+                            <div class="suggestion-text">Learn about Science, Technology, Engineering, and Mathematics education</div>
+                        </div>
+                        <div class="suggestion-card" onclick="sendSuggestion('Help me with a coding problem')">
+                            <div class="suggestion-title">Coding Help</div>
+                            <div class="suggestion-text">Get assistance with programming and development questions</div>
+                        </div>
+                        <div class="suggestion-card" onclick="sendSuggestion('Explain a scientific concept')">
+                            <div class="suggestion-title">Science Concepts</div>
+                            <div class="suggestion-text">Understand complex scientific theories and principles</div>
+                        </div>
+                        <div class="suggestion-card" onclick="sendSuggestion('Create a lesson plan')">
+                            <div class="suggestion-title">Lesson Planning</div>
+                            <div class="suggestion-text">Design educational activities and curriculum</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <!-- File upload input (hidden) -->
+                    <input type="file" id="fileInput" style="display: none;" accept="*/*" onchange="handleFileSelect(event)">
+                    
+                    <!-- File preview area -->
+                    <div id="filePreview" class="file-preview" style="display: none;">
+                        <div class="file-preview-content">
+                            <div class="file-info">
+                                <i class="file-icon"></i>
+                                <div class="file-details">
+                                    <div class="file-name"></div>
+                                    <div class="file-size"></div>
+                                </div>
+                            </div>
+                            <button type="button" class="remove-file-btn" onclick="removeFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <textarea 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Type your message here..."
+                        rows="1"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    
+                    <!-- Attach file button -->
+                    <button class="attach-btn" onclick="openFileDialog()" title="Attach file">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    
+                    <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static "script/chatbot.js" %}"></script>
+</body>
+</html>

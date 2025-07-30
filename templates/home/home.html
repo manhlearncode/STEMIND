@@ -1,0 +1,155 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/home/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content text-center">
+            <img src="{% static 'images/Logo_noback_white.png' %}" alt="Logo" class="logo-image" style="width: 220px; height: 200px; margin-bottom: 20px; margin-top: 0px;">
+            <p class="hero-subtitle">Nền tảng chia sẻ tài liệu giáo dục STEM hàng đầu Việt Nam</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-number">{{ featured_files|length }}+</span>
+                    <span class="hero-stat-label">Tài liệu chất lượng</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number">{{ top_users|length }}+</span>
+                    <span class="hero-stat-label">Giáo viên tham gia</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number">{{ categories|length }}+</span>
+                    <span class="hero-stat-label">Chuyên mục</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Files Section -->
+<section class="featured-section">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="section-title mb-0">Tài liệu nổi bật</h2>
+            <small class="text-muted">
+                <i class="fas fa-arrow-right me-1"></i>Kéo để xem thêm
+            </small>
+        </div>
+        <div class="featured-scroll-container">
+            <div class="featured-grid">
+                {% for file in featured_files %}
+                <article class="featured-card">
+                    <a href="{% url 'file_detail' file.title %}" class="text-decoration-none">
+                        <div class="featured-card-image">
+                            <img src="{{ file.get_thumbnail_presigned_url }}" alt="{{ file.title }}" loading="lazy">
+                            <div class="featured-card-overlay"></div>
+                        </div>
+                        <div class="featured-card-content">
+                            <h3 class="featured-card-title">{{ file.title }}</h3>
+                            <p class="featured-card-description">{{ file.file_description|linebreaksbr }}</p>
+                            <div class="featured-card-author">
+                                <i class="fas fa-user"></i>
+                                <span>{{ file.author.username }}</span>
+                            </div>
+                            <div class="featured-card-footer">
+                                <div class="featured-card-infor">{{ file.file_downloads }} lượt tải</div>
+                                <div class="featured-card-price">
+                                    {% if file.file_status == 0 %}
+                                        <span class="badge bg-success">Miễn phí</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ file.file_price|floatformat:0 }} VNĐ</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Files & Sidebar Section -->
+<section class="recent-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <h2 class="section-title text-start">Tài liệu mới nhất</h2>
+                {% for file in recently_files %}
+                <article class="recent-item">
+                    <a href="{% url 'file_detail' file.title %}" class="text-decoration-none d-flex align-items-center gap-3 w-100">
+                        <div class="recent-item-image">
+                            <img src="{{ file.get_thumbnail_presigned_url }}" alt="{{ file.title }}" loading="lazy">
+                        </div>
+                        <div class="recent-item-content">
+                            <h4 class="recent-item-title">{{ file.title }}</h4>
+                            <p class="recent-item-date">{{ file.created_at|timesince }} trước bởi {{ file.author.username }}</p>
+                        </div>
+                    </a>
+                </article>
+                {% endfor %}
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="sidebar-section">
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Giới thiệu
+                        </h3>
+                        <p>Tại Việt Nam, giáo dục STEM là một yêu cầu cấp thiết trong đổi mới giáo dục, nhưng đang gặp nhiều rào cản, đặc biệt là tại các vùng nông thôn. Việt Nam có khoảng 1,6 triệu giáo viên phổ thông, trong đó trên 50% làm việc ở khu vực nông thôn, miền núi.</p>
+                    </div>
+                    
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">
+                            <i class="fas fa-star me-2"></i>
+                            Người đóng góp nổi bật
+                        </h3>
+                        {% for user in top_users %}
+                        <div class="contributor-item">
+                            <div class="contributor-avatar">
+                                {{ user.username|slice:":1"|upper }}
+                            </div>
+                            <a href="#" class="contributor-name">{{ user.username }}</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">
+                            <i class="fas fa-link me-2"></i>
+                            Liên kết
+                        </h3>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fab fa-github me-2"></i>GitHub
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fab fa-facebook me-2"></i>Facebook
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fas fa-envelope me-2"></i>Liên hệ
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'script/home/home.js' %}"></script>
+{% endblock %}
+    

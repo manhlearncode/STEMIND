@@ -1,0 +1,75 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Liked Posts - STEMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/social/liked_posts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="liked-container">
+    <!-- Header -->
+    <div class="liked-header">
+        <h1><i class="fas fa-heart me-2"></i>Liked Posts</h1>
+    </div>
+
+    <!-- Liked Posts -->
+    {% if posts %}
+        {% for post in posts %}
+        <div class="post-item" id="post-{{ post.id }}">
+            <div class="post-header">
+                <div class="user-avatar">
+                    {{ post.author.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <a href="{% url 'social:profile' post.author.username %}" class="post-author">
+                        {{ post.author.get_full_name|default:post.author.username }}
+                    </a>
+                    <div class="post-time">{{ post.created_at|timesince }} ago</div>
+                </div>
+            </div>
+            
+            <div class="post-content">{{ post.content }}</div>
+            
+            {% if post.image %}
+            <img src="{{ post.get_image_presigned_url }}" alt="Post image" class="post-image">
+            {% endif %}
+            
+            <div class="post-actions">
+                <div class="post-action-group">
+                    <button class="post-action like-btn liked" data-post-id="{{ post.id }}">
+                        <i class="fas fa-heart"></i>
+                        <span class="like-count">{{ post.like_count }}</span>
+                    </button>
+                    
+                    <button class="post-action">
+                        <i class="fas fa-comment"></i>
+                        <span>{{ post.comment_count }}</span>
+                    </button>
+                    
+                    <button class="post-action" onclick="sharePost({{ post.id }})">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <h3>No liked posts yet</h3>
+            <p>Posts you like will appear here. Start exploring and liking posts!</p>
+            <a href="{% url 'social:feed' %}" class="btn btn-primary mt-3">
+                <i class="fas fa-home me-2"></i>Go to Feed
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'script/social/liked_posts.js' %}"></script>
+{% endblock %} 

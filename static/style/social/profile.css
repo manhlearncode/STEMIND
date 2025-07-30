@@ -1,0 +1,203 @@
+.profile-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.profile-header {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #006056 0%, #00897B 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 3rem;
+    margin: 0 auto 1rem;
+}
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f1419;
+    margin-bottom: 0.5rem;
+}
+
+.profile-username {
+    color: #536471;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.profile-bio {
+    color: #0f1419;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-weight: 700;
+    color: #0f1419;
+    font-size: 1.2rem;
+}
+
+.stat-label {
+    color: #536471;
+    font-size: 0.9rem;
+}
+
+.follow-button {
+    background: #1d9bf0;
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.follow-button:hover {
+    background: #1a8cd8;
+}
+
+.follow-button.following {
+    background: #0f1419;
+}
+
+.follow-button.following:hover {
+    background: #536471;
+}
+
+.profile-tabs {
+    display: flex;
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.profile-tab {
+    flex: 1;
+    padding: 1rem;
+    text-align: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: #536471;
+    font-weight: 600;
+}
+
+.profile-tab.active {
+    color: #1d9bf0;
+    border-bottom: 2px solid #1d9bf0;
+}
+
+.profile-tab:hover {
+    background: #f7f9fa;
+}
+
+.post-item {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.post-author {
+    font-weight: 600;
+    color: #0f1419;
+}
+
+.post-time {
+    color: #536471;
+    font-size: 0.9rem;
+}
+
+.post-content {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #0f1419;
+    margin-bottom: 1rem;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e1e8ed;
+}
+
+.post-action-group {
+    display: flex;
+    gap: 2rem;
+}
+
+.post-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: #536471;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.post-action:hover {
+    background: rgba(29, 155, 240, 0.1);
+    color: #1d9bf0;
+}
+
+.post-action.liked {
+    color: #f91880;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #536471;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #1d9bf0;
+}

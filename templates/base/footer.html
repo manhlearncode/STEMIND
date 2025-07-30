@@ -1,0 +1,162 @@
+<!-- Modern Footer -->
+<footer class="main-footer bg-dark text-light">
+    <!-- Main Footer Content -->
+    <div class="footer-content py-5">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Brand & About -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-section">
+                        <h3 class="footer-brand mb-3">
+                            <span class="brand-gradient-light">STEMind</span>
+                        </h3>
+                        <p class="text-muted mb-4">
+                            Nền tảng chia sẻ tài liệu giáo dục STEM hàng đầu Việt Nam, kết nối giáo viên và học sinh trong việc học tập và nghiên cứu khoa học.
+                        </p>
+                        
+                        <!-- Stats -->
+                        <div class="footer-stats">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <h4 class="stat-number text-primary">1000+</h4>
+                                        <p class="stat-label">Tài liệu</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <h4 class="stat-number text-success">500+</h4>
+                                        <p class="stat-label">Giáo viên</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-item">
+                                        <h4 class="stat-number text-warning">50+</h4>
+                                        <p class="stat-label">Trường học</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6">
+                    <div class="footer-section">
+                        <h5 class="footer-title">Liên kết nhanh</h5>
+                        <ul class="footer-links">
+                            <li><a href="{% url 'home' %}">
+                                <i class="fas fa-home me-2"></i>Trang chủ
+                            </a></li>
+                            <li><a href="#">
+                                <i class="fas fa-folder me-2"></i>Tài liệu
+                            </a></li>
+                            <li><a href="{% url 'chatbot' %}">
+                                <i class="fas fa-robot me-2"></i>Trợ lý AI
+                            </a></li>
+                            <li><a href="#">
+                                <i class="fas fa-newspaper me-2"></i>Bài viết
+                            </a></li>
+                            <li><a href="#">
+                                <i class="fas fa-search me-2"></i>Tìm kiếm
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-section">
+                        <h5 class="footer-title">Chuyên mục</h5>
+                        <ul class="footer-links">
+                            {% for category in categories|slice:":5" %}
+                            <li><a href="{% url 'posts_by_category' category.category_name %}">
+                                <i class="fas fa-tag me-2"></i>{{ category.category_name }}
+                            </a></li>
+                            {% endfor %}
+                            <li><a href="#" class="text-primary">
+                                <i class="fas fa-plus me-2"></i>Xem tất cả
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Contact & Newsletter -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-section">
+                        <h5 class="footer-title">Kết nối với chúng tôi</h5>
+                        
+                        <!-- Contact Info -->
+                        <div class="contact-info mb-4">
+                            <div class="contact-item">
+                                <i class="fas fa-envelope text-primary me-2"></i>
+                                <span>contact@stemind.vn</span>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fas fa-phone text-success me-2"></i>
+                                <span>(+84) 123 456 789</span>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                <span>Hà Nội, Việt Nam</span>
+                            </div>
+                        </div>
+
+                        <!-- Newsletter Signup -->
+                        <div class="newsletter-signup">
+                            <h6 class="mb-3">Đăng ký nhận tin tức</h6>
+                            <form class="newsletter-form">
+                                <div class="input-group">
+                                    <input type="email" class="form-control" placeholder="Email của bạn..." required>
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Media & Bottom Footer -->
+    <div class="footer-bottom border-top border-secondary">
+        <div class="container">
+            <div class="row align-items-center py-4">
+                <!-- Copyright -->
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        &copy; 2025 <strong>STEMind</strong>. Tất cả quyền được bảo lưu.
+                    </p>
+                </div>
+
+                <!-- Social Links -->
+                <div class="col-md-6">
+                    <div class="social-links text-md-end">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <svg width="20" height="20"><use href="#facebook"></use></svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <svg width="20" height="20"><use href="#instagram"></use></svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Twitter">
+                            <svg width="20" height="20"><use href="#twitter"></use></svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="LinkedIn">
+                            <svg width="20" height="20"><use href="#linkedin"></use></svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="YouTube">
+                            <svg width="20" height="20"><use href="#youtube"></use></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="Lên đầu trang">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+</footer>

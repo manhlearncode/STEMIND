@@ -1,0 +1,282 @@
+{% extends "auth/auth_base.html" %}
+{% load static %}
+
+{% block title %}STEMind - Đăng ký{% endblock %}
+
+{% block content %}
+<!-- Auth Brand -->
+<div class="auth-brand">
+    <h1>
+        <a href="{% url 'home' %}">STEMind</a>
+    </h1>
+    <p class="subtitle">Tham gia cộng đồng STEMind ngay hôm nay!</p>
+</div>
+
+<!-- Registration Form -->
+<form method="post" action="{% url 'register' %}" id="registerForm" novalidate>
+    {% csrf_token %}
+    
+    <!-- Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'danger' }}" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Form Progress Indicator -->
+    <div class="form-progress mb-4">
+        <div class="progress-bar" id="formProgress"></div>
+        <div class="progress-steps">
+            <div class="step active" data-step="1">
+                <i class="fas fa-user"></i>
+                <span>Thông tin</span>
+            </div>
+            <div class="step" data-step="2">
+                <i class="fas fa-envelope"></i>
+                <span>Email</span>
+            </div>
+            <div class="step" data-step="3">
+                <i class="fas fa-lock"></i>
+                <span>Mật khẩu</span>
+            </div>
+            <div class="step" data-step="4">
+                <i class="fas fa-check"></i>
+                <span>Hoàn thành</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Username Field -->
+    <div class="form-floating">
+        <input type="text" 
+               class="form-control" 
+               id="{{ form.username.id_for_label }}" 
+               name="username" 
+               placeholder="Tên người dùng"
+               required
+               autocomplete="username"
+               data-step="1">
+        <label for="{{ form.username.id_for_label }}">
+            <i class="fas fa-user me-2"></i>Tên người dùng
+        </label>
+        <div class="field-requirements">
+            <small class="text-muted">3-30 ký tự, chỉ gồm chữ cái, số và dấu gạch dưới</small>
+        </div>
+        {% if form.username.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.username.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Email Field -->
+    <div class="form-floating">
+        <input type="email" 
+               class="form-control" 
+               id="{{ form.email.id_for_label }}" 
+               name="email" 
+               placeholder="Địa chỉ email"
+               required
+               autocomplete="email"
+               data-step="2">
+        <label for="{{ form.email.id_for_label }}">
+            <i class="fas fa-envelope me-2"></i>Địa chỉ email
+        </label>
+        <div class="email-verification" id="emailVerification"></div>
+        {% if form.email.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.email.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Password Field -->
+    <div class="form-floating">
+        <input type="password" 
+               class="form-control" 
+               id="{{ form.password1.id_for_label }}" 
+               name="password1" 
+               placeholder="Mật khẩu"
+               required
+               autocomplete="new-password"
+               data-step="3">
+        <label for="{{ form.password1.id_for_label }}">
+            <i class="fas fa-lock me-2"></i>Mật khẩu
+        </label>
+        <div class="password-toggle">
+            <button type="button" class="btn-password-toggle" onclick="togglePassword('{{ form.password1.id_for_label }}')">
+                <i class="fas fa-eye" id="{{ form.password1.id_for_label }}ToggleIcon"></i>
+            </button>
+        </div>
+        
+        <!-- Password Strength Indicator -->
+        <div class="password-strength mt-2" id="passwordStrength">
+            <div class="strength-bar">
+                <div class="strength-progress" id="strengthProgress"></div>
+            </div>
+            <div class="strength-text" id="strengthText">Nhập mật khẩu để kiểm tra độ mạnh</div>
+            <div class="strength-requirements mt-2">
+                <div class="requirement" id="lengthReq">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>Ít nhất 8 ký tự</span>
+                </div>
+                <div class="requirement" id="lowerReq">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>Chữ thường (a-z)</span>
+                </div>
+                <div class="requirement" id="upperReq">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>Chữ hoa (A-Z)</span>
+                </div>
+                <div class="requirement" id="numberReq">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>Số (0-9)</span>
+                </div>
+                <div class="requirement" id="specialReq">
+                    <i class="fas fa-times text-danger"></i>
+                    <span>Ký tự đặc biệt (!@#$%)</span>
+                </div>
+            </div>
+        </div>
+        
+        {% if form.password1.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.password1.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Confirm Password Field -->
+    <div class="form-floating">
+        <input type="password" 
+               class="form-control" 
+               id="{{ form.password2.id_for_label }}" 
+               name="password2" 
+               placeholder="Xác nhận mật khẩu"
+               required
+               autocomplete="new-password"
+               data-step="3">
+        <label for="{{ form.password2.id_for_label }}">
+            <i class="fas fa-lock me-2"></i>Xác nhận mật khẩu
+        </label>
+        <div class="password-toggle">
+            <button type="button" class="btn-password-toggle" onclick="togglePassword('{{ form.password2.id_for_label }}')">
+                <i class="fas fa-eye" id="{{ form.password2.id_for_label }}ToggleIcon"></i>
+            </button>
+        </div>
+        <div class="password-match" id="passwordMatch"></div>
+        {% if form.password2.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.password2.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Terms and Conditions -->
+    <div class="form-check mb-4" data-step="4">
+        <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required>
+        <label class="form-check-label" for="agreeTerms">
+            Tôi đồng ý với 
+            <a href="#" class="terms-link" data-bs-toggle="modal" data-bs-target="#termsModal">Điều khoản sử dụng</a> 
+            và 
+            <a href="#" class="terms-link" data-bs-toggle="modal" data-bs-target="#privacyModal">Chính sách bảo mật</a>
+        </label>
+        <div class="invalid-feedback">
+            Bạn phải đồng ý với điều khoản để tiếp tục
+        </div>
+    </div>
+    
+    <!-- Submit Button -->
+    <button class="btn btn-primary w-100 mb-3" type="submit" id="submitBtn" disabled>
+        <i class="fas fa-user-plus me-2"></i>Tạo tài khoản
+    </button>
+</form>
+
+<!-- Social Registration Divider -->
+<div class="social-divider">
+    <span>hoặc đăng ký với</span>
+</div>
+
+<!-- Social Registration Buttons -->
+<div class="social-login">
+    <button class="btn btn-social" onclick="socialRegister('google')">
+        <i class="fab fa-google" style="color: #db4437;"></i>
+        <span>Đăng ký với Google</span>
+    </button>
+    
+    <button class="btn btn-social" onclick="socialRegister('facebook')">
+        <i class="fab fa-facebook-f" style="color: #4267B2;"></i>
+        <span>Đăng ký với Facebook</span>
+    </button>
+</div>
+
+<!-- Login Link -->
+<div class="text-center mt-4">
+    <p class="mb-0">
+        Đã có tài khoản? 
+        <a href="{% url 'enter' %}" class="fw-semibold">Đăng nhập ngay</a>
+    </p>
+</div>
+
+<!-- Footer -->
+<div class="auth-footer">
+    <p class="mb-0">&copy; 2025 STEMind. Tất cả quyền được bảo lưu.</p>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Điều khoản sử dụng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Đây là nội dung điều khoản sử dụng của STEMind...</p>
+                <!-- Add actual terms content here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="acceptTerms()">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chính sách bảo mật</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Đây là nội dung chính sách bảo mật của STEMind...</p>
+                <!-- Add actual privacy policy content here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="acceptPrivacy()">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{% static 'style/auth/register.css' %}">
+<script src="{% static 'script/auth/register.js' %}"></script>
+
+{% endblock content %}
+
+

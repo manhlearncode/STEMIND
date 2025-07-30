@@ -1,0 +1,282 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ file.title }} - STEMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/home/detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- File Hero Section -->
+<section class="file-hero">
+    <div class="container">
+        <div class="file-hero-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-custom">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="#">Tài liệu</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ file.title|truncatechars:30 }}</li>
+                </ol>
+            </nav>
+            
+            <!-- File Title & Info -->
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-5 fw-bold mb-3">{{ file.title }}</h1>
+                    <p class="lead mb-0">{{ file.file_description|linebreaksbr|truncatechars:200 }}</p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="file-meta">
+                        <div class="file-meta-item">
+                            <i class="fas fa-user"></i>
+                            <span><strong>Tác giả:</strong> {{ file.author.get_full_name|default:file.author.username }}</span>
+                        </div>
+                        <div class="file-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span><strong>Ngày tạo:</strong> {{ file.created_at|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="file-meta-item">
+                            <i class="fas fa-eye"></i>
+                            <span><strong>Lượt tải xuống:</strong> {{ file.file_downloads|default:0 }}</span>
+                        </div>
+                        <div class="file-meta-item">
+                            <i class="fas fa-info-circle"></i>
+                            <span><strong>Trạng thái:</strong> 
+                                {% if file.file_status == 0 %}
+                                    <span class="badge bg-success">Miễn phí</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Có phí</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if file.file_status == 1 and file.file_price > 0 %}
+                        <div class="file-meta-item">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span><strong>Giá:</strong> <span class="text-warning fw-bold">{{ file.file_price|floatformat:0 }} VNĐ</span></span>
+                        </div>
+                        {% endif %}
+                        {% if file.category %}
+                        <div class="file-meta-item">
+                            <i class="fas fa-tag"></i>
+                            <span><strong>Danh mục:</strong> {{ file.category.category_name }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- File Content Section -->
+<section class="file-content-section">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- File Description -->
+                {% if file.file_description %}
+                <div class="sidebar-card mb-4">
+                    <div class="sidebar-card-header">
+                        <i class="fas fa-info-circle me-2"></i>Mô tả chi tiết
+                    </div>
+                    <div class="sidebar-card-body">
+                        <div class="blog-body">
+                            {{ file.file_description|linebreaksbr }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- File Preview -->
+                {% if file.file_urls %}
+                <div class="file-preview-card">
+                    <div class="file-preview-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-file me-2"></i>Xem tài liệu
+                        </h4>
+                        <div class="file-type-badge">
+                            {% if file.file_urls.url|slice:"-4:" == ".pdf" %}
+                                <span class="badge bg-danger">PDF</span>
+                            {% elif file.file_urls.url|slice:"-4:" == ".doc" or file.file_urls.url|slice:"-5:" == ".docx" %}
+                                <span class="badge bg-primary">DOC</span>
+                            {% elif file.file_urls.url|slice:"-4:" == ".ppt" or file.file_urls.url|slice:"-5:" == ".pptx" %}
+                                <span class="badge bg-warning">PPT</span>
+                            {% else %}
+                                <span class="badge bg-secondary">FILE</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="file-preview-body">
+                        <div class="iframe-container">
+                            <!-- Loading Overlay -->
+                            <div class="loading-overlay" id="loadingOverlay">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            
+                            {% if file.file_urls.name|slice:"-4:" == ".pdf" or file.file_urls.name|slice:"-4:" == ".PDF" %}
+                                <!-- PDF Viewer -->
+                                <iframe src="https://docs.google.com/gview?url={{ file.get_presigned_url|urlencode }}&embedded=true"
+                                        width="100%" height="600px"
+                                        onload="hideLoading()"
+                                        title="Document Viewer"
+                                        frameborder="0">
+                                    Trình duyệt của bạn không hỗ trợ hiển thị tài liệu Word.
+                                </iframe>
+                            {% elif file.file_urls.name|slice:"-4:" == ".doc" or file.file_urls.name|slice:"-5:" == ".docx" %}
+                            <!-- DOC/DOCX Viewer -->
+                            <iframe 
+                                src="https://view.officeapps.live.com/op/embed.aspx?src={{ file.get_presigned_url|urlencode }}"
+                                width="100%" height="600px"
+                                frameborder="0">
+                                Trình duyệt của bạn không hỗ trợ hiển thị file Word.
+                            </iframe>
+                            {% elif file.file_urls.name|slice:"-4:" == ".ppt" or file.file_urls.name|slice:"-5:" == ".pptx" %}
+                            <!-- PPT/PPTX Viewer -->
+                                <iframe 
+                                    src="https://view.officeapps.live.com/op/embed.aspx?src={{ file.get_presigned_url|urlencode }}"
+                                    width="100%" height="600px"
+                                    frameborder="0">
+                                    Trình duyệt của bạn không hỗ trợ hiển thị file PowerPoint.
+                                </iframe>
+                            {% elif file.file_urls.name|slice:"-4:" == ".jpg" or file.file_urls.name|slice:"-4:" == ".png" or file.file_urls.name|slice:"-5:" == ".jpeg" or file.file_urls.name|slice:"-4:" == ".gif" %}
+                                <!-- Image Viewer -->
+                                <iframe src="https://docs.google.com/gview?url={{ file.get_presigned_url|urlencode }}&embedded=true"
+                                        width="100%" height="600px"
+                                        onload="hideLoading()"
+                                        title="Document Viewer"
+                                        frameborder="0">
+                                    Trình duyệt của bạn không hỗ trợ hiển thị tài liệu Word.
+                                </iframe> 
+                            {% elif file.file_urls.name|slice:"-4:" == ".mp4" or file.file_urls.name|slice:"-4:" == ".avi" or file.file_urls.name|slice:"-4:" == ".mov" %}
+                                <!-- Video Player -->
+                                <iframe src="https://docs.google.com/gview?url={{ file.get_presigned_url|urlencode }}&embedded=true"
+                                        width="100%" height="600px"
+                                        onload="hideLoading()"
+                                        title="Document Viewer"
+                                        frameborder="0">
+                                    Trình duyệt của bạn không hỗ trợ hiển thị tài liệu Word.
+                                </iframe>
+                            {% else %}
+                                <!-- File Preview Placeholder -->
+                                <div class="file-viewer">
+                                    <div class="file-placeholder">
+                                        <i class="fas fa-file-alt"></i>
+                                        <h5>{{ file.file_urls.name|default:"Tài liệu" }}</h5>
+                                        <p class="text-muted">Nhấn nút bên dưới để tải xuống hoặc xem tài liệu</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                    <!-- File Actions -->
+                    <div class="file-actions">
+                        <a href="{% url 'download_file' file.id %}" 
+                           class="btn btn-download btn-lg flex-fill">
+                            <i class="fas fa-download me-2"></i>Tải xuống
+                        </a>
+                        <button class="btn btn-outline-primary btn-lg" onclick="shareFile()">
+                            <i class="fas fa-share-alt me-2"></i>Chia sẻ
+                        </button>
+                        {% if user.is_authenticated %}
+                        <button class="btn btn-outline-danger btn-lg" id="favoriteBtn" onclick="toggleFavorite()" data-file-id="{{ file.id }}">
+                            <i class="fas fa-heart me-2" id="favoriteIcon"></i>
+                            <span id="favoriteText">
+                                {% if is_favorited %}
+                                    Bỏ yêu thích
+                                {% else %}
+                                    Thêm vào yêu thích
+                                {% endif %}
+                            </span>
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Related Files -->
+                {% if related_files %}
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <i class="fas fa-file-alt me-2"></i>Tài liệu liên quan
+                    </div>
+                    <div class="sidebar-card-body">
+                        {% for related_file in related_files %}
+                        <a href="{% url 'file_detail' related_file.title %}" class="related-file-item">
+                            <div class="related-file-image">
+                                {% if related_file.file_thumbnail %}
+                                    <img src="{{ related_file.file_thumbnail.url }}" alt="{{ related_file.title }}">
+                                {% else %}
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <i class="fas fa-file-alt text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="related-file-content">
+                                <h6>{{ related_file.title|truncatechars:50 }}</h6>
+                                <small>{{ related_file.created_at|timesince }} trước</small>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Top Contributors -->
+                {% if top_users %}
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <i class="fas fa-star me-2"></i>Người đóng góp nổi bật
+                    </div>
+                    <div class="sidebar-card-body">
+                        {% for user in top_users|slice:":5" %}
+                        <div class="contributor-item">
+                            <div class="contributor-avatar">
+                                {{ user.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                                <small class="text-muted">{{ user.Files.count|default:0 }} tài liệu</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% if user.is_authenticated %}
+                <!-- Quick Actions -->
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <i class="fas fa-cog me-2"></i>Thao tác nhanh
+                    </div>
+                    <div class="sidebar-card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="reportFile()">
+                                <i class="fas fa-flag me-2"></i>Báo cáo tài liệu
+                            </button>
+                            <a href="{% url 'upload_file' %}" class="btn btn-outline-warning">
+                                <i class="fas fa-plus me-2"></i>Tạo tài liệu mới
+                            </a>
+                            <a href="{% url 'user_favorites' %}" class="btn btn-outline-info">
+                                <i class="fas fa-heart me-2"></i>Tài liệu yêu thích
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="{% static 'script/home/detail.js' %}"></script>
+{% endblock content %}

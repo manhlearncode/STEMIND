@@ -1,0 +1,149 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Social Feed - STEMind{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/social/feed.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="social-container">
+    <!-- Header -->
+    <div class="social-header">
+        <h1><i class="fas fa-home me-2"></i>Social Feed</h1>
+    </div>
+
+    <!-- Post Form -->
+    <div class="post-form-container">
+        <form method="post" enctype="multipart/form-data" class="post-form" id="postForm">
+            {% csrf_token %}
+            <div class="user-avatar">
+                {{ user.username|slice:":1"|upper }}
+            </div>
+            <div class="post-form-content">
+                <textarea 
+                    name="content" 
+                    class="post-input" 
+                    placeholder="What's happening in STEM world?"
+                    maxlength="500"
+                    required
+                ></textarea>
+                <div class="post-form-actions">
+                    <div class="post-form-actions-left">
+                        <label for="image" class="post-action" style="cursor: pointer;">
+                            <i class="fas fa-image"></i>
+                            <span>Image</span>
+                        </label>
+                        <input type="file" id="image" name="image" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="post-form-actions-right">
+                        <span id="charCount" style="color: #536471; font-size: 0.9rem;">500</span>
+                        <button type="submit" class="post-button" id="postButton">
+                            Post
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Posts Feed -->
+    {% if posts %}
+        {% for post in posts %}
+        <div class="post-item" id="post-{{ post.id }}">
+            <div class="post-header">
+                <div class="user-avatar">
+                    {{ post.author.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <a href="{% url 'social:profile' post.author.username %}" class="post-author">
+                        {{ post.author.get_full_name|default:post.author.username }}
+                    </a>
+                    <div class="post-time">{{ post.created_at|timesince }} ago</div>
+                </div>
+            </div>
+            
+            <div class="post-content">{{ post.content }}</div>
+            
+            {% if post.image %}
+            <img src="{{ post.get_image_presigned_url }}" alt="Post image" class="post-image">
+            {% endif %}
+            
+            <div class="post-actions">
+                <div class="post-action-group">
+                    <button class="post-action like-btn {% if request.user in post.likes.all %}liked{% endif %}" 
+                            data-post-id="{{ post.id }}">
+                        <i class="fas fa-heart"></i>
+                        <span class="like-count">{{ post.like_count }}</span>
+                    </button>
+                    
+                    <button class="post-action comment-btn" data-post-id="{{ post.id }}">
+                        <i class="fas fa-comment"></i>
+                        <span class="comment-count">{{ post.comment_count }}</span>
+                    </button>
+                    
+                    <button class="post-action share-btn" onclick="sharePost({{ post.id }})">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Comments Section -->
+            <div class="comments-section" id="comments-{{ post.id }}" style="display: none;">
+                <form class="comment-form" data-post-id="{{ post.id }}">
+                    {% csrf_token %}
+                    <div class="comment-avatar">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+                    <textarea class="comment-input" placeholder="Write a comment..." maxlength="300" required></textarea>
+                    <button type="submit" class="comment-button">Comment</button>
+                </form>
+                
+                <div class="comments-list" id="comments-list-{{ post.id }}">
+                    {% for comment in post.comments.all %}
+                    <div class="comment-item">
+                        <div class="comment-avatar">
+                            {{ comment.user.username|slice:":1"|upper }}
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">{{ comment.user.get_full_name|default:comment.user.username }}</span>
+                                <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+                            </div>
+                            <div class="comment-text">{{ comment.content }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-feed">
+            <div class="empty-feed-icon">
+                <i class="fas fa-feather"></i>
+            </div>
+            <h3>No posts yet</h3>
+            <p>Be the first to share something in the STEM community!</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Success/Error Messages -->
+{% if messages %}
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'script/social/feed.js' %}"></script>
+{% endblock %} 
