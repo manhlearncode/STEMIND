@@ -303,17 +303,161 @@ def get_file_type(filename, content_type):
     return 'other'
 
 def generate_bot_response(message):
-    """Generate bot response (simple implementation)"""
+    """Generate bot response using RAG chatbot logic"""
+    try:
+        # Import the RAG chatbot service
+        from File_sharing_platform.services.rag_chatbot_service import get_rag_chatbot_service
+        
+        # Get RAG chatbot service instance
+        rag_service = get_rag_chatbot_service()
+        
+        if rag_service:
+            # Use RAG to answer the question
+            response = rag_service.answer_question(message)
+            return response
+        else:
+            # Fallback if RAG service is not available
+            return generate_fallback_response(message)
+            
+    except Exception as e:
+        print(f"Lỗi trong RAG chatbot: {e}")
+        return generate_fallback_response(message)
+
+def generate_fallback_response(message):
+    """Generate fallback response when RAG is not available"""
     message_lower = message.lower()
     
-    if 'hello' in message_lower or 'hi' in message_lower or 'chào' in message_lower:
-        return "Xin chào! Tôi có thể giúp gì cho bạn hôm nay?"
-    elif 'help' in message_lower or 'giúp' in message_lower:
-        return "Tôi có thể giúp bạn:\n- Trả lời câu hỏi\n- Phân tích tài liệu\n- Đọc và tóm tắt file PDF, Word, Excel\n- Xử lý hình ảnh\n- Và nhiều việc khác!"
-    elif 'file' in message_lower or 'tài liệu' in message_lower:
-        return "Bạn có thể upload file bằng cách click vào icon đính kèm. Tôi có thể đọc và phân tích nội dung các file như PDF, Word, Excel, PowerPoint, hình ảnh, v.v."
+    # STEM Education responses
+    if any(word in message_lower for word in ['stem', 'giáo dục', 'education']):
+        return '''🔬 **STEM Education** là phương pháp giáo dục tích hợp:
+
+• **S**cience (Khoa học): Vật lý, Hóa học, Sinh học
+• **T**echnology (Công nghệ): Máy tính, AI, Robotics  
+• **E**ngineering (Kỹ thuật): Thiết kế, xây dựng, sáng tạo
+• **M**athematics (Toán học): Logic, phân tích, tính toán
+
+**Lợi ích của STEM:**
+• Phát triển tư duy phản biện
+• Kỹ năng giải quyết vấn đề
+• Sáng tạo và đổi mới
+• Chuẩn bị cho thế giới công nghệ'''
+    
+    # Programming/Coding responses
+    elif any(word in message_lower for word in ['code', 'programming', 'lập trình', 'python', 'javascript']):
+        return '''💻 **Lập trình** là kỹ năng quan trọng trong thời đại số:
+
+**Ngôn ngữ phổ biến:**
+• **Python**: Dễ học, AI/ML, Data Science
+• **JavaScript**: Web development, Node.js
+• **Java**: Ứng dụng doanh nghiệp, Android
+• **C++**: Lập trình hệ thống, game development
+
+**Tại sao nên học lập trình:**
+• Tư duy logic và giải quyết vấn đề
+• Cơ hội nghề nghiệp rộng mở
+• Tự động hóa công việc
+• Sáng tạo ứng dụng và website'''
+    
+    # Science responses
+    elif any(word in message_lower for word in ['science', 'khoa học', 'physics', 'chemistry', 'biology']):
+        return '''🔬 **Khoa học** là nền tảng hiểu biết về thế giới:
+
+**Các lĩnh vực chính:**
+• **Vật lý**: Nghiên cứu vật chất, năng lượng, chuyển động
+• **Hóa học**: Cấu trúc, tính chất và biến đổi vật chất
+• **Sinh học**: Nghiên cứu sự sống và sinh vật
+• **Địa chất**: Nghiên cứu Trái Đất và vũ trụ
+
+**Phương pháp khoa học:**
+1. Quan sát hiện tượng
+2. Đặt giả thuyết
+3. Thiết kế thí nghiệm
+4. Thu thập dữ liệu
+5. Phân tích và kết luận'''
+    
+    # Math responses
+    elif any(word in message_lower for word in ['math', 'toán', 'toán học', 'mathematics']):
+        return '''📐 **Toán học** là ngôn ngữ của khoa học:
+
+**Các lĩnh vực chính:**
+• **Đại số**: Phương trình, hàm số, biểu thức
+• **Hình học**: Hình dạng, không gian, đo lường
+• **Giải tích**: Đạo hàm, tích phân, giới hạn
+• **Thống kê**: Phân tích dữ liệu, xác suất
+
+**Ứng dụng thực tế:**
+• Kỹ thuật và xây dựng
+• Tài chính và kinh tế
+• Khoa học máy tính
+• Nghiên cứu khoa học'''
+    
+    # Technology responses
+    elif any(word in message_lower for word in ['technology', 'công nghệ', 'ai', 'artificial intelligence', 'machine learning']):
+        return '''🤖 **Công nghệ** đang thay đổi thế giới:
+
+**Công nghệ mới nổi:**
+• **AI (Trí tuệ nhân tạo)**: Hệ thống thông minh
+• **Machine Learning**: Máy học từ dữ liệu
+• **Deep Learning**: Mạng neural sâu
+• **IoT**: Internet of Things - Kết nối vạn vật
+• **Blockchain**: Công nghệ chuỗi khối
+
+**Tác động đến giáo dục:**
+• Học tập cá nhân hóa
+• Thực tế ảo/tăng cường (VR/AR)
+• Nền tảng học trực tuyến
+• Phân tích học tập thông minh'''
+    
+    # Greeting responses
+    elif any(word in message_lower for word in ['hello', 'hi', 'xin chào', 'chào']):
+        return '''👋 **Xin chào! Tôi là STEMind AI Assistant**
+
+Tôi có thể giúp bạn với:
+• 🔬 **STEM Education** - Giáo dục tích hợp
+• 💻 **Lập trình** - Python, JavaScript, Java
+• 🔬 **Khoa học** - Vật lý, Hóa học, Sinh học  
+• 📐 **Toán học** - Đại số, Hình học, Thống kê
+• 🤖 **Công nghệ** - AI, Machine Learning, IoT
+
+**Bạn muốn tìm hiểu về chủ đề nào?** 🚀'''
+    
+    # Help responses
+    elif any(word in message_lower for word in ['help', 'giúp', 'hỗ trợ', 'support']):
+        return '''🆘 **Tôi có thể giúp bạn với:**
+
+🔬 **Giáo dục STEM**
+• Giải thích khái niệm cơ bản
+• Phương pháp học tập hiệu quả
+• Tài liệu và nguồn học
+
+💻 **Lập trình & Công nghệ**
+• Hướng dẫn ngôn ngữ lập trình
+• Giải thích thuật toán
+• Debug và tối ưu code
+
+📚 **Học tập & Nghiên cứu**
+• Giải đáp thắc mắc
+• Hướng dẫn làm bài tập
+• Tìm kiếm tài liệu
+
+**Hãy đặt câu hỏi cụ thể để tôi có thể hỗ trợ bạn tốt nhất!** 💡'''
+    
+    # Default response
     else:
-        return f"Tôi đã nhận được tin nhắn của bạn: '{message}'. Bạn có câu hỏi gì về nội dung này không?"
+        return f'''🤖 **Cảm ơn bạn đã hỏi về: "{message}"**
+
+Tôi là **STEMind AI Assistant** - trợ lý AI chuyên về giáo dục STEM. 
+
+**Tôi có thể giúp bạn với:**
+• 🔬 **STEM Education** - Phương pháp giáo dục tích hợp
+• 💻 **Lập trình** - Python, JavaScript, Java và nhiều ngôn ngữ khác
+• 🔬 **Khoa học** - Vật lý, Hóa học, Sinh học, Địa chất
+• 📐 **Toán học** - Đại số, Hình học, Giải tích, Thống kê
+• 🤖 **Công nghệ** - AI, Machine Learning, IoT, Blockchain
+
+**Hãy đặt câu hỏi cụ thể hơn để tôi có thể hỗ trợ bạn tốt nhất!** 🚀
+
+*Ví dụ: "Giải thích Machine Learning", "Python là gì?", "Làm thế nào để học STEM?"*'''
 
 def generate_file_content_response(attachment, file_content, user_message):
     """Generate bot response based on file content"""

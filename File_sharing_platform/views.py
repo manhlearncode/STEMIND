@@ -186,98 +186,109 @@ def chatbot(request):
     """Chatbot interface view"""
     return render(request, 'chatbot.html')
 
-@csrf_exempt
-def chatbot_api(request):
-    """API endpoint for chatbot message processing"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            message = data.get('message', '')
-            session_id = data.get('session_id', '')
-            
-            # Process the message and generate response
-            response = process_chatbot_message(message)
-            
-            return JsonResponse({
-                'success': True,
-                'response': response,
-                'session_id': session_id
-            })
-        except json.JSONDecodeError:
-            return JsonResponse({
-                'success': False,
-                'error': 'Invalid JSON data'
-            }, status=400)
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
-    
-    return JsonResponse({
-        'success': False,
-        'error': 'Method not allowed'
-    }, status=405)
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
+from .services.chatbot_service import ChatbotService
 
-def process_chatbot_message(message):
-    """Process chatbot message and generate appropriate response"""
-    message_lower = message.lower()
+# Initialize RAG chatbot service
+try:
+    from .services.rag_chatbot_service import get_rag_chatbot_service
+    rag_chatbot_service = get_rag_chatbot_service()
+except Exception as e:
+    print(f"Lỗi khi khởi tạo RAG chatbot service: {e}")
+    rag_chatbot_service = None
+
+# Fallback to old chatbot service if RAG fails
+try:
+    from .services.chatbot_service import ChatbotService
+    fallback_chatbot_service = ChatbotService()
+except Exception as e:
+    print(f"Lỗi khi khởi tạo fallback chatbot service: {e}")
+    fallback_chatbot_service = None
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def chatbot_api(request):
+    """API endpoint cho RAG chatbot"""
+    try:
+        data = json.loads(request.body)
+        user_message = data.get('message', '')
+        session_id = data.get('session_id', '')
+        
+        if not user_message.strip():
+            return JsonResponse({
+                'success': False,
+                'error': 'Message không được để trống'
+            })
+        
+        # Sử dụng RAG chatbot trước
+        if rag_chatbot_service:
+            try:
+                bot_response = rag_chatbot_service.answer_question(user_message)
+                
+                # Tìm chunks tương tự để hiển thị thêm thông tin
+                similar_chunks = rag_chatbot_service.get_similar_chunks(user_message, top_k=3)
+                
+                return JsonResponse({
+                    'success': True,
+                    'response': {
+                        'text': bot_response,
+                        'type': 'rag_response'
+                    },
+                    'similar_chunks': [chunk['preview'] for chunk in similar_chunks],
+                    'session_id': session_id
+                })
+            except Exception as e:
+                print(f"Lỗi trong RAG chatbot: {e}")
+                # Fallback to old service
+                pass
+        
+        # Fallback to old chatbot service
+        if fallback_chatbot_service:
+            try:
+                bot_response = fallback_chatbot_service.answer_question(user_message)
+                similar_files = fallback_chatbot_service.get_similar_files(user_message)
+                
+                return JsonResponse({
+                    'success': True,
+                    'response': {
+                        'text': bot_response,
+                        'type': 'fallback_response'
+                    },
+                    'similar_files': similar_files[:3],
+                    'session_id': session_id
+                })
+            except Exception as e:
+                print(f"Lỗi trong fallback chatbot: {e}")
+        
+        # Last resort - simple response
+        simple_response = f"Xin lỗi, tôi hiện không thể xử lý câu hỏi '{user_message}'. Hệ thống chatbot đang được cập nhật. Vui lòng thử lại sau."
+        return JsonResponse({
+            'success': True,
+            'response': {
+                'text': simple_response,
+                'type': 'simple_response'
+            },
+            'session_id': session_id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
     
-    # STEM Education responses
-    if any(word in message_lower for word in ['stem', 'giáo dục', 'education']):
-        return {
-            'text': 'STEM là viết tắt của Science (Khoa học), Technology (Công nghệ), Engineering (Kỹ thuật), và Mathematics (Toán học). Đây là phương pháp giáo dục tích hợp các lĩnh vực này để chuẩn bị cho học sinh thích ứng với thế giới công nghệ hiện đại.',
-            'type': 'text'
-        }
-    
-    # Programming/Coding responses
-    elif any(word in message_lower for word in ['code', 'programming', 'lập trình', 'python', 'javascript']):
-        return {
-            'text': 'Lập trình là kỹ năng quan trọng trong thời đại số. Các ngôn ngữ phổ biến bao gồm Python, JavaScript, Java. Bạn muốn tìm hiểu về ngôn ngữ lập trình nào cụ thể không?',
-            'type': 'text'
-        }
-    
-    # Science responses
-    elif any(word in message_lower for word in ['science', 'khoa học', 'physics', 'chemistry', 'biology']):
-        return {
-            'text': 'Khoa học là hệ thống kiến thức có tổ chức về vũ trụ, bao gồm vật lý, hóa học, sinh học và nhiều lĩnh vực khác. Bạn quan tâm đến lĩnh vực khoa học nào?',
-            'type': 'text'
-        }
-    
-    # Math responses
-    elif any(word in message_lower for word in ['math', 'toán', 'toán học', 'calculation']):
-        return {
-            'text': 'Toán học là nền tảng của tất cả các ngành khoa học. Nó bao gồm đại số, hình học, giải tích và nhiều lĩnh vực khác. Bạn cần hỗ trợ về chủ đề toán học nào?',
-            'type': 'text'
-        }
-    
-    # Technology responses
-    elif any(word in message_lower for word in ['technology', 'công nghệ', 'ai', 'artificial intelligence', 'machine learning']):
-        return {
-            'text': 'Công nghệ đang phát triển nhanh chóng, đặc biệt là AI và Machine Learning. Những công nghệ này đang thay đổi cách chúng ta học tập và làm việc.',
-            'type': 'text'
-        }
-    
-    # Greeting responses
-    elif any(word in message_lower for word in ['hello', 'hi', 'xin chào', 'chào']):
-        return {
-            'text': 'Xin chào! Tôi là trợ lý AI của STEMind. Tôi có thể giúp bạn tìm hiểu về STEM, lập trình, khoa học và nhiều chủ đề khác. Bạn muốn tìm hiểu về điều gì?',
-            'type': 'text'
-        }
-    
-    # Help responses
-    elif any(word in message_lower for word in ['help', 'giúp', 'hỗ trợ', 'support']):
-        return {
-            'text': 'Tôi có thể giúp bạn với:\n• Thông tin về giáo dục STEM\n• Hướng dẫn lập trình\n• Giải thích các khái niệm khoa học\n• Hỗ trợ toán học\n• Tìm kiếm tài liệu học tập\nBạn cần hỗ trợ gì cụ thể?',
-            'type': 'text'
-        }
-    
-    # Default response
-    else:
-        return {
-            'text': 'Cảm ơn bạn đã hỏi! Tôi là trợ lý AI được thiết kế để hỗ trợ giáo dục STEM. Bạn có thể hỏi tôi về khoa học, công nghệ, kỹ thuật, toán học hoặc bất kỳ chủ đề nào khác. Tôi sẽ cố gắng hết sức để giúp bạn!',
-            'type': 'text'
-        }
+@require_http_methods(["GET"])
+def chatbot_page(request):
+    """Trang giao diện chatbot"""
+    return render(request, 'chatbot.html')
 
 @login_required
 def toggle_favorite(request, file_id):

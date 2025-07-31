@@ -103,8 +103,8 @@ Trả lời:"""
 
 # Ví dụ sử dụng
 if __name__ == "__main__":
-    db_path = 'stem_documents.sqlite'
-    query = "SELECT content FROM documents"
+    db_path = 'File_sharing_platform/db.sqlite3'
+    query = "SELECT url FROM files"
     process_and_save_embeddings(db_path, query)
 
     user_query = "Giải thích nguyên lý hoạt động của động cơ điện."
