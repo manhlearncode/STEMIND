@@ -15,4 +15,5 @@ urlpatterns = [
     path('favorites/', views.user_favorites, name='user_favorites'),
     path('toggle-favorite/<int:file_id>/', views.toggle_favorite, name='toggle_favorite'),
     path('about/', views.about, name='about'),
+    path('api/files/', views.file_list_api, name='file_list_api'),
 ]

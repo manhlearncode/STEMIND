@@ -16,6 +16,9 @@ import io
 import base64
 from .models import ChatSession, ChatMessage, FileAttachment
 
+def get_message(request):
+    message = request.POST.get('message')
+    return JsonResponse({'message': message})
 # Create your views here.
 def chatbot_view(request):
     context = {

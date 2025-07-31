@@ -14,6 +14,20 @@ from .forms import FileUploadForm
 import json
 from django.http import HttpResponseRedirect
     
+def file_list_api(request):
+    files = File.objects.all()
+    data = []
+    for file in files:
+        data.append({
+            'id': file.id,
+            'title': file.title,
+            'author': file.author.username,
+            'category': file.category.category_name,
+            'downloads': file.file_downloads,
+            'created_at': file.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+    return JsonResponse(data, safe=False)
+
 def home(request):
     categories = Category.objects.all()
     featured_files = File.objects.filter(file_status__in=[0, 1]).order_by('-file_downloads')[:7]
