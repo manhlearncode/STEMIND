@@ -101,7 +101,7 @@
                             <i class="fas fa-info-circle me-2"></i>
                             Giới thiệu
                         </h3>
-                        <p>Tại Việt Nam, giáo dục STEM là một yêu cầu cấp thiết trong đổi mới giáo dục, nhưng đang gặp nhiều rào cản, đặc biệt là tại các vùng nông thôn. Việt Nam có khoảng 1,6 triệu giáo viên phổ thông, trong đó trên 50% làm việc ở khu vực nông thôn, miền núi.</p>
+                        <p>STEMIND là nền tảng trực tuyến tích hợp AI được thiết kế để giúp giáo viên nhanh chóng thiết kế bài giảng STEM, tìm kiếm tài liệu học tập phù hợp và tổ chức các hoạt động. Với giao diện thân thiện, tiết kiệm thời gian, nâng cao chất lượng giảng dạy và kết nối cộng đồng.</p>
                     </div>
                     
                     <div class="sidebar-card">
@@ -109,14 +109,21 @@
                             <i class="fas fa-star me-2"></i>
                             Người đóng góp nổi bật
                         </h3>
-                        {% for user in top_users %}
-                        <div class="contributor-item">
-                            <div class="contributor-avatar">
-                                {{ user.username|slice:":1"|upper }}
+                        {% if top_users %}
+                            {% for user in top_users %}
+                            <div class="contributor-item">
+                                <div class="contributor-avatar">
+                                    {{ user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="contributor-name">{{ user.username }}</div>
+                                    <small class="text-muted">{{ user.files.count|default:0 }} tài liệu</small>
+                                </div>
                             </div>
-                            <a href="#" class="contributor-name">{{ user.username }}</a>
-                        </div>
-                        {% endfor %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted mb-0">Chưa có người đóng góp nào.</p>
+                        {% endif %}
                     </div>
                     
                     <div class="sidebar-card">

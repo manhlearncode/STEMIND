@@ -18,7 +18,7 @@ def home(request):
     categories = Category.objects.all()
     featured_files = File.objects.filter(file_status__in=[0, 1]).order_by('-file_downloads')[:7]
     recently_files = File.objects.filter(file_status__in=[0, 1]).order_by('-created_at')[:10]
-    top_users = User.objects.annotate(num_posts=Count('files')).order_by('-num_posts')[:10]
+    top_users = User.objects.annotate(num_posts=Count('files')).filter(num_posts__gt=0).order_by('-num_posts')[:10]
     context = {
         'categories':categories,
         'featured_files':featured_files,
@@ -91,7 +91,7 @@ def posts_by_category(request, category_name):
     category = get_object_or_404(Category, category_name=category_name)
     featured_files = File.objects.filter(file_status__in=[0, 1], category=category).order_by('-file_downloads')[:3]
     recently_files = File.objects.filter(file_status__in=[0, 1], category=category).order_by('-created_at')[:15]
-    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__category=category))).order_by('-num_posts')[:10]
+    top_users = User.objects.annotate(num_posts=Count('files')).filter(num_posts__gt=0).order_by('-num_posts')[:10]
     context = {
         'categories':categories,
         'featured_files':featured_files,
@@ -120,7 +120,7 @@ def file_detail(request, title):
     file_obj = get_object_or_404(File, title=title)
     
     related_files = File.objects.filter(file_status=1, category=file_obj.category).exclude(id=file_obj.id).order_by('-file_downloads')[:5]
-    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__category=file_obj.category))).order_by('-num_posts')[:5]
+    top_users = User.objects.annotate(num_posts=Count('files')).filter(num_posts__gt=0).order_by('-num_posts')[:5]
     
     # Check if user has favorited this file
     is_favorited = False

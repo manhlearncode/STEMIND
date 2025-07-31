@@ -1,4 +1,6 @@
 <!-- Modern Footer -->
+{% load static %}
+<link rel="stylesheet" href="{% static 'style/base/footer.css' %}">
 <footer class="main-footer bg-dark text-light">
     <!-- Main Footer Content -->
     <div class="footer-content py-5">
@@ -48,17 +50,28 @@
                             <li><a href="{% url 'home' %}">
                                 <i class="fas fa-home me-2"></i>Trang chủ
                             </a></li>
-                            <li><a href="#">
+                            <li><a href="{% url 'home' %}">
                                 <i class="fas fa-folder me-2"></i>Tài liệu
                             </a></li>
+                            {% if user.is_authenticated %}
                             <li><a href="{% url 'chatbot' %}">
                                 <i class="fas fa-robot me-2"></i>Trợ lý AI
+                                </a></li>
+                            {% else %}
+                            <li><a href="{% url 'enter' %}">
+                                <i class="fas fa-robot me-2"></i>Trợ lý AI
                             </a></li>
-                            <li><a href="#">
-                                <i class="fas fa-newspaper me-2"></i>Bài viết
+                            {% endif %}
+                            {% if user.is_authenticated %}
+                            <li><a href="{% url 'social:feed' %}">
+                                <i class="fas fa-users me-2"></i>Social
                             </a></li>
-                            <li><a href="#">
-                                <i class="fas fa-search me-2"></i>Tìm kiếm
+                            {% else %}
+                            <li><a href="{% url 'enter' %}">
+                                <i class="fas fa-users me-2"></i>Social
+                            {% endif %}
+                            <li><a href="{% url 'about' %}">
+                                <i class="fas fa-info-circle me-2"></i>Về chúng tôi
                             </a></li>
                         </ul>
                     </div>

@@ -245,10 +245,19 @@
                             </div>
                             <div>
                                 <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
-                                <small class="text-muted">{{ user.Files.count|default:0 }} tài liệu</small>
+                                <small class="text-muted">{{ user.files.count|default:0 }} tài liệu</small>
                             </div>
                         </div>
                         {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <i class="fas fa-star me-2"></i>Người đóng góp nổi bật
+                    </div>
+                    <div class="sidebar-card-body">
+                        <p class="text-muted mb-0">Chưa có người đóng góp nào.</p>
                     </div>
                 </div>
                 {% endif %}
