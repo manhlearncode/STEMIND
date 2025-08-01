@@ -25,8 +25,7 @@ urlpatterns = [
     path('chatbot/', include('Chatbot.urls')),
     path('social/', include('Social_Platform.urls')),
 ]
-
-# Serve media files only in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+

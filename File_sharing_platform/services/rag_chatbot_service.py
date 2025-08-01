@@ -138,10 +138,6 @@ class RAGChatbotService:
     
     def answer_question(self, query, top_k=3):
         """Trả lời câu hỏi sử dụng RAG với fallback đến Gemini"""
-        if not self.chunks or len(self.embeddings) == 0:
-            # Fallback trực tiếp đến Gemini nếu không có embeddings
-            return self._fallback_to_gemini(query)
-        
         try:
             # Tạo embedding cho câu hỏi
             query_embedding = self.get_gemini_embedding(query)
@@ -163,30 +159,29 @@ class RAGChatbotService:
                     relevant_chunks.append(top_chunks[i])
             
             if relevant_chunks:
-                # Có thông tin liên quan, sử dụng RAG
+                # Có thông tin liên quan, sử dụng RAG + Gemini
                 context = "\n".join(relevant_chunks)
-                prompt = f"""Dựa trên các đoạn tài liệu sau, hãy trả lời câu hỏi của người dùng một cách chi tiết, dễ hiểu và chính xác.
+                prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau, hãy trả lời câu hỏi của người dùng một cách chi tiết, dễ hiểu và chính xác.
 
-Tài liệu liên quan:
-{context}
+    Tài liệu liên quan:
+    {context}
 
-Câu hỏi: {query}
+    Câu hỏi: {query}
 
-Hãy trả lời bằng tiếng Việt, sử dụng thông tin từ tài liệu trên.
+    Hãy trả lời bằng tiếng Việt, sử dụng thông tin từ tài liệu trên. Nếu cần, bạn có thể bổ sung kiến thức tổng quát của mình để giải thích rõ hơn.
 
-Trả lời:"""
-
+    Trả lời:"""
                 model = genai.GenerativeModel("gemini-2.0-flash-exp")
                 response = model.generate_content(prompt)
                 return response.text
             else:
-                # Không có thông tin liên quan, fallback đến Gemini
+                # Không có thông tin liên quan, chỉ dùng Gemini AI
                 return self._fallback_to_gemini(query)
             
         except Exception as e:
             print(f"Lỗi trong RAG: {e}")
             return self._fallback_to_gemini(query)
-    
+ 
     def _fallback_to_gemini(self, query):
         """Fallback trực tiếp đến Gemini API"""
         try:

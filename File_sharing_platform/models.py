@@ -31,32 +31,15 @@ class File(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def get_presigned_url(self, expires_in=3600):
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-        )
-        return s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': self.file_urls.name},
-            ExpiresIn=expires_in
-        )
+        # Return local file URL instead of S3 presigned URL
+        return self.file_urls.url
 
     def get_thumbnail_presigned_url(self, expires_in=3600):
-        """Lấy presigned URL cho thumbnail"""
+        """Lấy URL cho thumbnail"""
         if self.file_thumbnail and self.file_thumbnail.name:
-            s3_client = boto3.client(
-                's3',
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-            )
-            return s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': self.file_thumbnail.name},
-                ExpiresIn=expires_in
-            )
+            return self.file_thumbnail.url
         else:
-            # Trả về URL default thumbnail local (không cần presigned URL cho static files)
+            # Trả về URL default thumbnail local
             return f"{settings.STATIC_URL}images/default.webp"
 
     def __str__(self):
@@ -94,16 +77,8 @@ class FileUpload(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def get_presigned_url(self, expires_in=3600):
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-        )
-        return s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': self.file_urls.name},
-            ExpiresIn=expires_in
-        )
+        # Return local file URL instead of S3 presigned URL
+        return self.file_urls.url
 
     def get_thumbnail_url(self):
         """Lấy URL của thumbnail, nếu không có thì trả về default local"""
@@ -114,20 +89,11 @@ class FileUpload(models.Model):
             return f"{settings.STATIC_URL}images/default.webp"
 
     def get_thumbnail_presigned_url(self, expires_in=3600):
-        """Lấy presigned URL cho thumbnail"""
+        """Lấy URL cho thumbnail"""
         if self.file_thumbnail and self.file_thumbnail.name:
-            s3_client = boto3.client(
-                's3',
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-            )
-            return s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': self.file_thumbnail.name},
-                ExpiresIn=expires_in
-            )
+            return self.file_thumbnail.url
         else:
-            # Trả về URL default thumbnail local (không cần presigned URL cho static files)
+            # Trả về URL default thumbnail local
             return f"{settings.STATIC_URL}images/default.webp"
     
     def __str__(self):

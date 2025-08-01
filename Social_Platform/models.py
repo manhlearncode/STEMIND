@@ -24,18 +24,9 @@ class Post(models.Model):
         return self.comments.count()
     
     def get_image_presigned_url(self, expires_in=3600):
-        """Lấy presigned URL cho ảnh post"""
+        """Lấy URL cho ảnh post"""
         if self.image and self.image.name:
-            s3_client = boto3.client(
-                's3',
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-            )
-            return s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': self.image.name},
-                ExpiresIn=expires_in
-            )
+            return self.image.url
         return None
 
 class Like(models.Model):
@@ -77,18 +68,9 @@ class UserProfile(models.Model):
         return self.user.following.count()
     
     def get_avatar_presigned_url(self, expires_in=3600):
-        """Lấy presigned URL cho avatar"""
+        """Lấy URL cho avatar"""
         if self.avatar and self.avatar.name:
-            s3_client = boto3.client(
-                's3',
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-            )
-            return s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': self.avatar.name},
-                ExpiresIn=expires_in
-            )
+            return self.avatar.url
         return None
 
 # Signal to create UserProfile automatically

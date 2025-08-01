@@ -24,6 +24,7 @@ def file_list_api(request):
             'author': file.author.username,
             'category': file.category.category_name,
             'downloads': file.file_downloads,
+            'file_urls': file.get_presigned_url(),
             'created_at': file.created_at.strftime('%Y-%m-%d %H:%M:%S')
         })
     return JsonResponse(data, safe=False)
@@ -114,20 +115,7 @@ def posts_by_category(request, category_name):
     }
     return render(request, 'home/home.html', context)
 
-def get_presigned_url(self):
-    import boto3
-    from django.conf import settings
 
-    s3 = boto3.client('s3')
-    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-    key = self.file_urls.name  # đường dẫn trong bucket
-
-    url = s3.generate_presigned_url(
-        'get_object',
-        Params={'Bucket': bucket_name, 'Key': key},
-        ExpiresIn=3600
-    )
-    return url
 
 def file_detail(request, title):
     categories = Category.objects.all()
