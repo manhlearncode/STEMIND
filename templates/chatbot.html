@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'images/Symbol.png' %}">
     <title>STEMind AI Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -126,6 +127,57 @@
             box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
         }
 
+        .chat-item {
+            position: relative;
+        }
+
+        .chat-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(239, 68, 68, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .clear-all-btn {
+            margin: 10px 20px;
+            padding: 8px 12px;
+            background: rgba(239, 68, 68, 0.8);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .clear-all-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: translateY(-1px);
+        }
+
         .chat-title {
             font-size: 14px;
             font-weight: 500;
@@ -134,6 +186,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             color: rgba(255, 255, 255, 0.95);
+            padding-right: 30px;
         }
 
         .chat-time {
@@ -460,6 +513,52 @@
         .sidebar ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.5);
         }
+
+        /* New styles for topic buttons */
+        .topic-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .topic-btn {
+            padding: 14px 16px;
+            background: #006065;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .topic-btn:hover {
+            background: #616161;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .topic-btn.wide-btn {
+            grid-column: span 3;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .topic-buttons-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .topic-btn.wide-btn {
+                grid-column: span 2;
+            }
+        }
     </style>
 </head>
 <body>
@@ -475,6 +574,10 @@
             
             <button class="new-chat-btn" onclick="startNewChat()">
                 <i class="fas fa-plus"></i> Cuộc trò chuyện mới
+            </button>
+            
+            <button class="clear-all-btn" onclick="clearAllSessions()">
+                <i class="fas fa-trash"></i> Xóa tất cả
             </button>
             
             <div class="chat-history" id="chatHistory">
@@ -500,15 +603,14 @@
                         <i class="fas fa-robot"></i>
                     </div>
                     <div class="message-content">
-                        <div>Xin chào! 👋 Tôi là STEMIND AI Assistant.</div>
-                        <div style="margin-top: 12px;">
-                            Tôi có thể giúp bạn với:
-                            <ul style="margin: 12px 0; padding-left: 20px;">
-                                <li>Học sinh ở địa phương thường gặp vấn đề gì liên quan bài học?</li>
-                                <li>Có vấn đề cộng đồng nào liên quan đến bài học này?</li>
-                                <li>Làm sao học sinh phối hợp và phân vai hiệu quả trong nhóm?</li>
-                            </ul>
-                            Bạn muốn tìm hiểu về điều gì?
+                        <div>Chào bạn! Mình là STEMIND AI Assistant, rất vui được giúp bạn tạo bài giảng, bài tập, bài kiểm tra, bài học.</div>
+                        <div style="margin-top: 20px;">
+                            <div class="topic-buttons-grid">
+                                <button class="topic-btn" onclick="sendTopicMessage('Tôi muốn tạo bài giảng')">Tôi muốn tạo bài giảng</button>
+                                <button class="topic-btn" onclick="sendTopicMessage('Tôi muốn tạo bài tập')">Tôi muốn tạo bài tập</button>
+                                <button class="topic-btn" onclick="sendTopicMessage('Tôi muốn tạo bài kiểm tra')">Tôi muốn tạo bài kiểm tra</button>
+                                <button class="topic-btn" onclick="sendTopicMessage('Tôi muốn tạo bài học')">Tôi muốn tạo bài học</button>
+                            </div>
                         </div>
                         <div class="message-time" id="welcomeTime"></div>
                     </div>
@@ -641,6 +743,164 @@
             });
         }
 
+        function sendTopicMessage(topic) {
+            // Add user message to UI
+            topic = topic.replace('Bạn muốn tạo ', 'Tôi muốn tạo ');
+            addMessageToUI(`${topic}.`, 'user');
+            
+            // Add grade selection message immediately
+            setTimeout(() => {
+                addGradeSelectionMessage(topic);
+            }, 300);
+        }
+
+        function addGradeSelectionMessage(topic) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const typingIndicator = document.getElementById('typingIndicator');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            avatarDiv.innerHTML = '<i class="fas fa-robot"></i>';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const textDiv = document.createElement('div');
+            topic = topic.replace('Tôi muốn tạo ', 'Bạn muốn tạo ');
+            textDiv.innerHTML = `${topic} cho học sinh lớp mấy?`;
+            
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.style.marginTop = '20px';
+            buttonsDiv.className = 'topic-buttons-grid';
+            
+            const grades = ['Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5'];
+            
+            grades.forEach(grade => {
+                const button = document.createElement('button');
+                button.className = 'topic-btn';
+                button.textContent = grade;
+                button.onclick = () => addSubjectSelectionMessage(topic, grade);
+                buttonsDiv.appendChild(button);
+            });
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = formatTime(new Date());
+            
+            contentDiv.appendChild(textDiv);
+            contentDiv.appendChild(buttonsDiv);
+            contentDiv.appendChild(timeDiv);
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            messagesContainer.insertBefore(messageDiv, typingIndicator);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addSubjectSelectionMessage(topic, grade) {
+            // Add user message to UI
+            topic = topic.replace('Bạn muốn tạo ', 'Tôi muốn tạo ');
+            grade = grade.toLowerCase();
+            addMessageToUI(`${topic} cho học sinh ${grade}.`, 'user');
+            
+            const messagesContainer = document.getElementById('messagesContainer');
+            const typingIndicator = document.getElementById('typingIndicator');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            avatarDiv.innerHTML = '<i class="fas fa-robot"></i>';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const textDiv = document.createElement('div');
+            topic = topic.replace('Tôi muốn tạo ', 'Bạn muốn tạo ');
+            textDiv.innerHTML = `${topic} cho môn học nào cho học sinh ${grade}?`;
+            
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.style.marginTop = '20px';
+            buttonsDiv.className = 'topic-buttons-grid';
+            
+            const subjects = [
+                'Toán học', 'Vật lý', 'Hóa học', 'Sinh học',
+                'Lịch sử', 'Địa lý', 'Văn học', 'Tiếng Anh',
+                'Tin học', 'Công nghệ', 'Giáo dục công dân', 'Thể dục'
+            ];
+            
+            subjects.forEach(subject => {
+                const button = document.createElement('button');
+                button.className = 'topic-btn';
+                button.textContent = subject;
+                button.onclick = () => sendSubjectMessage(topic, grade, subject);
+                buttonsDiv.appendChild(button);
+            });
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = formatTime(new Date());
+            
+            contentDiv.appendChild(textDiv);
+            contentDiv.appendChild(buttonsDiv);
+            contentDiv.appendChild(timeDiv);
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            messagesContainer.insertBefore(messageDiv, typingIndicator);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function sendSubjectMessage(topic, grade, subject) {
+            // Add user message to UI
+            topic = topic.replace('Bạn muốn tạo ', 'Tôi muốn tạo ');
+            subject = subject.toLowerCase();
+            addMessageToUI(`${topic} môn ${subject} cho học sinh ${grade}.`, 'user');
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send to server
+            fetch('/chatbot/api/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    message: `${topic} cho môn ${subject} của ${grade}.`,
+                    session_id: currentSessionId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                
+                if (data.success) {
+                    const response = data.response;
+                    if (typeof response === 'object' && response.text) {
+                        addMessageToUI(response.text, 'bot');
+                    } else {
+                        addMessageToUI(response, 'bot');
+                    }
+                    
+                    // Save to chat history
+                    saveChatToHistory(`${topic} cho môn ${subject} của ${grade}.`, response);
+                } else {
+                    addMessageToUI('Xin lỗi, có lỗi xảy ra: ' + data.error, 'bot');
+                }
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                addMessageToUI('Lỗi kết nối tới server. Vui lòng thử lại.', 'bot');
+                console.error('Error:', error);
+            });
+        }
+
         function addMessageToUI(content, sender) {
             const messagesContainer = document.getElementById('messagesContainer');
             const typingIndicator = document.getElementById('typingIndicator');
@@ -753,11 +1013,46 @@
                 chatItem.innerHTML = `
                     <div class="chat-title">${firstMessage.user_message.substring(0, 30)}...</div>
                     <div class="chat-time">${formatTime(new Date(firstMessage.timestamp))}</div>
+                    <button class="delete-btn" onclick="deleteSession('${sessionId}', event)">
+                        <i class="fas fa-times"></i>
+                    </button>
                 `;
                 
-                chatItem.onclick = () => loadChatSession(sessionId, sessionChats);
+                chatItem.onclick = (e) => {
+                    if (!e.target.closest('.delete-btn')) {
+                        loadChatSession(sessionId, sessionChats);
+                    }
+                };
                 chatHistoryDiv.appendChild(chatItem);
             });
+        }
+
+        function deleteSession(sessionId, event) {
+            event.stopPropagation();
+            
+            if (confirm('Bạn có chắc muốn xóa cuộc trò chuyện này?')) {
+                // Remove from localStorage
+                let history = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+                history = history.filter(chat => chat.session_id !== sessionId);
+                localStorage.setItem('chatHistory', JSON.stringify(history));
+                
+                // If deleted session is current session, start new chat
+                if (sessionId === currentSessionId) {
+                    startNewChat();
+                } else {
+                    updateChatHistoryUI();
+                }
+            }
+        }
+
+        function clearAllSessions() {
+            if (confirm('Bạn có chắc muốn xóa tất cả cuộc trò chuyện?')) {
+                // Clear all chat history
+                localStorage.removeItem('chatHistory');
+                
+                // Start new chat
+                startNewChat();
+            }
         }
 
         function loadChatSession(sessionId, sessionChats) {
