@@ -7,6 +7,7 @@ import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import django
 from django.conf import settings
+from typing import List, Tuple, Optional
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'The_Chalk.settings')
@@ -14,6 +15,7 @@ django.setup()
 
 from File_sharing_platform.models import File, Category
 from Social_Platform.models import Post, Comment
+from .user_embedding_service import UserEmbeddingService
 
 class RAGChatbotService:
     def __init__(self, embeddings_file='stem_embeddings.json'):
@@ -26,6 +28,7 @@ class RAGChatbotService:
         self.embeddings_file = embeddings_file
         self.chunks = []
         self.embeddings = []
+        self.user_embedding_service = UserEmbeddingService()
         self.load_embeddings()
     
     def load_embeddings(self):
@@ -225,6 +228,83 @@ Trả lời:"""
         except Exception as e:
             print(f"Lỗi khi tìm chunks tương tự: {e}")
             return []
+
+    def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
+        """
+        Trả lời câu hỏi sử dụng cả dữ liệu chung và dữ liệu cá nhân của user
+        """
+        try:
+            # Lấy context từ dữ liệu cá nhân của user
+            user_chunks = self.user_embedding_service.get_user_context(user_id, query, top_k)
+            
+            # Lấy context từ dữ liệu chung
+            global_chunks = self.get_global_context(query, top_k)
+            
+            # Kết hợp context
+            all_chunks = user_chunks + global_chunks
+            
+            if all_chunks:
+                # Có thông tin liên quan, sử dụng RAG + Gemini
+                context = "\n".join(all_chunks)
+                prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân của người dùng và dữ liệu chung), hãy trả lời câu hỏi của người dùng một cách chi tiết, dễ hiểu và chính xác.
+
+Tài liệu liên quan:
+{context}
+
+Câu hỏi: {query}
+
+Hãy trả lời bằng tiếng Việt, ưu tiên sử dụng thông tin từ tài liệu cá nhân của người dùng nếu có. Nếu cần, bạn có thể bổ sung kiến thức tổng quát của mình để giải thích rõ hơn.
+
+Trả lời:"""
+                model = genai.GenerativeModel("gemini-2.0-flash-exp")
+                response = model.generate_content(prompt)
+                return response.text
+            else:
+                # Không có thông tin liên quan, chỉ dùng Gemini AI
+                return self._fallback_to_gemini(query)
+            
+        except Exception as e:
+            print(f"Lỗi trong RAG với user context: {e}")
+            return self._fallback_to_gemini(query)
+    
+    def get_global_context(self, query: str, top_k: int = 3) -> List[str]:
+        """
+        Lấy context từ dữ liệu chung
+        """
+        if not self.chunks or len(self.embeddings) == 0:
+            return []
+        
+        try:
+            query_embedding = self.get_gemini_embedding(query)
+            if not query_embedding:
+                return []
+            
+            query_embedding = np.array(query_embedding).reshape(1, -1)
+            similarities = cosine_similarity(query_embedding, self.embeddings)[0]
+            top_indices = np.argsort(similarities)[-top_k:][::-1]
+            
+            relevant_chunks = []
+            for i in top_indices:
+                if similarities[i] > 0.3:
+                    relevant_chunks.append(self.chunks[i])
+            
+            return relevant_chunks
+            
+        except Exception as e:
+            print(f"Lỗi khi lấy global context: {e}")
+            return []
+    
+    def get_user_profile(self, user_id: str) -> Optional[dict]:
+        """
+        Lấy thông tin profile của user
+        """
+        return self.user_embedding_service.get_user_profile(user_id)
+    
+    def list_users_with_embeddings(self) -> List[str]:
+        """
+        Liệt kê tất cả users có embeddings
+        """
+        return self.user_embedding_service.list_all_users()
 
 # Global instance
 rag_chatbot_service = None
