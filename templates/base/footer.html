@@ -54,7 +54,7 @@
                                 <i class="fas fa-folder me-2"></i>Tài liệu
                             </a></li>
                             {% if user.is_authenticated %}
-                            <li><a href="{% url 'chatbot' %}">
+                            <li><a href="{% url 'chatbot:chatbot_page' %}">
                                 <i class="fas fa-robot me-2"></i>Trợ lý AI
                                 </a></li>
                             {% else %}

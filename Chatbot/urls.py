@@ -4,13 +4,9 @@ from . import views
 app_name = 'chatbot'
 
 urlpatterns = [
-    # Main chatbot page
     path('', views.chatbot_view, name='chatbot'),
-    
-    # API endpoints
     path('api/', views.chatbot_api, name='chatbot_api'),
-    path('upload/', views.upload_file, name='upload_file'),
-    
-    # Get message endpoint (legacy)
-    path('get-message/', views.get_message, name='get_message'),
+    path('user-profile/', views.user_profile_view, name='user_profile'),
+    path('list-users/', views.list_users_view, name='list_users'),
+    path('page/', views.chatbot_page, name='chatbot_page'),
 ]

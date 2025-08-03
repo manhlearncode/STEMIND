@@ -22,8 +22,8 @@ from django.conf import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('File_sharing_platform.urls')),
-    path('chatbot/', include('Chatbot.urls')),
     path('social/', include('Social_Platform.urls')),
+    path('chatbot/', include('Chatbot.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

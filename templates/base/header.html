@@ -7,7 +7,7 @@
         </a>
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 {% if user.is_authenticated %}
-                <li><a href="{% url 'chatbot' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Trợ lý AI</a></li>
+                <li><a href="{% url 'chatbot:chatbot_page' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Trợ lý AI</a></li>
                 {% else %}
                 <li><a href="{% url 'enter' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Trợ lý AI</a></li>
                 {% endif %}

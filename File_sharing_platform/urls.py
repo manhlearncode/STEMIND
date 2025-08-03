@@ -10,13 +10,9 @@ urlpatterns = [
     path("file/<str:title>/", views.file_detail, name='file_detail'),
     path('download/<int:file_id>/', views.download_file, name='download_file'),
     path('upload/', views.upload_file, name='upload_file'),
-    path('chatbot/', views.chatbot_view, name='chatbot'),
-    path('user-profile/', views.user_profile_view, name='user_profile'),
-    path('list-users/', views.list_users_view, name='list_users'),
-    path('chatbot/api/', views.chatbot_api, name='chatbot_api'),
     path('favorites/', views.user_favorites, name='user_favorites'),
     path('toggle-favorite/<int:file_id>/', views.toggle_favorite, name='toggle_favorite'),
     path('about/', views.about, name='about'),
     path('api/files/', views.file_list_api, name='file_list_api'),
-    path('chatbot-page/', views.chatbot_page, name='chatbot_page'),
+    # Đã xóa các URL chatbot
 ]
