@@ -1,4 +1,22 @@
 {% load static %}
+<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+<style>
+    .avatar-circle {
+    width: 40px;
+    height: 40px;
+    background-color: #006056;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+.avatar-circle:hover {
+    background-color: #004d4a;
+    cursor: pointer;
+}
+</style>
 <div class="container">
     <header class="p-3 border-bottom">
     <div class="container">
@@ -24,11 +42,11 @@
                     aria-label="Search"> </form>
             {% if user.is_authenticated %}
             <div class="dropdown text-end"> 
-                {% comment %} <a href="#"class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">  {% endcomment %}
-                    <a class="contributor-avatar" height="20" width="20" data-bs-toggle="dropdown" aria-expanded="false" style="color:white; cursor: pointer; background-color: #006056 !important; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; margin-right: 10px;">
-                        {{ user.username|slice:":1"|upper }}
-                    </a> 
-                {% comment %} </a> {% endcomment %}
+                <a class="avatar-circle text-white text-decoration-none"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+                    {{ user.username|slice:":1"|upper }}
+                </a>
                 <ul class="dropdown-menu text-small">
                     <li><a class="dropdown-item" href="{% url 'upload_file' %}">Tạo tài liệu mới</a></li>
                     <li><a class="dropdown-item" href="{% url 'user_favorites' %}">Tài liệu yêu thích</a></li>

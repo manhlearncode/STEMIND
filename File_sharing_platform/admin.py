@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, File, Favorite, FileUpload
+from .models import Category, File, Favorite
 from django.utils.html import format_html
 
 @admin.register(Category)
@@ -47,25 +47,3 @@ class FavoriteAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'file__title']
     readonly_fields = ['created_at']
 
-@admin.register(FileUpload)
-class FileUploadAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category', 'author', 'file_status', 'file_views', 'created_at']
-    list_filter = ['file_status', 'category', 'created_at']
-    search_fields = ['title', 'file_description']
-    readonly_fields = ['file_views', 'created_at', 'updated_at']
-    
-    fieldsets = (
-        ('Thông tin cơ bản', {
-            'fields': ('title', 'category', 'author')
-        }),
-        ('Nội dung', {
-            'fields': ('file_description', 'file_urls', 'file_thumbnail')
-        }),
-        ('Trạng thái', {
-            'fields': ('file_status', 'file_views')
-        }),
-        ('Thời gian', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        })
-    )
