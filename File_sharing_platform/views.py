@@ -11,17 +11,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .forms import FileUploadForm
-import json
 from django.http import HttpResponseRedirect
-import os
-import json
-import numpy as np
-from typing import List, Tuple, Optional
-from sklearn.metrics.pairwise import cosine_similarity
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from dotenv import load_dotenv
-
-load_dotenv()
+    
 
 def file_list_api(request):
     files = File.objects.all()
@@ -42,7 +33,7 @@ def home(request):
     categories = Category.objects.all()
     featured_files = File.objects.filter(file_status__in=[0, 1]).order_by('-file_downloads')[:7]
     recently_files = File.objects.filter(file_status__in=[0, 1]).order_by('-created_at')[:10]
-    top_users = User.objects.annotate(num_posts=Count('files')).filter(num_posts__gt=0).order_by('-num_posts')[:10]
+    top_users = User.objects.annotate(num_posts=Count('files')).order_by('-num_posts')[:10]
     context = {
         'categories':categories,
         'featured_files':featured_files,
@@ -115,7 +106,7 @@ def posts_by_category(request, category_name):
     category = get_object_or_404(Category, category_name=category_name)
     featured_files = File.objects.filter(file_status__in=[0, 1], category=category).order_by('-file_downloads')[:3]
     recently_files = File.objects.filter(file_status__in=[0, 1], category=category).order_by('-created_at')[:15]
-    top_users = User.objects.annotate(num_posts=Count('files')).filter(num_posts__gt=0).order_by('-num_posts')[:10]
+    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__category=category))).order_by('-num_posts')[:10]
     context = {
         'categories':categories,
         'featured_files':featured_files,
@@ -124,14 +115,23 @@ def posts_by_category(request, category_name):
     }
     return render(request, 'home/home.html', context)
 
+def get_presigned_url(self):
+    import boto3
+    from django.conf import settings
 
+    s3 = boto3.client('s3')
+    return s3.generate_presigned_url('get_object', Params={
+        'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
+        'Key': self.file_urls.name
+    }, ExpiresIn=3600)
+    return url
 
 def file_detail(request, title):
     categories = Category.objects.all()
     file_obj = get_object_or_404(File, title=title)
     
     related_files = File.objects.filter(file_status=1, category=file_obj.category).exclude(id=file_obj.id).order_by('-file_downloads')[:5]
-    top_users = User.objects.annotate(num_posts=Count('files')).filter(num_posts__gt=0).order_by('-num_posts')[:5]
+    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__category=file_obj.category))).order_by('-num_posts')[:5]
     
     # Check if user has favorited this file
     is_favorited = False
@@ -183,12 +183,29 @@ def chatbot(request):
     """Chatbot interface view"""
     return render(request, 'chatbot.html')
 
+@login_required
 def toggle_favorite(request, file_id):
-    file = get_object_or_404(File, id=file_id)
-    favorite, created = Favorite.objects.get_or_create(user=request.user, file=file)
-    if not created:
-        favorite.delete()
-    return JsonResponse({'success': True})
+    """Toggle favorite status for a file"""
+    if request.method == 'POST':
+        file_obj = get_object_or_404(File, id=file_id)
+        favorite, created = Favorite.objects.get_or_create(user=request.user, file=file_obj)
+        
+        if not created:
+            # If favorite already exists, remove it
+            favorite.delete()
+            is_favorited = False
+            message = 'Đã xóa khỏi yêu thích'
+        else:
+            is_favorited = True
+            message = 'Đã thêm vào yêu thích'
+        
+        return JsonResponse({
+            'success': True,
+            'is_favorited': is_favorited,
+            'message': message
+        })
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
 @login_required
 def user_favorites(request):

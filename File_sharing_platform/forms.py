@@ -86,6 +86,10 @@ class FileUploadForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Cập nhật choices cho file_status theo model
         self.fields['file_status'].choices = [(0, 'Free'), (1, 'For sales')]
+        
+        # Log file info for debugging
+        print(f"📁 FileUploadForm initialized with fields: {list(self.fields.keys())}")
+        print(f"📁 file_status choices: {self.fields['file_status'].choices}")
 
     def clean_file_urls(self):
         file = self.cleaned_data.get('file_urls')
