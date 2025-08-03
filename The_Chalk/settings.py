@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'File_sharing_platform',
     'Chatbot',
     'Social_Platform',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -103,40 +104,21 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# S3 settings - Using environment variables for security (Commented out for local storage)
+# # S3 settings - Using environment variables for security (Commented out for local storage)
 # AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 # AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 # AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-# AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
-# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-# AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}'
-
-# S3 permissions và security
-# AWS_QUERYSTRING_AUTH = False
-# AWS_DEFAULT_ACL = 'public-read'
+# AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
 # AWS_S3_FILE_OVERWRITE = False
-# AWS_S3_VERIFY = True
-# AWS_S3_SECURE_URLS = True
+# AWS_DEFAULT_ACL = 'public-read'   
 
-# Tối ưu performance
-# AWS_PRELOAD_METADATA = True
-# AWS_IS_GZIPPED = True
-# AWS_GZIP_CONTENT_TYPES = [
-#     'text/css',
-#     'text/javascript',
-#     'application/javascript',
-#     'application/x-javascript',
-#     'image/svg+xml',
-# ]
+# STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'   
 
 # Local Media Storage Configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Cache control cho media files
-# AWS_S3_OBJECT_PARAMETERS = {
-#     'CacheControl': 'max-age=86400',  # Cache 1 ngày
-# } 
 # RAG Configuration
 GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY', '')
 
