@@ -52,10 +52,10 @@ class UserEmbeddingService:
             similarities = cosine_similarity(query_embedding, embeddings)[0]
             top_indices = np.argsort(similarities)[-top_k:][::-1]
             
-            # Lấy các chunk có similarity > 0.3
+            # Giảm ngưỡng similarity để lấy nhiều context hơn
             relevant_chunks = []
             for i in top_indices:
-                if similarities[i] > 0.3:
+                if similarities[i] > 0.1:  # Giảm từ 0.3 xuống 0.1
                     relevant_chunks.append(chunks[i])
             
             return relevant_chunks
@@ -176,12 +176,12 @@ Trả lời:"""
                 response = model.generate_content(prompt)
                 return response.text
             else:
-                # Không có thông tin liên quan, chỉ dùng Gemini AI
-                return self._fallback_to_gemini(query)
+                # Không có thông tin liên quan, sử dụng Gemini AI với prompt thông minh
+                return self._smart_fallback_to_gemini(query)
             
         except Exception as e:
             print(f"Lỗi trong RAG với user context: {e}")
-            return self._fallback_to_gemini(query)
+            return self._smart_fallback_to_gemini(query)
     
     def answer_question(self, query, top_k=3):
         """Trả lời câu hỏi sử dụng RAG với fallback đến Gemini"""
@@ -189,7 +189,7 @@ Trả lời:"""
             # Tạo embedding cho câu hỏi
             query_embedding = self.get_gemini_embedding(query)
             if not query_embedding:
-                return self._fallback_to_gemini(query)
+                return self._smart_fallback_to_gemini(query)
             
             query_embedding = np.array(query_embedding).reshape(1, -1)
             
@@ -199,10 +199,10 @@ Trả lời:"""
             top_chunks = [self.chunks[i] for i in top_indices]
             top_scores = [similarities[i] for i in top_indices]
             
-            # Kiểm tra xem có thông tin liên quan không (similarity > 0.3)
+            # Giảm ngưỡng similarity để lấy nhiều context hơn
             relevant_chunks = []
             for i, score in enumerate(top_scores):
-                if score > 0.3:  # Ngưỡng similarity
+                if score > 0.1:  # Giảm từ 0.3 xuống 0.1
                     relevant_chunks.append(top_chunks[i])
             
             if relevant_chunks:
@@ -222,12 +222,12 @@ Trả lời:"""
                 response = model.generate_content(prompt)
                 return response.text
             else:
-                # Không có thông tin liên quan, chỉ dùng Gemini AI
-                return self._fallback_to_gemini(query)
+                # Không có thông tin liên quan, sử dụng Gemini AI với prompt thông minh
+                return self._smart_fallback_to_gemini(query)
             
         except Exception as e:
             print(f"Lỗi trong RAG: {e}")
-            return self._fallback_to_gemini(query)
+            return self._smart_fallback_to_gemini(query)
     
     def get_global_context(self, query: str, top_k: int = 3) -> List[str]:
         """
@@ -247,7 +247,7 @@ Trả lời:"""
             
             relevant_chunks = []
             for i in top_indices:
-                if similarities[i] > 0.3:
+                if similarities[i] > 0.1:  # Giảm ngưỡng similarity
                     relevant_chunks.append(self.chunks[i])
             
             return relevant_chunks
@@ -256,10 +256,36 @@ Trả lời:"""
             print(f"Lỗi khi lấy global context: {e}")
             return []
     
-    def _fallback_to_gemini(self, query):
-        """Fallback trực tiếp đến Gemini API"""
+    def _smart_fallback_to_gemini(self, query):
+        """Fallback thông minh đến Gemini API với prompt phù hợp"""
         try:
-            prompt = f"""Bạn là một trợ lý AI thông minh. Hãy trả lời câu hỏi sau một cách chi tiết, dễ hiểu và chính xác bằng tiếng Việt:
+            # Phân tích loại câu hỏi để tạo prompt phù hợp
+            if any(word in query.lower() for word in ['xin chào', 'hello', 'hi', 'chào']):
+                prompt = f"""Bạn là một trợ lý AI thân thiện. Hãy chào hỏi và giới thiệu về khả năng của bạn một cách tự nhiên bằng tiếng Việt.
+
+Câu hỏi: {query}
+
+Trả lời:"""
+            elif any(word in query.lower() for word in ['cảm ơn', 'thank', 'thanks']):
+                prompt = f"""Bạn là một trợ lý AI thân thiện. Hãy trả lời lời cảm ơn một cách lịch sự và thân thiện bằng tiếng Việt.
+
+Câu hỏi: {query}
+
+Trả lời:"""
+            elif any(word in query.lower() for word in ['bạn là ai', 'bạn tên gì', 'giới thiệu']):
+                prompt = f"""Bạn là trợ lý AI STEM thông minh. Hãy giới thiệu về bản thân và khả năng hỗ trợ trong lĩnh vực STEM một cách thân thiện bằng tiếng Việt.
+
+Câu hỏi: {query}
+
+Trả lời:"""
+            elif any(word in query.lower() for word in ['hướng dẫn', 'cách sử dụng', 'help', 'giúp']):
+                prompt = f"""Bạn là trợ lý AI hỗ trợ kỹ thuật. Hãy trả lời câu hỏi sau một cách chi tiết và hữu ích bằng tiếng Việt:
+
+Câu hỏi: {query}
+
+Trả lời:"""
+            else:
+                prompt = f"""Bạn là một trợ lý AI thông minh và thân thiện. Hãy trả lời câu hỏi sau một cách chi tiết, dễ hiểu và chính xác bằng tiếng Việt. Bạn có thể trả lời về bất kỳ chủ đề nào một cách hữu ích.
 
 Câu hỏi: {query}
 
@@ -271,6 +297,10 @@ Trả lời:"""
             
         except Exception as e:
             return f"Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi: {str(e)}"
+    
+    def _fallback_to_gemini(self, query):
+        """Fallback trực tiếp đến Gemini API"""
+        return self._smart_fallback_to_gemini(query)
     
     def get_user_profile(self, user_id: str):
         """

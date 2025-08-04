@@ -30,16 +30,18 @@
                 <li><a href="{% url 'enter' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Trợ lý AI</a></li>
                 {% endif %}
                 {% if user.is_authenticated %}
-                <li><a href="{% url 'social:feed' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Social</a></li>
+                <li><a href="{% url 'social:feed' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Cộng đồng</a></li>
                 {% else %}
-                <li><a href="{% url 'enter' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Social</a></li>
+                <li><a href="{% url 'enter' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Cộng đồng</a></li>
                 {% endif %}
                 <li><a href="{% url 'home' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Tài liệu</a></li>
                 <li><a href="{% url 'about' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Về chúng tôi</a></li>
             </ul>
+            {% if user.is_authenticated %}
             <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search"> <input type="search"
-                    class="form-control form-control-dark" placeholder="Search..."
+                    class="form-control form-control-dark" placeholder="Tìm kiếm..."
                     aria-label="Search"> </form>
+            {% endif %}
             {% if user.is_authenticated %}
             <div class="dropdown text-end"> 
                 <a class="avatar-circle text-white text-decoration-none"
