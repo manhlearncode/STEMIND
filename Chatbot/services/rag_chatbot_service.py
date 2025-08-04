@@ -5,6 +5,11 @@ from typing import List, Tuple, Optional
 from sklearn.metrics.pairwise import cosine_similarity
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from dotenv import load_dotenv
+import asyncio
+import threading
+import google.generativeai as genai
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from .user_embedding_service import UserEmbeddingService
 
 load_dotenv()
 
@@ -18,7 +23,7 @@ class UserEmbeddingService:
         Returns: (chunks, embeddings)
         """
         filename = f"user_{user_id}_embeddings.json"
-        
+
         if not os.path.exists(filename):
             print(f"File {filename} không tồn tại")
             return [], np.array([])
@@ -144,6 +149,15 @@ class RAGChatbotService:
         except Exception as e:
             print(f"Lỗi khi tạo embedding: {e}")
             return None
+        
+    def _safe_generate_content(self, model, prompt):
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        return loop.run_until_complete(model.generate_content_async(prompt))
     
     def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
         """
@@ -173,7 +187,7 @@ Hãy trả lời bằng tiếng Việt, ưu tiên sử dụng thông tin từ t�
 
 Trả lời:"""
                 model = genai.GenerativeModel("gemini-2.0-flash-exp")
-                response = model.generate_content(prompt)
+                response = self._safe_generate_content(model, prompt)
                 return response.text
             else:
                 # Không có thông tin liên quan, sử dụng Gemini AI với prompt thông minh
@@ -219,7 +233,7 @@ Hãy trả lời bằng tiếng Việt, sử dụng thông tin từ tài liệu 
 
 Trả lời:"""
                 model = genai.GenerativeModel("gemini-2.0-flash-exp")
-                response = model.generate_content(prompt)
+                response = self._safe_generate_content(model, prompt)
                 return response.text
             else:
                 # Không có thông tin liên quan, sử dụng Gemini AI với prompt thông minh
@@ -292,7 +306,7 @@ Câu hỏi: {query}
 Trả lời:"""
 
             model = genai.GenerativeModel("gemini-2.0-flash-exp")
-            response = model.generate_content(prompt)
+            response = self._safe_generate_content(model, prompt)
             return response.text
             
         except Exception as e:

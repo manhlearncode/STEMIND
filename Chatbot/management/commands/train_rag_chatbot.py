@@ -7,7 +7,6 @@ import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from django.core.management.base import BaseCommand
 from django.conf import settings
-
 from File_sharing_platform.models import File, Category
 from Social_Platform.models import Post, Comment
 from datetime import datetime
