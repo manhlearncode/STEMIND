@@ -151,13 +151,21 @@ class RAGChatbotService:
             return None
         
     def _safe_generate_content(self, model, prompt):
+
+        def blocking_generate():
+            return model.generate_content(prompt)
+
         try:
             loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # Nếu đang trong một loop (unlikely trong Django), dùng executor
+                return asyncio.ensure_future(loop.run_in_executor(None, blocking_generate))
         except RuntimeError:
+            # Không có loop hiện tại -> tạo mới
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        return loop.run_until_complete(loop.run_in_executor(None, model.generate_content, prompt))
+        return loop.run_until_complete(loop.run_in_executor(None, blocking_generate))
     
     def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
         """
