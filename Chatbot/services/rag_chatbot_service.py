@@ -156,8 +156,8 @@ class RAGChatbotService:
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        
-        return loop.run_until_complete(model.generate_content_async(prompt))
+
+        return loop.run_until_complete(loop.run_in_executor(None, model.generate_content, prompt))
     
     def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
         """
