@@ -148,6 +148,22 @@ class RAGChatbotService:
             prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung) và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
             model = genai.GenerativeModel("gemini-2.0-flash-exp")
             response = model.generate_content(prompt)
+
+            if not response.text or len(response.text.strip()) < 50:
+                print("⚠️ Trả lời không hợp lệ. Sử dụng Gemini.")
+                return self._fallback_to_gemini(query)
+            
+            BAD_PHRASES = [
+                "tôi không tìm thấy", 
+                "không có thông tin",
+                "không đủ dữ liệu", 
+                "tài liệu không đề cập"
+            ]
+
+            if any(phrase in response.text.lower() for phrase in BAD_PHRASES):
+                print("⚠️ Trả lời không hợp lệ. Sử dụng Gemini.")
+                return self._fallback_to_gemini(query)
+            
             return response.text
         except Exception as e:
             print(f"Lỗi trong RAG với user context: {e}")
@@ -195,6 +211,21 @@ class RAGChatbotService:
             prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên tài liệu sau và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
             model = genai.GenerativeModel("gemini-2.0-flash-exp")
             response = model.generate_content(prompt)
+
+            if not response.text or len(response.text.strip()) < 50:
+                print("⚠️ Trả lời không hợp lệ. Sử dụng Gemini.")
+                return self._fallback_to_gemini(query)
+            
+            BAD_PHRASES = [
+                "tôi không tìm thấy", 
+                "không có thông tin",
+                "không đủ dữ liệu", 
+                "tài liệu không đề cập"
+            ]
+
+            if any(phrase in response.text.lower() for phrase in BAD_PHRASES):
+                return self._fallback_to_gemini(query)
+            
             return response.text
         except Exception as e:
             print(f"Lỗi trong RAG: {e}")
