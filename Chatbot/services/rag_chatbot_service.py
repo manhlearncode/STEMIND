@@ -117,22 +117,64 @@ class RAGChatbotService:
             print(f"Lỗi khi tạo embedding: {e}")
             return None
 
+    # def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
+    #     try:
+    #         user_chunks = self.user_embedding_service.get_user_context(user_id, query, top_k)
+    #         global_chunks = self.get_global_context(query, top_k)
+    #         all_chunks = user_chunks + global_chunks
+    #         if all_chunks:
+    #             context = "\n".join(all_chunks)
+    #             prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung), hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+    #             model = genai.GenerativeModel("gemini-2.0-flash-exp")
+    #             response = model.generate_content(prompt)
+    #             return response.text
+    #         else:
+    #             return self._fallback_to_gemini(query)
+    #     except Exception as e:
+    #         print(f"Lỗi trong RAG với user context: {e}")
+    #         return self._fallback_to_gemini(query)
+
     def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
         try:
             user_chunks = self.user_embedding_service.get_user_context(user_id, query, top_k)
             global_chunks = self.get_global_context(query, top_k)
             all_chunks = user_chunks + global_chunks
-            if all_chunks:
-                context = "\n".join(all_chunks)
-                prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung), hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
-                model = genai.GenerativeModel("gemini-2.0-flash-exp")
-                response = model.generate_content(prompt)
-                return response.text
-            else:
+
+            if not all_chunks:  # Nếu không có dữ liệu nào
+                print("⚠️ Không có dữ liệu user hoặc global. Sử dụng Gemini.")
                 return self._fallback_to_gemini(query)
+
+            context = "\n".join(all_chunks)
+            prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung) và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+            model = genai.GenerativeModel("gemini-2.0-flash-exp")
+            response = model.generate_content(prompt)
+            return response.text
         except Exception as e:
             print(f"Lỗi trong RAG với user context: {e}")
             return self._fallback_to_gemini(query)
+
+    # def answer_question(self, query, top_k=3):
+    #     try:
+    #         query_embedding = self.get_gemini_embedding(query)
+    #         if not query_embedding:
+    #             return self._fallback_to_gemini(query)
+
+    #         query_embedding = np.array(query_embedding).reshape(1, -1)
+    #         similarities = cosine_similarity(query_embedding, self.embeddings)[0]
+    #         top_indices = np.argsort(similarities)[-top_k:][::-1]
+    #         relevant_chunks = [self.chunks[i] for i in top_indices if similarities[i] > 0.3]
+
+    #         if relevant_chunks:
+    #             context = "\n".join(relevant_chunks)
+    #             prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên tài liệu sau, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+    #             model = genai.GenerativeModel("gemini-2.0-flash-exp")
+    #             response = model.generate_content(prompt)
+    #             return response.text
+    #         else:
+    #             return self._fallback_to_gemini(query)
+    #     except Exception as e:
+    #         print(f"Lỗi trong RAG: {e}")
+    #         return self._fallback_to_gemini(query)
 
     def answer_question(self, query, top_k=3):
         try:
@@ -145,17 +187,19 @@ class RAGChatbotService:
             top_indices = np.argsort(similarities)[-top_k:][::-1]
             relevant_chunks = [self.chunks[i] for i in top_indices if similarities[i] > 0.3]
 
-            if relevant_chunks:
-                context = "\n".join(relevant_chunks)
-                prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên tài liệu sau, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
-                model = genai.GenerativeModel("gemini-2.0-flash-exp")
-                response = model.generate_content(prompt)
-                return response.text
-            else:
+            if not relevant_chunks:
+                print("⚠️ Không tìm được chunk nào phù hợp. Sử dụng Gemini.")
                 return self._fallback_to_gemini(query)
+
+            context = "\n".join(relevant_chunks)
+            prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên tài liệu sau và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+            model = genai.GenerativeModel("gemini-2.0-flash-exp")
+            response = model.generate_content(prompt)
+            return response.text
         except Exception as e:
             print(f"Lỗi trong RAG: {e}")
             return self._fallback_to_gemini(query)
+
 
     def get_global_context(self, query: str, top_k: int = 3):
         if not self.chunks or len(self.embeddings) == 0:
