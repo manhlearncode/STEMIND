@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import File
+from .models import File, Category
 
 
 class RegisterForm(UserCreationForm):
@@ -33,14 +33,14 @@ class RegisterForm(UserCreationForm):
 class FileUploadForm(forms.ModelForm):
     class Meta:
         model = File
-        fields = ['title', 'category', 'file_description', 'file_urls', 'file_thumbnail', 'file_status', 'file_price']
+        fields = ['title', 'categories', 'file_description', 'file_urls', 'file_thumbnail', 'file_status', 'file_price']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nhập tiêu đề tài liệu...'
             }),
-            'category': forms.Select(attrs={
-                'class': 'form-select'
+            'categories': forms.CheckboxSelectMultiple(attrs={
+                'class': 'form-check-input'
             }),
             'file_description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -68,7 +68,7 @@ class FileUploadForm(forms.ModelForm):
         }
         labels = {
             'title': 'Tiêu đề tài liệu',
-            'category': 'Danh mục',
+            'categories': 'Danh mục',
             'file_description': 'Mô tả',
             'file_urls': 'Tệp tài liệu',
             'file_thumbnail': 'Ảnh thumbnail (tùy chọn)',
@@ -77,6 +77,7 @@ class FileUploadForm(forms.ModelForm):
         }
         help_texts = {
             'title': 'Tên tài liệu phải là duy nhất',
+            'categories': 'Chọn một hoặc nhiều danh mục con (không chọn danh mục cha)',
             'file_urls': 'Chọn file PDF, Word, PowerPoint, Excel, Text, ZIP hoặc RAR (tối đa 50MB)',
             'file_thumbnail': 'Tải ảnh đại diện cho tài liệu (tối đa 5MB)',
             'file_price': 'Nhập giá bằng VNĐ (0 = miễn phí)'
@@ -86,6 +87,9 @@ class FileUploadForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Cập nhật choices cho file_status theo model
         self.fields['file_status'].choices = [(0, 'Free'), (1, 'For sales')]
+        
+        # Chỉ hiển thị categories con (không hiển thị categories cha)
+        self.fields['categories'].queryset = Category.objects.filter(parent__isnull=False)
         
         # Log file info for debugging
         print(f"📁 FileUploadForm initialized with fields: {list(self.fields.keys())}")
@@ -145,4 +149,18 @@ class FileUploadForm(forms.ModelForm):
         if File.objects.filter(title=title).exclude(pk=self.instance.pk if self.instance else None).exists():
             raise forms.ValidationError('Tiêu đề này đã tồn tại. Vui lòng chọn tiêu đề khác.')
             
-        return title 
+        return title
+
+    def clean_categories(self):
+        categories = self.cleaned_data.get('categories')
+        
+        # Kiểm tra xem có ít nhất một category được chọn
+        if not categories:
+            raise forms.ValidationError('Vui lòng chọn ít nhất một danh mục.')
+        
+        # Kiểm tra xem có category cha nào được chọn không
+        parent_categories = categories.filter(parent__isnull=True)
+        if parent_categories.exists():
+            raise forms.ValidationError('Không thể chọn danh mục cha. Vui lòng chỉ chọn các danh mục con.')
+            
+        return categories 

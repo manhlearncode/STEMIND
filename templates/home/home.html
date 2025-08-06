@@ -106,7 +106,25 @@
                         </h3>
                         <p>STEMIND là nền tảng trực tuyến tích hợp AI được thiết kế để giúp giáo viên nhanh chóng thiết kế bài giảng STEM, tìm kiếm tài liệu học tập phù hợp và tổ chức các hoạt động. Với giao diện thân thiện, tiết kiệm thời gian, nâng cao chất lượng giảng dạy và kết nối cộng đồng.</p>
                     </div>
-                    
+                    {% if user.is_authenticated %}
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">
+                            <i class="fas fa-link me-2"></i>
+                            Thao tác nhanh
+                        </h3>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'upload_file' %}" class="btn btn-outline-warning">
+                                <i class="fas fa-plus me-2"></i>Tạo tài liệu mới
+                            </a>
+                            <a href="{% url 'user_favorites' %}" class="btn btn-outline-info">
+                                <i class="fas fa-heart me-2"></i>Tài liệu yêu thích
+                            </a>
+                            <a href="{% url 'search_files' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-flag me-2"></i>Tìm kiếm tài liệu
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="sidebar-card">
                         <h3 class="sidebar-title">
                             <i class="fas fa-star me-2"></i>
@@ -127,30 +145,6 @@
                         {% else %}
                             <p class="text-muted mb-0">Chưa có người đóng góp nào.</p>
                         {% endif %}
-                    </div>
-                    
-                    <div class="sidebar-card">
-                        <h3 class="sidebar-title">
-                            <i class="fas fa-link me-2"></i>
-                            Liên kết
-                        </h3>
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <a href="#" class="text-decoration-none">
-                                    <i class="fab fa-github me-2"></i>GitHub
-                                </a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="#" class="text-decoration-none">
-                                    <i class="fab fa-facebook me-2"></i>Facebook
-                                </a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="#" class="text-decoration-none">
-                                    <i class="fas fa-envelope me-2"></i>Liên hệ
-                                </a>
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>

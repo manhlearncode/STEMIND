@@ -18,11 +18,12 @@ def file_list_api(request):
     files = File.objects.all()
     data = []
     for file in files:
+        categories_str = ", ".join([cat.name for cat in file.categories.all()])
         data.append({
             'id': file.id,
             'title': file.title,
             'author': file.author.username,
-            'category': file.category.category_name,
+            'categories': categories_str,
             'downloads': file.file_downloads,
             'file_urls': file.get_presigned_url(),
             'created_at': file.created_at.strftime('%Y-%m-%d %H:%M:%S')
@@ -30,12 +31,16 @@ def file_list_api(request):
     return JsonResponse(data, safe=False)
 
 def home(request):
-    categories = Category.objects.all()
+    # Lấy categories cha và con
+    parent_categories = Category.objects.filter(parent__isnull=True)
+    child_categories = Category.objects.filter(parent__isnull=False)
+    
     featured_files = File.objects.filter(file_status__in=[0, 1]).order_by('-file_downloads')[:7]
     recently_files = File.objects.filter(file_status__in=[0, 1]).order_by('-created_at')[:10]
     top_users = User.objects.annotate(num_posts=Count('files')).order_by('-num_posts')[:10]
     context = {
-        'categories':categories,
+        'parent_categories': parent_categories,
+        'child_categories': child_categories,
         'featured_files':featured_files,
         'recently_files':recently_files,
         'top_users':top_users
@@ -102,13 +107,25 @@ def user_logout(request):
     return redirect('home')
 
 def posts_by_category(request, category_name):
-    categories = Category.objects.all()
-    category = get_object_or_404(Category, category_name=category_name)
-    featured_files = File.objects.filter(file_status__in=[0, 1], category=category).order_by('-file_downloads')[:3]
-    recently_files = File.objects.filter(file_status__in=[0, 1], category=category).order_by('-created_at')[:15]
-    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__category=category))).order_by('-num_posts')[:10]
+    parent_categories = Category.objects.filter(parent__isnull=True)
+    child_categories = Category.objects.filter(parent__isnull=False)
+    category = get_object_or_404(Category, name=category_name)
+    
+    # Nếu là category cha, lấy tất cả files của các category con
+    if category.is_parent:
+        child_cats = category.get_all_children()
+        featured_files = File.objects.filter(file_status__in=[0, 1], categories__in=child_cats).order_by('-file_downloads')[:3]
+        recently_files = File.objects.filter(file_status__in=[0, 1], categories__in=child_cats).order_by('-created_at')[:15]
+        top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__categories__in=child_cats))).order_by('-num_posts')[:10]
+    else:
+        # Nếu là category con, lấy files trực tiếp
+        featured_files = File.objects.filter(file_status__in=[0, 1], categories=category).order_by('-file_downloads')[:3]
+        recently_files = File.objects.filter(file_status__in=[0, 1], categories=category).order_by('-created_at')[:15]
+        top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__categories=category))).order_by('-num_posts')[:10]
+    
     context = {
-        'categories':categories,
+        'parent_categories': parent_categories,
+        'child_categories': child_categories,
         'featured_files':featured_files,
         'recently_files':recently_files,
         'top_users':top_users
@@ -127,11 +144,13 @@ def get_presigned_url(self):
     return url
 
 def file_detail(request, title):
-    categories = Category.objects.all()
+    parent_categories = Category.objects.filter(parent__isnull=True)
+    child_categories = Category.objects.filter(parent__isnull=False)
     file_obj = get_object_or_404(File, title=title)
     
-    related_files = File.objects.filter(file_status=1, category=file_obj.category).exclude(id=file_obj.id).order_by('-file_downloads')[:5]
-    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__category=file_obj.category))).order_by('-num_posts')[:5]
+    # Lấy related files từ cùng categories
+    related_files = File.objects.filter(file_status=1, categories__in=file_obj.categories.all()).exclude(id=file_obj.id).order_by('-file_downloads')[:5]
+    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__categories__in=file_obj.categories.all()))).order_by('-num_posts')[:5]
     
     # Check if user has favorited this file
     is_favorited = False
@@ -140,7 +159,8 @@ def file_detail(request, title):
     
     context = {
         'file': file_obj,
-        'categories': categories,
+        'parent_categories': parent_categories,
+        'child_categories': child_categories,
         'related_files': related_files,
         'top_users': top_users,
         'is_favorited': is_favorited
@@ -210,15 +230,93 @@ def toggle_favorite(request, file_id):
 @login_required
 def user_favorites(request):
     """Display user's favorite files"""
-    favorites = Favorite.objects.filter(user=request.user).select_related('file', 'file__category', 'file__author')
+    favorites = Favorite.objects.filter(user=request.user).select_related('file', 'file__author')
     favorite_files = [favorite.file for favorite in favorites]
+    
+    parent_categories = Category.objects.filter(parent__isnull=True)
+    child_categories = Category.objects.filter(parent__isnull=False)
     
     context = {
         'favorite_files': favorite_files,
-        'categories': Category.objects.all(),
+        'parent_categories': parent_categories,
+        'child_categories': child_categories,
     }
     return render(request, 'home/favorites.html', context)
 
 def about(request):
     """About us page"""
     return render(request, 'home/about.html')
+
+def search_files(request):
+    """Search files by title, description, category, or author"""
+    query = request.GET.get('q', '').strip()
+    category_filter = request.GET.get('category', '')
+    status_filter = request.GET.get('status', '')
+    
+    # Start with all files
+    files = File.objects.filter(file_status__in=[0, 1])
+    
+    if query:
+        # Search in title, description, category name, and author username
+        files = files.filter(
+            Q(title__icontains=query) |
+            Q(file_description__icontains=query) |
+            Q(categories__name__icontains=query) |
+            Q(author__username__icontains=query)
+        )
+    
+    if category_filter:
+        files = files.filter(categories__name=category_filter)
+    
+    if status_filter:
+        files = files.filter(file_status=int(status_filter))
+    
+    # Order by downloads and creation date
+    files = files.order_by('-file_downloads', '-created_at')
+    
+    # Get categories for filter dropdown (chỉ hiển thị categories con)
+    child_categories = Category.objects.filter(parent__isnull=False)
+    
+    context = {
+        'files': files,
+        'child_categories': child_categories,
+        'query': query,
+        'selected_category': category_filter,
+        'selected_status': status_filter,
+        'total_results': files.count()
+    }
+    
+    return render(request, 'home/search.html', context)
+
+def search_api(request):
+    """API endpoint for real-time search"""
+    query = request.GET.get('q', '').strip()
+    
+    if not query:
+        return JsonResponse({'files': [], 'total': 0})
+    
+    files = File.objects.filter(
+        file_status__in=[0, 1]
+    ).filter(
+        Q(title__icontains=query) |
+        Q(file_description__icontains=query) |
+        Q(categories__name__icontains=query) |
+        Q(author__username__icontains=query)
+    ).order_by('-file_downloads', '-created_at')[:10]
+    
+    data = []
+    for file in files:
+        categories_str = ", ".join([cat.name for cat in file.categories.all()])
+        data.append({
+            'id': file.id,
+            'title': file.title,
+            'description': file.file_description[:100] + '...' if file.file_description and len(file.file_description) > 100 else file.file_description,
+            'categories': categories_str,
+            'author': file.author.username,
+            'downloads': file.file_downloads,
+            'created_at': file.created_at.strftime('%Y-%m-%d'),
+            'status': 'Free' if file.file_status == 0 else 'For sale',
+            'url': f'/file/{file.title}/'
+        })
+    
+    return JsonResponse({'files': data, 'total': files.count()})

@@ -7,22 +7,61 @@ import boto3
 from django.core.files.storage import default_storage
 
 class Category(models.Model):
-    category_name = models.TextField(unique=True)
+    name = models.CharField(max_length=255, default='')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name_plural = "Categories"
+        unique_together = ['name', 'parent']  # Đảm bảo tên unique trong cùng parent
 
     def __str__(self):
-        return self.category_name
+        return self.name
+    
+    @property
+    def is_parent(self):
+        """Kiểm tra xem category có phải là parent không"""
+        return self.parent is None
+    
+    @property
+    def is_child(self):
+        """Kiểm tra xem category có phải là child không"""
+        return self.parent is not None
+    
+    def get_all_children(self):
+        """Lấy tất cả children của category này"""
+        children = []
+        for child in self.children.all():
+            children.append(child)
+            children.extend(child.get_all_children())
+        return children
+    
+    def get_all_parents(self):
+        """Lấy tất cả parents của category này"""
+        parents = []
+        current = self.parent
+        while current:
+            parents.append(current)
+            current = current.parent
+        return parents[::-1]  # Đảo ngược để có thứ tự từ root đến leaf
+    
+    def get_full_path(self):
+        """Lấy đường dẫn đầy đủ của category"""
+        path = [self.name]
+        current = self.parent
+        while current:
+            path.append(current.name)
+            current = current.parent
+        return ' > '.join(reversed(path))
     
 class File(models.Model):
-    title = models.TextField(unique=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    title = models.CharField(unique=True, max_length=255)
+    categories = models.ManyToManyField(Category, related_name='files')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='files')
     file_thumbnail = models.ImageField(upload_to='thumbnails/%y/%m/%d', blank=True, null=True)
-    file_description = models.TextField(blank=True, null=True)
+    file_description = models.TextField(blank=True, null=True, max_length=500)
     file_urls = models.FileField(upload_to='uploads/%y/%m/%d')
     file_status = models.IntegerField(choices=[(0, 'Free'), (1, 'For sales')], default=0)
     file_price = models.PositiveIntegerField(default=0)

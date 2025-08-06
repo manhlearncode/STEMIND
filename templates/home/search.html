@@ -1,0 +1,230 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/home/search.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Search Header -->
+<div class="search-header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="search-title">
+                    <i class="fas fa-search me-3"></i>Tìm kiếm tài liệu
+                </h1>
+                <p class="search-subtitle">Tìm kiếm trong hàng nghìn tài liệu STEM chất lượng</p>
+                
+                <!-- Search Form -->
+                <form method="GET" action="{% url 'search_files' %}" class="search-form">
+                    <div class="input-group input-group-lg">
+                        <input type="text" 
+                               class="form-control search-input" 
+                               name="q" 
+                               value="{{ query }}" 
+                               placeholder="Nhập từ khóa tìm kiếm..."
+                               id="searchInput">
+                        <button class="btn btn-primary search-btn" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="search-filters mt-3">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select name="category" class="form-select">
+                                    <option value="">Tất cả danh mục</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.name }}" 
+                                            {% if selected_category == category.name %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select name="status" class="form-select">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="0" {% if selected_status == '0' %}selected{% endif %}>Miễn phí</option>
+                                    <option value="1" {% if selected_status == '1' %}selected{% endif %}>Có phí</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-filter me-2"></i>Lọc
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Results -->
+<div class="search-results">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9">
+                <!-- Results Header -->
+                <div class="results-header">
+                    <h3>Kết quả tìm kiếm</h3>
+                    <p class="text-muted">
+                        {% if query %}
+                            Tìm thấy <strong>{{ total_results }}</strong> kết quả cho "<strong>{{ query }}</strong>"
+                        {% else %}
+                            Hiển thị tất cả tài liệu
+                        {% endif %}
+                    </p>
+                </div>
+
+                <!-- Real-time Search Results -->
+                <div id="realTimeResults" class="real-time-results" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-bolt me-2"></i>Kết quả tìm kiếm nhanh
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="realTimeList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Results -->
+                <div id="mainResults">
+                    {% if files %}
+                        <div class="row">
+                            {% for file in files %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="file-card">
+                                    <div class="file-thumbnail">
+                                        {% if file.file_thumbnail %}
+                                            <img src="{{ file.get_thumbnail_presigned_url }}" alt="{{ file.title }}" class="img-fluid">
+                                        {% else %}
+                                            <img src="{% static 'images/default.webp' %}" alt="Default thumbnail" class="img-fluid">
+                                        {% endif %}
+                                        <div class="file-overlay">
+                                            <a href="{% url 'file_detail' file.title %}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>Xem chi tiết
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="file-info">
+                                        <h5 class="file-title">
+                                            <a href="{% url 'file_detail' file.title %}">{{ file.title }}</a>
+                                        </h5>
+                                        <p class="file-description">
+                                            {{ file.file_description|truncatewords:15|default:"Không có mô tả" }}
+                                        </p>
+                                        <div class="file-meta">
+                                            <span class="category-badge">{{ file.categories.first.name }}</span>
+                                            <span class="author">bởi {{ file.author.username }}</span>
+                                        </div>
+                                        <div class="file-stats">
+                                            <span class="downloads">
+                                                <i class="fas fa-download me-1"></i>{{ file.file_downloads }}
+                                            </span>
+                                            <span class="status {% if file.file_status == 0 %}free{% else %}paid{% endif %}">
+                                                {% if file.file_status == 0 %}
+                                                    <i class="fas fa-gift me-1"></i>Miễn phí
+                                                {% else %}
+                                                    <i class="fas fa-dollar-sign me-1"></i>{{ file.file_price }}đ
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="no-results">
+                            <div class="text-center py-5">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h4>Không tìm thấy kết quả</h4>
+                                <p class="text-muted">
+                                    {% if query %}
+                                        Không có tài liệu nào phù hợp với từ khóa "{{ query }}"
+                                    {% else %}
+                                        Chưa có tài liệu nào trong hệ thống
+                                    {% endif %}
+                                </p>
+                                <a href="{% url 'home' %}" class="btn btn-primary">
+                                    <i class="fas fa-home me-2"></i>Về trang chủ
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="sidebar-section">
+                    <!-- Quick Actions -->
+                    <div class="sidebar-card">
+                        <div class="sidebar-card-header">
+                            <i class="fas fa-cog me-2"></i>Thao tác nhanh
+                        </div>
+                        <div class="sidebar-card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary" onclick="reportFile()">
+                                    <i class="fas fa-flag me-2"></i>Báo cáo tài liệu
+                                </button>
+                                <a href="{% url 'upload_file' %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-plus me-2"></i>Tạo tài liệu mới
+                                </a>
+                                <a href="{% url 'user_favorites' %}" class="btn btn-outline-info">
+                                    <i class="fas fa-heart me-2"></i>Tài liệu yêu thích
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Tips -->
+                    <div class="sidebar-card">
+                        <div class="sidebar-card-body">
+                            <h3 class="sidebar-title">
+                                <i class="fas fa-lightbulb me-2"></i>Mẹo tìm kiếm
+                            </h3>
+                            <ul class="search-tips">
+                                <li>Tìm kiếm theo tên tài liệu</li>
+                                <li>Tìm kiếm theo tác giả</li>
+                                <li>Tìm kiếm theo danh mục</li>
+                                <li>Sử dụng từ khóa ngắn gọn</li>
+                                <li>Kết hợp với bộ lọc</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Popular Categories -->
+                    <div class="sidebar-card">
+                        <div class="sidebar-card-body">
+                            <h3 class="sidebar-title">
+                                <i class="fas fa-star me-2"></i>Danh mục phổ biến
+                            </h3>
+                            <div class="popular-categories">
+                                {% for category in categories %}
+                                <a href="{% url 'search_files' %}?category={{ category.name }}" 
+                                   class="category-link">
+                                    <i class="fas fa-folder me-2"></i>{{ category.name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'script/home/search.js' %}"></script>
+{% endblock %} 

@@ -1,22 +1,8 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-<style>
-    .avatar-circle {
-    width: 40px;
-    height: 40px;
-    background-color: #006056;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: bold;
-}
-.avatar-circle:hover {
-    background-color: #004d4a;
-    cursor: pointer;
-}
-</style>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/base/header.css' %}">
+{% endblock %}
+
 <div class="container">
     <header class="p-3 border-bottom">
     <div class="container">
@@ -35,12 +21,17 @@
                 <li><a href="{% url 'enter' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Cộng đồng</a></li>
                 {% endif %}
                 <li><a href="{% url 'home' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Tài liệu</a></li>
+                <li><a href="{% url 'search_files' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Tìm kiếm</a></li>
                 <li><a href="{% url 'about' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Về chúng tôi</a></li>
             </ul>
             {% if user.is_authenticated %}
-            <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search"> <input type="search"
-                    class="form-control form-control-dark" placeholder="Tìm kiếm..."
-                    aria-label="Search"> </form>
+            <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search" method="GET" action="{% url 'search_files' %}"> 
+                <input type="search"
+                       class="form-control form-control-dark" 
+                       placeholder="Tìm kiếm..."
+                       name="q"
+                       aria-label="Search"> 
+            </form>
             {% endif %}
             {% if user.is_authenticated %}
             <div class="dropdown text-end"> 
@@ -72,8 +63,23 @@
 </header>
     <div class="nav-scroller py-1 mb-3 border-bottom">
         <nav class="nav nav-underline justify-content-between"> 
-            {% for category in categories %}
-            <a class="nav-item nav-link link-body-emphasis {% if category.id == active_category_id %}active{% endif %}" href="{% url 'posts_by_category' category.category_name %}">{{category.category_name}}</a>
+            {% for category in parent_categories %}
+            <div class="dropdown">
+                <a class="nav-item nav-link link-body-emphasis dropdown-toggle {% if category.id == active_category_id %}active{% endif %}" 
+                   data-bs-toggle="dropdown" 
+                   href="#" 
+                   role="button" 
+                   aria-expanded="false">
+                    {{category.name}}
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'posts_by_category' category.name %}">{{category.name}} (Tất cả)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    {% for child in category.children.all %}
+                    <li><a class="dropdown-item" href="{% url 'posts_by_category' child.name %}">{{child.name}}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>            
             {% endfor %}
         </nav>
     </div>

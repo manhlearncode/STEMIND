@@ -1,4 +1,9 @@
 /* Footer Styles */
+*{
+    margin: 5px;
+    padding: 5px;
+    box-sizing: border-box;
+}
 .main-footer {
     margin-top: auto;
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;

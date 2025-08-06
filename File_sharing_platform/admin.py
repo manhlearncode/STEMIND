@@ -4,32 +4,53 @@ from django.utils.html import format_html
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['category_name', 'created_at', 'updated_at']
-    search_fields = ['category_name']
+    list_display = ['name', 'parent', 'is_parent', 'created_at']
+    list_filter = ['parent', 'created_at']
+    search_fields = ['name']
     readonly_fields = ['created_at', 'updated_at']
-
-@admin.register(File)
-class FileAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category', 'author', 'thumbnail_preview', 'file_status', 'file_downloads', 'created_at']
-    list_filter = ['file_status', 'category', 'created_at']
-    search_fields = ['title', 'file_description']
-    readonly_fields = ['file_downloads', 'created_at', 'updated_at', 'thumbnail_preview']
     
     fieldsets = (
         ('Thông tin cơ bản', {
-            'fields': ('title', 'category', 'author')
-        }),
-        ('Nội dung', {
-            'fields': ('file_description', 'file_urls', 'file_thumbnail', 'thumbnail_preview')
-        }),
-        ('Trạng thái', {
-            'fields': ('file_status', 'file_downloads')
+            'fields': ('name', 'parent')
         }),
         ('Thời gian', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         })
     )
+    
+    def is_parent(self, obj):
+        return obj.is_parent
+    is_parent.boolean = True
+    is_parent.short_description = "Là category cha"
+
+@admin.register(File)
+class FileAdmin(admin.ModelAdmin):
+    list_display = ['title', 'categories_display', 'author', 'thumbnail_preview', 'file_status', 'file_downloads', 'created_at']
+    list_filter = ['file_status', 'categories', 'created_at']
+    search_fields = ['title', 'file_description']
+    readonly_fields = ['file_downloads', 'created_at', 'updated_at', 'thumbnail_preview']
+    filter_horizontal = ['categories']
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('title', 'categories', 'author')
+        }),
+        ('Nội dung', {
+            'fields': ('file_description', 'file_urls', 'file_thumbnail', 'thumbnail_preview')
+        }),
+        ('Trạng thái', {
+            'fields': ('file_status', 'file_price', 'file_downloads')
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def categories_display(self, obj):
+        return ", ".join([cat.name for cat in obj.categories.all()])
+    categories_display.short_description = "Categories"
     
     def thumbnail_preview(self, obj):
         if obj.file_thumbnail:

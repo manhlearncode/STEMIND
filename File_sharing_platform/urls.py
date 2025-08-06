@@ -13,6 +13,8 @@ urlpatterns = [
     path('favorites/', views.user_favorites, name='user_favorites'),
     path('toggle-favorite/<int:file_id>/', views.toggle_favorite, name='toggle_favorite'),
     path('about/', views.about, name='about'),
+    path('search/', views.search_files, name='search_files'),
+    path('api/search/', views.search_api, name='search_api'),
     path('api/files/', views.file_list_api, name='file_list_api'),
     # Đã xóa các URL chatbot
 ]

@@ -96,12 +96,27 @@
                         {% endif %}
                     </div>
                     
-                    <div class="col-md-4 mb-3">
-                        <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }} <span class="text-danger">*</span></label>
-                        {{ form.category }}
-                        {% if form.category.errors %}
+                    <div class="mb-3">
+                        <label for="{{ form.file_description.id_for_label }}" class="form-label">{{ form.file_description.label }}</label>
+                        {{ form.file_description }}
+                        {% if form.file_description.errors %}
                             <div class="error-message">
-                                {% for error in form.category.errors %}
+                                {% for error in form.file_description.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">{{ form.categories.label }} <span class="text-danger">*</span></label>
+                        <div class="categories-checkbox-container">
+                            {{ form.categories }}
+                        </div>
+                        <div class="form-text">{{ form.categories.help_text }}</div>
+                        {% if form.categories.errors %}
+                            <div class="error-message">
+                                {% for error in form.categories.errors %}
                                     <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
                                 {% endfor %}
                             </div>
@@ -109,17 +124,6 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="{{ form.file_description.id_for_label }}" class="form-label">{{ form.file_description.label }}</label>
-                    {{ form.file_description }}
-                    {% if form.file_description.errors %}
-                        <div class="error-message">
-                            {% for error in form.file_description.errors %}
-                                <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
             </div>
 
             <!-- Thumbnail Section -->

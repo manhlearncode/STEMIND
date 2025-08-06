@@ -60,7 +60,7 @@
                         {% if file.category %}
                         <div class="file-meta-item">
                             <i class="fas fa-tag"></i>
-                            <span><strong>Danh mục:</strong> {{ file.category.category_name }}</span>
+                            <span><strong>Danh mục:</strong> {{ file.categories.first.name }}</span>
                         </div>
                         {% endif %}
                     </div>

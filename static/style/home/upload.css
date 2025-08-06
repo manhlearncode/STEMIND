@@ -261,3 +261,142 @@
         margin-bottom: 1rem;
     }
 }
+
+/* Categories Checkbox Styling */
+.categories-checkbox-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+/* Force grid layout for any list inside */
+.categories-checkbox-container ul,
+.categories-checkbox-container .checkbox-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 0.75rem !important;
+}
+
+/* Alternative selectors in case Django renders differently */
+.categories-checkbox-container > ul,
+.categories-checkbox-container ul ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 0.75rem !important;
+}
+
+.categories-checkbox-container li,
+.categories-checkbox-container .checkbox-item {
+    margin: 0 !important;
+    padding: 0.75rem !important;
+    border-radius: 0.5rem !important;
+    transition: var(--transition) !important;
+    background: white !important;
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.categories-checkbox-container li:hover {
+    background: rgba(0, 96, 86, 0.05);
+    border-color: #006056;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 96, 86, 0.15);
+}
+
+.categories-checkbox-container label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    margin: 0;
+    font-size: 0.9rem;
+    color: #495057;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+.categories-checkbox-container input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.categories-checkbox-container input[type="checkbox"]:checked + label {
+    color: #006056;
+    font-weight: 600;
+}
+
+/* Custom checkbox styling */
+.categories-checkbox-container input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+    position: relative;
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.categories-checkbox-container input[type="checkbox"]:checked {
+    background: #006056;
+    border-color: #006056;
+}
+
+.categories-checkbox-container input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.categories-checkbox-container input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 96, 86, 0.25);
+}
+
+/* Debug styles to see what's happening */
+.categories-checkbox-container * {
+    border: 1px solid red !important;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+    .categories-checkbox-container ul,
+    .categories-checkbox-container .checkbox-list {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+        gap: 0.5rem !important;
+    }
+    
+    .categories-checkbox-container li,
+    .categories-checkbox-container .checkbox-item {
+        padding: 0.5rem !important;
+    }
+    
+    .categories-checkbox-container label {
+        font-size: 0.85rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .categories-checkbox-container ul,
+    .categories-checkbox-container .checkbox-list {
+        grid-template-columns: 1fr !important;
+    }
+}
