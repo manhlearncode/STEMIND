@@ -189,6 +189,7 @@ def upload_file(request):
             file_obj = form.save(commit=False)
             file_obj.author = request.user
             file_obj.save()
+            form.save_m2m()  # <-- Thêm dòng này để lưu categories
             messages.success(request, 'Tài liệu đã được tải lên thành công!')
             return redirect('home')
         else:
