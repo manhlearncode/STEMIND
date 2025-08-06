@@ -177,6 +177,8 @@ def download_file(request, file_id):
 
 # # Alias để tương thích với template cũ
 def upload_file(request):
+    parent_categories = Category.objects.filter(parent__isnull=True)
+    child_categories = Category.objects.filter(parent__isnull=False)
     if not request.user.is_authenticated:
         messages.error(request, 'Vui lòng đăng nhập để tải lên tài liệu.')
         return redirect('enter')
@@ -195,7 +197,9 @@ def upload_file(request):
         form = FileUploadForm()
     
     context = {
-        'form': form
+        'form': form,
+        'parent_categories': parent_categories,
+        'child_categories': child_categories
     }
     return render(request, 'home/upload.html', context)
 
@@ -250,7 +254,7 @@ def about(request):
 def search_files(request):
     """Search files by title, description, category, or author"""
     query = request.GET.get('q', '').strip()
-    category_filter = request.GET.get('category', '')
+    categories_filter = request.GET.getlist('categories')  # Lấy multiple categories
     status_filter = request.GET.get('status', '')
     
     # Start with all files
@@ -265,8 +269,12 @@ def search_files(request):
             Q(author__username__icontains=query)
         )
     
-    if category_filter:
-        files = files.filter(categories__name=category_filter)
+    if categories_filter:
+        # Filter by multiple categories (OR logic)
+        category_q = Q()
+        for category_name in categories_filter:
+            category_q |= Q(categories__name=category_name)
+        files = files.filter(category_q)
     
     if status_filter:
         files = files.filter(file_status=int(status_filter))
@@ -274,14 +282,16 @@ def search_files(request):
     # Order by downloads and creation date
     files = files.order_by('-file_downloads', '-created_at')
     
-    # Get categories for filter dropdown (chỉ hiển thị categories con)
+    # Get categories for filter dropdown
+    parent_categories = Category.objects.filter(parent__isnull=True)
     child_categories = Category.objects.filter(parent__isnull=False)
     
     context = {
         'files': files,
+        'parent_categories': parent_categories,
         'child_categories': child_categories,
         'query': query,
-        'selected_category': category_filter,
+        'selected_categories': categories_filter,  # Pass selected categories to template
         'selected_status': status_filter,
         'total_results': files.count()
     }

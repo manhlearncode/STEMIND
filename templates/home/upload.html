@@ -107,23 +107,91 @@
                             </div>
                         {% endif %}
                     </div>
-
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">{{ form.categories.label }} <span class="text-danger">*</span></label>
-                        <div class="categories-checkbox-container">
-                            {{ form.categories }}
-                        </div>
-                        <div class="form-text">{{ form.categories.help_text }}</div>
-                        {% if form.categories.errors %}
-                            <div class="error-message">
-                                {% for error in form.categories.errors %}
-                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                </div>
+                <div class="search-filters mt-3">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Theo lĩnh vực</label>
+                            <div class="category-checkboxes">
+                                {% for category in parent_categories %}
+                                    {% if category.name == "Theo lĩnh vực" %}
+                                        {% for child in category.children.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="categories" value="{{ child.name }}" 
+                                                   id="cat_{{ child.id }}"
+                                                   {% if child.name in selected_categories %}checked{% endif %}>
+                                            <label class="form-check-label" for="cat_{{ child.id }}">
+                                                {{ child.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
                                 {% endfor %}
                             </div>
-                        {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Theo đối tượng</label>
+                            <div class="category-checkboxes">
+                                {% for category in parent_categories %}
+                                    {% if category.name == "Theo đối tượng" %}
+                                        {% for child in category.children.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="categories" value="{{ child.name }}" 
+                                                   id="cat_{{ child.id }}"
+                                                   {% if child.name in selected_categories %}checked{% endif %}>
+                                            <label class="form-check-label" for="cat_{{ child.id }}">
+                                                {{ child.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Theo thể loại</label>
+                            <div class="category-checkboxes">
+                                {% for category in parent_categories %}
+                                    {% if category.name == "Theo thể loại" %}
+                                        {% for child in category.children.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="categories" value="{{ child.name }}" 
+                                                   id="cat_{{ child.id }}"
+                                                   {% if child.name in selected_categories %}checked{% endif %}>
+                                            <label class="form-check-label" for="cat_{{ child.id }}">
+                                                {{ child.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Theo chương trình</label>
+                            <div class="category-checkboxes">
+                                {% for category in parent_categories %}
+                                    {% if category.name == "Theo chương trình" %}
+                                        {% for child in category.children.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="categories" value="{{ child.name }}" 
+                                                   id="cat_{{ child.id }}"
+                                                   {% if child.name in selected_categories %}checked{% endif %}>
+                                            <label class="form-check-label" for="cat_{{ child.id }}">
+                                                {{ child.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </div>
-
             </div>
 
             <!-- Thumbnail Section -->

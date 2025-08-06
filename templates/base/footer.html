@@ -85,7 +85,7 @@
                     <div class="footer-section">
                         <h5 class="footer-title">Chuyên mục</h5>
                         <ul class="footer-links">
-                            {% for category in categories|slice:":5" %}
+                            {% for category in parent_categories|slice:":5" %}
                             <li><a href="{% url 'posts_by_category' category.name %}">
                                 <i class="fas fa-tag me-2"></i>{{ category.name }}
                             </a></li>
