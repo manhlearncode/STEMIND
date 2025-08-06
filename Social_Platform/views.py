@@ -149,6 +149,28 @@ def follow_user(request, username):
     
     return JsonResponse({'error': 'Cannot follow yourself'})
 
+@login_required
+def check_profile_completion(request):
+    """Kiểm tra xem profile đã hoàn thiện chưa"""
+    try:
+        profile = request.user.userprofile
+        is_complete = bool(profile.firstname and profile.lastname and profile.age and profile.role)
+        return JsonResponse({
+            'is_complete': is_complete,
+            'profile': {
+                'firstname': profile.firstname,
+                'lastname': profile.lastname,
+                'age': profile.age,
+                'role': profile.role,
+                'role_display': profile.get_role_display() if profile.role else None
+            }
+        })
+    except UserProfile.DoesNotExist:
+        return JsonResponse({
+            'is_complete': False,
+            'profile': None
+        })
+
 def explore(request):
     posts = Post.objects.all().select_related('author').prefetch_related('likes', 'comments')
     

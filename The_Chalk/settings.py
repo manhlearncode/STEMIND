@@ -35,6 +35,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'Social_Platform.middleware.profile_completion.ProfileCompletionMiddleware',
 ]
 
 ROOT_URLCONF = 'The_Chalk.urls'

@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %}{{ profile_user.get_full_name|default:profile_user.username }} - STEMIND{% endblock %}
+{% block title %}{{ profile_user.userprofile.get_full_name|default:profile_user.username }} - STEMIND{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'style/social/profile.css' %}">
@@ -14,8 +14,34 @@
         <div class="profile-avatar">
             {{ profile_user.username|slice:":1"|upper }}
         </div>
-        <div class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</div>
+        <div class="profile-name">{{ profile_user.userprofile.get_full_name|default:profile_user.username }}</div>
         <div class="profile-username">@{{ profile_user.username }}</div>
+        
+        <!-- Thông tin cá nhân -->
+        {% if profile_user.userprofile %}
+        <div class="profile-info">
+            {% if profile_user.userprofile.firstname or profile_user.userprofile.lastname %}
+            <div class="info-item">
+                <i class="fas fa-user"></i>
+                <span>{{ profile_user.userprofile.lastname }} {{ profile_user.userprofile.firstname }}</span>
+            </div>
+            {% endif %}
+            
+            {% if profile_user.userprofile.age %}
+            <div class="info-item">
+                <i class="fas fa-birthday-cake"></i>
+                <span>{{ profile_user.userprofile.age }} tuổi</span>
+            </div>
+            {% endif %}
+            
+            {% if profile_user.userprofile.role %}
+            <div class="info-item">
+                <i class="fas fa-briefcase"></i>
+                <span>{{ profile_user.userprofile.get_role_display }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
         
         {% if profile_user.userprofile and profile_user.userprofile.bio %}
         <div class="profile-bio">{{ profile_user.userprofile.bio }}</div>
@@ -72,7 +98,7 @@
                         {{ post.author.username|slice:":1"|upper }}
                     </div>
                     <div>
-                        <div class="post-author">{{ post.author.get_full_name|default:post.author.username }}</div>
+                        <div class="post-author">{{ post.author.userprofile.get_full_name|default:post.author.username }}</div>
                         <div class="post-time">{{ post.created_at|timesince }} ago</div>
                     </div>
                 </div>
@@ -120,7 +146,7 @@
                         {{ post.author.username|slice:":1"|upper }}
                     </div>
                     <div>
-                        <div class="post-author">{{ post.author.get_full_name|default:post.author.username }}</div>
+                        <div class="post-author">{{ post.author.userprofile.get_full_name|default:post.author.username }}</div>
                         <div class="post-time">{{ post.created_at|timesince }} ago</div>
                     </div>
                 </div>

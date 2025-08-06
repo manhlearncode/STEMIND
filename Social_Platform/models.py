@@ -62,13 +62,27 @@ class Comment(models.Model):
         return f"{self.user.username}: {self.content[:30]}"
 
 class UserProfile(models.Model):
+    ROLE_CHOICES = [
+        ('teacher', 'Giáo viên'),
+        ('expert', 'Chuyên gia'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    lastname = models.CharField(max_length=100, blank=True, verbose_name='Họ')
+    firstname = models.CharField(max_length=100, blank=True, verbose_name='Tên')
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name='Tuổi')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, verbose_name='Vai trò')
     bio = models.TextField(max_length=200, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     followers = models.ManyToManyField(User, related_name='following', blank=True)
     
     def __str__(self):
         return self.user.username
+    
+    def get_full_name(self):
+        if self.firstname and self.lastname:
+            return f"{self.lastname} {self.firstname}"
+        return self.user.get_full_name() or self.user.username
     
     def followers_count(self):
         return self.followers.count()

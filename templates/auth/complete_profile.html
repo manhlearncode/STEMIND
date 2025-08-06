@@ -1,0 +1,158 @@
+{% extends "auth/auth_base.html" %}
+{% load static %}
+
+{% block title %}STEMIND - Hoàn thiện thông tin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/auth/complete_profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Auth Brand -->
+<div class="auth-brand">
+    <h1>
+        <a href="{% url 'home' %}"><image src="{% static "images/Logo_text.png" %}" style="width:300px"></a>
+    </h1>
+    <p class="subtitle">Hoàn thiện thông tin cá nhân để hoàn tất đăng ký</p>
+</div>
+
+<!-- Profile Completion Form -->
+<form method="post" action="{% url 'complete_profile' %}" id="completeProfileForm" novalidate>
+    {% csrf_token %}
+    
+    <!-- Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'danger' }}" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Form Progress Indicator -->
+    <div class="form-progress mb-4">
+        <div class="progress-bar" id="formProgress"></div>
+        <div class="progress-steps">
+            <div class="step completed" data-step="1">
+                <i class="fas fa-user"></i>
+                <span>Đăng ký</span>
+            </div>
+            <div class="step active" data-step="2">
+                <i class="fas fa-id-card"></i>
+                <span>Thông tin</span>
+            </div>
+            <div class="step" data-step="3">
+                <i class="fas fa-check"></i>
+                <span>Hoàn thành</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lastname Field -->
+    <div class="form-floating">
+        <input type="text" 
+               class="form-control" 
+               id="{{ form.lastname.id_for_label }}" 
+               name="lastname" 
+               placeholder="Họ"
+               required
+               autocomplete="family-name"
+               value="{{ form.lastname.value|default:'' }}">
+        <label for="{{ form.lastname.id_for_label }}">
+            <i class="fas fa-user me-2"></i>Họ
+        </label>
+        {% if form.lastname.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.lastname.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Firstname Field -->
+    <div class="form-floating">
+        <input type="text" 
+               class="form-control" 
+               id="{{ form.firstname.id_for_label }}" 
+               name="firstname" 
+               placeholder="Tên"
+               required
+               autocomplete="given-name"
+               value="{{ form.firstname.value|default:'' }}">
+        <label for="{{ form.firstname.id_for_label }}">
+            <i class="fas fa-user me-2"></i>Tên
+        </label>
+        {% if form.firstname.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.firstname.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Age Field -->
+    <div class="form-floating">
+        <input type="number" 
+               class="form-control" 
+               id="{{ form.age.id_for_label }}" 
+               name="age" 
+               placeholder="Tuổi"
+               required
+               min="1"
+               max="120"
+               value="{{ form.age.value|default:'' }}">
+        <label for="{{ form.age.id_for_label }}">
+            <i class="fas fa-birthday-cake me-2"></i>Tuổi
+        </label>
+        {% if form.age.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.age.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Role Field -->
+    <div class="form-floating">
+        <select class="form-control" 
+                id="{{ form.role.id_for_label }}" 
+                name="role" 
+                required>
+            <option value="">Chọn vai trò</option>
+            <option value="teacher" {% if form.role.value == 'teacher' %}selected{% endif %}>Giáo viên</option>
+            <option value="expert" {% if form.role.value == 'expert' %}selected{% endif %}>Chuyên gia</option>
+        </select>
+        <label for="{{ form.role.id_for_label }}">
+            <i class="fas fa-briefcase me-2"></i>Vai trò
+        </label>
+        {% if form.role.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.role.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary w-100 mb-3" id="submitBtn">
+        <i class="fas fa-check me-2"></i>Hoàn tất đăng ký
+    </button>
+    
+    <!-- Back to Login -->
+    <div class="text-center">
+        <small class="text-muted">
+            Đã có tài khoản? 
+            <a href="{% url 'enter' %}" class="text-decoration-none">Đăng nhập</a>
+        </small>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'script/auth/complete_profile.js' %}"></script>
+{% endblock %} 

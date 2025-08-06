@@ -1,17 +1,18 @@
 from unicodedata import category
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import File, Category, Favorite
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
-from django.shortcuts import redirect
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .forms import FileUploadForm
 from django.http import HttpResponseRedirect
+from Social_Platform.models import UserProfile
+from Social_Platform.forms import UserProfileForm
     
 
 def file_list_api(request):
@@ -92,15 +93,40 @@ def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Tài khoản đã được tạo thành công!')
-            return redirect('enter')
+            user = form.save()
+            # Tự động đăng nhập sau khi đăng ký
+            login(request, user)
+            messages.success(request, 'Tài khoản đã được tạo thành công! Vui lòng hoàn thiện thông tin cá nhân.')
+            return redirect('complete_profile')
     else:
         form = RegisterForm()
     context = {
         'form':form
     }
     return render(request, 'auth/register.html', context)
+
+@login_required
+def complete_profile(request):
+    """Trang điều thông tin sau đăng ký"""
+    try:
+        profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
+    
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Đăng ký hoàn tất! Chào mừng bạn đến với STEMIND!')
+            return redirect('home')
+    else:
+        form = UserProfileForm(instance=profile)
+    
+    context = {
+        'form': form,
+        'profile': profile
+    }
+    return render(request, 'auth/complete_profile.html', context)
 
 def user_logout(request):
     logout(request)

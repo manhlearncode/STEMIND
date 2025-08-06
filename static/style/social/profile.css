@@ -52,6 +52,40 @@
     margin-bottom: 1rem;
 }
 
+/* Thông tin cá nhân */
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #536471;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    background: #f7f9fa;
+    border-radius: 20px;
+    transition: background-color 0.2s;
+}
+
+.info-item:hover {
+    background: #e8f5e8;
+}
+
+.info-item i {
+    color: #006056;
+    width: 16px;
+}
+
+.info-item span {
+    font-weight: 500;
+}
+
 .profile-bio {
     color: #0f1419;
     line-height: 1.5;

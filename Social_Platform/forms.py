@@ -1,5 +1,5 @@
 from django import forms
-from .models import Post, Comment
+from .models import Post, Comment, UserProfile
 
 class PostForm(forms.ModelForm):
     class Meta:
@@ -36,4 +36,34 @@ class CommentForm(forms.ModelForm):
         }
         labels = {
             'content': ''
+        }
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['lastname', 'firstname', 'age', 'role']
+        widgets = {
+            'lastname': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập họ của bạn'
+            }),
+            'firstname': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập tên của bạn'
+            }),
+            'age': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập tuổi của bạn',
+                'min': '1',
+                'max': '120'
+            }),
+            'role': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+        labels = {
+            'lastname': 'Họ',
+            'firstname': 'Tên',
+            'age': 'Tuổi',
+            'role': 'Vai trò'
         } 

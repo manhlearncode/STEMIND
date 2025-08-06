@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateProgress() {
         const completed = Object.values(formState).filter(Boolean).length;
         const total = Object.keys(formState).length;
-        const percentage = (completed / total) * 100;
+        const percentage = (completed / total) * 33.33; // Chỉ 1/3 của toàn bộ quá trình
         
         document.querySelector('.progress-bar').style.setProperty('--progress', percentage + '%');
         
