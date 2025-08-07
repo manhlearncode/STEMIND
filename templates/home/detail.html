@@ -247,7 +247,7 @@
                                 {{ user.username|slice:":1"|upper }}
                             </div>
                             <div>
-                                <a href="{% url 'social:profile' user.username %}"><h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6></a>
+                                <a href="{% url 'social:profile' user.username %}"><h6 class="mb-0" style="decoration:none, text-underline:none">{{ user.get_full_name|default:user.username }}</h6></a>
                                 <small class="text-muted">{{ user.files.count|default:0 }} tài liệu</small>
                             </div>
                         </div>

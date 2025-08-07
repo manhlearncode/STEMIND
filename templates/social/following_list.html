@@ -1,0 +1,182 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - STEMIND{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'style/social/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Header -->
+    <div class="profile-header">
+        <div class="d-flex align-items-center mb-3">
+            <a href="{% url 'social:profile' profile_user.username %}" class="btn btn-outline-primary me-3">
+                <i class="fas fa-arrow-left"></i> Back to Profile
+            </a>
+            <h2>{{ title }}</h2>
+        </div>
+    </div>
+    
+    <!-- Following List -->
+    <div class="users-list">
+        {% if following %}
+            {% for followed_user in following %}
+            <div class="user-card">
+                <div class="user-avatar">
+                    {% if followed_user.userprofile and followed_user.userprofile.avatar %}
+                        <img src="{{ followed_user.userprofile.avatar_url }}" alt="Avatar" class="profile-avatar-img">
+                    {% else %}
+                        {{ followed_user.username|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                
+                <div class="user-info">
+                    <div class="user-name">
+                        <a href="{% url 'social:profile' followed_user.username %}">
+                            {{ followed_user.get_full_name|default:followed_user.username }}
+                        </a>
+                    </div>
+                    <div class="user-username">@{{ followed_user.username }}</div>
+                    {% if followed_user.userprofile and followed_user.userprofile.bio %}
+                        <div class="user-bio">{{ followed_user.userprofile.bio|truncatechars:100 }}</div>
+                    {% endif %}
+                </div>
+                
+                {% if user.is_authenticated and user != followed_user %}
+                <div class="user-actions">
+                    <button class="btn btn-sm follow-btn" data-username="{{ followed_user.username }}">
+                        {% if user in followed_user.userprofile.followers.all %}
+                            <i class="fas fa-user-minus"></i> Bỏ theo dõi
+                        {% else %}
+                            <i class="fas fa-user-plus"></i> Theo dõi
+                        {% endif %}
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>Not following anyone</h3>
+                <p>{{ profile_user.get_full_name|default:profile_user.username }} is not following anyone yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% csrf_token %}
+
+<style>
+.users-list {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e1e8ed;
+    gap: 1rem;
+    transition: background-color 0.2s;
+}
+
+.user-card:last-child {
+    border-bottom: none;
+}
+
+.user-card:hover {
+    background-color: #f7f9fa;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name a {
+    font-weight: 600;
+    color: #0f1419;
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+
+.user-name a:hover {
+    text-decoration: underline;
+}
+
+.user-username {
+    color: #536471;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.user-bio {
+    color: #0f1419;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.user-actions {
+    flex-shrink: 0;
+}
+
+.follow-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    min-width: 100px;
+}
+</style>
+
+<script>
+// Follow functionality for users in list
+document.querySelectorAll('.follow-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const username = this.dataset.username;
+        const button = this;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) return;
+        
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        fetch(`/social/follow/${username}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken.value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.is_following) {
+                    button.innerHTML = '<i class="fas fa-user-minus"></i> Bỏ theo dõi';
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-secondary');
+                } else {
+                    button.innerHTML = '<i class="fas fa-user-plus"></i> Theo dõi';
+                    button.classList.remove('btn-secondary');
+                    button.classList.add('btn-primary');
+                }
+            } else {
+                button.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.innerHTML = originalText;
+        })
+        .finally(() => {
+            button.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}

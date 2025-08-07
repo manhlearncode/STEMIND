@@ -94,10 +94,10 @@
                                  </div>
                              </div>
                              <div class="col-md-3">
-                                 <label class="form-label fw-bold">Theo chương trình</label>
+                                 <label class="form-label fw-bold">Theo khu vực</label>
                                  <div class="category-checkboxes">
                                      {% for category in parent_categories %}
-                                         {% if category.name == "Theo chương trình" %}
+                                         {% if category.name == "Theo khu vực" %}
                                              {% for child in category.children.all %}
                                              <div class="form-check">
                                                  <input class="form-check-input" type="checkbox" 

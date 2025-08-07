@@ -9,11 +9,12 @@
 
 {% block content %}
 <div class="profile-container">
+    {% csrf_token %}
     <!-- Profile Header -->
     <div class="profile-header">
         <div class="profile-avatar">
             {% if profile_user.userprofile and profile_user.userprofile.avatar %}
-                <img src="{{ profile_user.userprofile.avatar.url }}" alt="Avatar" class="rounded-circle">
+                <img src="{{ profile_user.userprofile.avatar.url }}" alt="Avatar" class="profile-avatar-img">
             {% else %}
                 <div class="avatar-placeholder">
                     {{ profile_user.username|slice:":1"|upper }}
@@ -28,25 +29,14 @@
             <!-- User Information -->
             <div class="profile-details">
                 {% if profile_user.firstname or profile_user.lastname %}
-                    <div class="detail-item">
+                    <div class="info-item">
                         <i class="fas fa-user"></i>
                         <span>{{ profile_user.lastname }} {{ profile_user.firstname }}</span>
                     </div>
                 {% endif %}
-                {% if profile_user.age %}
-                    <div class="detail-item">
-                        <i class="fas fa-birthday-cake"></i>
-                        <span>{{ profile_user.age }} tuổi</span>
-                    </div>
-                {% endif %}
-                {% if profile_user.address %}
-                    <div class="detail-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>{{ profile_user.address }}</span>
-                    </div>
-                {% endif %}
+                
                 {% if profile_user.role %}
-                    <div class="detail-item">
+                    <div class="info-item">
                         <i class="fas fa-briefcase"></i>
                         <span>{{ profile_user.get_role_display }}</span>
                     </div>
@@ -70,13 +60,14 @@
                         <i class="fas fa-user-plus"></i> Theo dõi
                     {% endif %}
                 </button>
+                <br><small class="text-muted">Debug: User={{ user.username }}, Profile={{ profile_user.username }}, Following={{ is_following }}</small>
             </div>
         {% endif %}
     </div>
     
     <!-- Profile Stats -->
     <div class="profile-stats">
-        <div class="stat-item">
+        <a href="{% url 'social:followers_list' profile_user.username %}" class="stat-item stat-link">
             <div class="stat-number">
                 {% if profile_user.userprofile %}
                     {{ profile_user.userprofile.followers_count }}
@@ -85,9 +76,9 @@
                 {% endif %}
             </div>
             <div class="stat-label">Người theo dõi</div>
-        </div>
+        </a>
         
-        <div class="stat-item">
+        <a href="{% url 'social:following_list' profile_user.username %}" class="stat-item stat-link">
             <div class="stat-number">
                 {% if profile_user.userprofile %}
                     {{ profile_user.userprofile.following_count }}
@@ -96,11 +87,22 @@
                 {% endif %}
             </div>
             <div class="stat-label">Đang theo dõi</div>
-        </div>
+        </a>
         
         <div class="stat-item">
             <div class="stat-number">{{ posts.count }}</div>
             <div class="stat-label">Bài viết</div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-number">
+                {% if profile_user.files.count %}
+                    {{ profile_user.files.count }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="stat-label">Tài liệu</div>
         </div>
     </div>
     
@@ -109,8 +111,8 @@
         <button class="nav-btn active" data-tab="posts">
             <i class="fas fa-file-alt"></i> Bài viết
         </button>
-        <button class="nav-btn" data-tab="liked">
-            <i class="fas fa-heart"></i> Đã thích
+        <button class="nav-btn" data-tab="documents">
+            <i class="fas fa-file-pdf"></i> Tài liệu
         </button>
     </div>
     
@@ -152,31 +154,53 @@
         {% endif %}
     </div>
     
-    <!-- Liked Posts Tab -->
-    <div class="tab-content" id="liked-tab">
-        {% if liked_posts %}
-            <div class="posts-grid">
-                {% for post in liked_posts %}
-                    <div class="post-card">
-                        {% if post.image %}
-                            <div class="post-image">
-                                <img src="{{ post.image.url }}" alt="Post image">
+    <!-- Documents Tab -->
+    <div class="tab-content" id="documents-tab">
+        {% if profile_user.files.all %}
+            <div class="documents-grid">
+                {% for file in profile_user.files.all %}
+                    <div class="document-card">
+                        <div class="document-icon">
+                            {% if file.file_urls %}
+                                {% if file.file_urls.name|slice:"-4:" == '.pdf' %}
+                                    <i class="fas fa-file-pdf text-danger"></i>
+                                {% elif file.file_urls.name|slice:"-4:" == '.doc' or file.file_urls.name|slice:"-5:" == '.docx' %}
+                                    <i class="fas fa-file-word text-primary"></i>
+                                {% elif file.file_urls.name|slice:"-4:" == '.ppt' or file.file_urls.name|slice:"-5:" == '.pptx' %}
+                                    <i class="fas fa-file-powerpoint text-warning"></i>
+                                {% elif file.file_urls.name|slice:"-4:" == '.xls' or file.file_urls.name|slice:"-5:" == '.xlsx' %}
+                                    <i class="fas fa-file-excel text-success"></i>
+                                {% else %}
+                                    <i class="fas fa-file text-secondary"></i>
+                                {% endif %}
+                            {% else %}
+                                <i class="fas fa-file text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="document-content">
+                            <h5 class="document-title">{{ file.title|truncatechars:50 }}</h5>
+                            {% if file.file_description %}
+                                <p class="document-description">{{ file.file_description|truncatewords:15 }}</p>
+                            {% endif %}
+                            <div class="document-meta">
+                                <span class="document-date">{{ file.created_at|date:"M d, Y" }}</span>
+                                <span class="document-price">
+                                    {% if file.file_status == 0 %}
+                                        <span class="badge badge-success">Miễn phí</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">{{ file.file_price|floatformat:0 }} VNĐ</span>
+                                    {% endif %}
+                                </span>
                             </div>
-                        {% endif %}
-                        <div class="post-content">
-                            <p>{{ post.content|truncatewords:30 }}</p>
-                            <div class="post-meta">
-                                <span class="post-date">{{ post.created_at|date:"M d, Y" }}</span>
-                                <div class="post-actions">
-                                    <button class="like-btn" data-post-id="{{ post.id }}">
-                                        <i class="fas fa-heart {% if post in user.likes.all %}liked{% endif %}"></i>
-                                        <span>{{ post.like_count }}</span>
-                                    </button>
-                                    <button class="comment-btn" data-post-id="{{ post.id }}">
-                                        <i class="fas fa-comment"></i>
-                                        <span>{{ post.comment_count }}</span>
-                                    </button>
-                                </div>
+                            <div class="document-actions">
+                                {% if file.file_urls %}
+                                    <a href="{{ file.file_urls.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-download"></i> Tải xuống
+                                    </a>
+                                {% endif %}
+                                <a href="/file/{{ file.title }}/" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye"></i> Xem chi tiết
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -184,13 +208,46 @@
             </div>
         {% else %}
             <div class="empty-state">
-                <i class="fas fa-heart"></i>
-                <p>Posts that {{ profile_user.username }} likes will appear here.</p>
+                <i class="fas fa-file-pdf"></i>
+                <p>{{ profile_user.username }} chưa có tài liệu nào.</p>
             </div>
         {% endif %}
     </div>
 </div>
 
 <link rel="stylesheet" href="{% static 'style/social/profile.css' %}">
+<style>
+.tab-content {
+    display: none !important;
+}
+.tab-content.active {
+    display: block !important;
+}
+</style>
+<script src="{% static 'script/social/profile.js' %}"></script>
+<script>
+// Backup tab switching code
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.nav-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            // Add active to clicked button
+            this.classList.add('active');
+            
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            // Show selected tab
+            const targetTab = document.getElementById(tabName + '-tab');
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+        });
+    });
+});
+</script>
+
 <script src="{% static 'script/social/profile.js' %}"></script>
 {% endblock %} 

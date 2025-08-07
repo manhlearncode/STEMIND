@@ -55,6 +55,7 @@ document.querySelectorAll('.comment-btn').forEach(btn => {
             this.classList.remove('commented');
         }
     });
+    window.location.reload();
 });
 
 // Comment form submission
@@ -65,18 +66,26 @@ document.querySelectorAll('.comment-form').forEach(form => {
         const input = this.querySelector('.comment-input');
         const content = input.value.trim();
         
+        console.log('Submitting comment for post:', postId, 'Content:', content);
         if (!content) return;
+        
+        // Try using FormData instead of JSON for better compatibility
+        const formData = new FormData();
+        formData.append('content', content);
         
         fetch(`/social/comment/${postId}/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content: content })
+            body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Comment response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Comment response data:', data);
             if (data.success) {
                 // Add new comment to the list
                 const commentsList = document.getElementById(`comments-list-${postId}`);
@@ -84,11 +93,11 @@ document.querySelectorAll('.comment-form').forEach(form => {
                 newComment.className = 'comment-item';
                 newComment.innerHTML = `
                     <div class="comment-avatar">
-                        {{ user.username|slice:":1"|upper }}
+                        ${data.user_avatar}
                     </div>
                     <div class="comment-content">
                         <div class="comment-header">
-                            <span class="comment-author">{{ user.get_full_name|default:user.username }}</span>
+                            <span class="comment-author">${data.user}</span>
                             <span class="comment-time">Just now</span>
                         </div>
                         <div class="comment-text">${data.content}</div>
@@ -102,6 +111,9 @@ document.querySelectorAll('.comment-form').forEach(form => {
                 
                 // Clear input
                 input.value = '';
+            } else {
+                console.error('Error adding comment:', data.error);
+                alert('Failed to add comment. Please try again.');
             }
         })
         .catch(error => {

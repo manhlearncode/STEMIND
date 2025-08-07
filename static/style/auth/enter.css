@@ -78,23 +78,11 @@
 
 /* Animation for form elements */
 .form-floating {
-    animation: slideInUp 0.4s ease-out backwards;
 }
 
-.form-floating:nth-child(2) { animation-delay: 0.1s; }
-.form-floating:nth-child(3) { animation-delay: 0.2s; }
-.form-floating:nth-child(4) { animation-delay: 0.3s; }
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+.form-floating:nth-child(2) { }
+.form-floating:nth-child(3) { }
+.form-floating:nth-child(4) { }
 
 /* Mobile responsive */
 @media (max-width: 576px) {
