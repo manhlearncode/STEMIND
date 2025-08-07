@@ -13,6 +13,7 @@ from .forms import FileUploadForm
 from django.http import HttpResponseRedirect
 from Social_Platform.models import UserProfile, CustomUser
 from Social_Platform.forms import UserProfileForm, CustomUserCreationForm
+from Social_Platform.services.point_service import PointService
     
 
 def file_list_api(request):
@@ -222,6 +223,16 @@ def file_detail(request, title):
     child_categories = Category.objects.filter(parent__isnull=False)
     file_obj = get_object_or_404(File, title=title)
     
+    # Deduct points for viewing paid file
+    can_view = True
+    if request.user.is_authenticated and file_obj.file_status == 1:  # Paid file
+        success, message = PointService.handle_view_paid_file(request.user, file_obj.id)
+        if not success:
+            messages.error(request, message)
+            can_view = False
+        else:
+            messages.info(request, message)
+    
     # Lấy related files từ cùng categories
     related_files = File.objects.filter(file_status=1, categories__in=file_obj.categories.all()).exclude(id=file_obj.id).order_by('-file_downloads')[:5]
     top_users = CustomUser.objects.annotate(num_posts=Count('files', filter=Q(files__categories__in=file_obj.categories.all()))).order_by('-num_posts')[:5]
@@ -237,12 +248,23 @@ def file_detail(request, title):
         'child_categories': child_categories,
         'related_files': related_files,
         'top_users': top_users,
-        'is_favorited': is_favorited
+        'is_favorited': is_favorited,
+        'can_view': can_view
     }
     return render(request, 'home/detail.html', context)
 
 def download_file(request, file_id):
     file_obj = get_object_or_404(File, id=file_id)
+    
+    # Deduct points for downloading paid file
+    if request.user.is_authenticated and file_obj.file_status == 1:  # Paid file
+        success, message = PointService.handle_download_paid_file(request.user, file_obj.id)
+        if not success:
+            messages.error(request, message)
+            return redirect('file_detail', title=file_obj.title)
+        else:
+            messages.info(request, message)
+    
     file_obj.file_downloads += 1
     file_obj.save(update_fields=['file_downloads'])
 
@@ -264,6 +286,10 @@ def upload_file(request):
             file_obj.author = request.user
             file_obj.save()
             form.save_m2m()  # <-- Thêm dòng này để lưu categories
+            
+            # Award points for file upload
+            PointService.handle_file_upload(request.user, file_obj.id)
+            
             messages.success(request, 'Tài liệu đã được tải lên thành công!')
             return redirect('home')
         else:

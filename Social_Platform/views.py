@@ -3,12 +3,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
-from .models import Post, Like, Comment, UserProfile, CustomUser
+from .models import Post, Like, Comment, UserProfile, CustomUser, PointTransaction
 from .forms import PostForm, CommentForm
+from .services.point_service import PointService
 # Create your views here.
 
 @login_required
 def feed(request):
+    # Check and award daily points
+    success, message = PointService.check_and_award_daily_points(request.user)
+    if success:
+        messages.success(request, message)
+    
     # Get all posts for now (simplified version)
     posts = Post.objects.all().select_related('author').prefetch_related('likes', 'comments').order_by('-created_at')
     
@@ -24,14 +30,22 @@ def feed(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
+            
+            # Award points for creating post
+            PointService.handle_post_creation(request.user, post.id)
+            
             messages.success(request, 'Post created successfully!')
             return redirect('social:feed')
     else:
         form = PostForm()
     
+    # Get user points for display
+    user_points = PointService.get_user_points(request.user)
+    
     context = {
         'posts': posts,
         'form': form,
+        'user_points': user_points,
     }
     return render(request, 'social/feed.html', context)
 
@@ -45,6 +59,8 @@ def like_post(request, post_id):
         liked = False
     else:
         liked = True
+        # Award points for liking post
+        PointService.handle_like_post(request.user, post_id)
     
     return JsonResponse({
         'liked': liked,
@@ -71,6 +87,9 @@ def add_comment(request, post_id):
                 post=post,
                 content=content
             )
+            
+            # Award points for commenting
+            PointService.handle_comment(request.user, post_id)
             
             # Get user display name
             user_display_name = request.user.get_full_name() or request.user.username
@@ -177,6 +196,9 @@ def follow_user(request, username):
             is_following = True
             action = 'followed'
             message = f'You followed {user_to_follow.get_full_name() or user_to_follow.username}'
+            
+            # Award points for following user
+            PointService.handle_follow_user(request.user, user_to_follow.id)
         
         followers_count = profile.followers_count()
         print(f"New follow status: {is_following}, Followers count: {followers_count}")
@@ -200,6 +222,25 @@ def follow_user(request, username):
             'success': False, 
             'error': f'Server error: {str(e)}'
         }, status=500)
+
+
+@login_required
+def points_history(request):
+    """Hiển thị lịch sử điểm của user"""
+    transactions = PointTransaction.objects.filter(user=request.user).order_by('-created_at')
+    user_points = PointService.get_user_points(request.user)
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(transactions, 20)  # 20 transactions per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'transactions': page_obj,
+        'user_points': user_points,
+    }
+    return render(request, 'social/points_history.html', context)
 
 @login_required
 def check_profile_completion(request):

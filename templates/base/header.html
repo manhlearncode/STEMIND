@@ -46,6 +46,16 @@
             </form>
             {% endif %}
             {% if user.is_authenticated %}
+            <!-- Points Display -->
+                <div class="d-flex align-items-center me-3">
+                    <a href="{% url 'social:points_history' %}" class="text-decoration-none">
+                        <span class="badge bg-warning text-dark fs-6">
+                            <i class="fas fa-coins"></i> 
+                            {% if user.userprofile.points %}{{ user.userprofile.points }}{% else %}0{% endif %} điểm
+                        </span>
+                    </a>
+                </div>
+
             <div class="dropdown text-end"> 
                 <a class="avatar-circle text-white text-decoration-none"
                 data-bs-toggle="dropdown"
@@ -57,6 +67,7 @@
                     <li><a class="dropdown-item" href="{% url 'user_favorites' %}">Tài liệu yêu thích</a></li>
                     <li><a class="dropdown-item" href="{% url 'social:liked_posts' %}">Bài viết đã like</a></li>
                     <li><a class="dropdown-item" href="{% url 'social:profile' user.username %}">Hồ sơ</a></li>
+                    <li><a class="dropdown-item" href="{% url 'social:points_history' %}"><i class="fas fa-coins"></i> Lịch sử điểm</a></li>
                     <li><a class="dropdown-item" href="#">Cài đặt</a></li>
                     <li><a class="dropdown-item" href="#">Thông tin tài khoản</a></li>
                     <li>

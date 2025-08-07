@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import CustomUser, Post, Like, Comment, UserProfile
+from .models import CustomUser, Post, Like, Comment, UserProfile, PointTransaction, PointSettings
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -52,7 +52,7 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'bio_preview', 'followers_count', 'avatar_display']
+    list_display = ['user', 'points', 'bio_preview', 'followers_count', 'avatar_display']
     search_fields = ['user__username', 'bio']
     readonly_fields = ['followers_count']
     
@@ -65,6 +65,35 @@ class UserProfileAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="50" height="50" style="border-radius: 50%;" />', obj.avatar.url)
         return "Không có ảnh"
     avatar_display.short_description = 'Ảnh đại diện'
+
+@admin.register(PointTransaction)
+class PointTransactionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'transaction_type', 'points', 'description', 'created_at']
+    list_filter = ['transaction_type', 'created_at']
+    search_fields = ['user__username', 'description']
+    readonly_fields = ['created_at']
+    ordering = ['-created_at']
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+
+@admin.register(PointSettings)
+class PointSettingsAdmin(admin.ModelAdmin):
+    list_display = [
+        'daily_login_points', 'upload_file_points', 'create_post_points',
+        'like_post_points', 'share_post_points', 'comment_points',
+        'follow_user_points', 'view_paid_file_cost', 'download_paid_file_cost'
+    ]
+    
+    def has_add_permission(self, request):
+        # Chỉ cho phép 1 instance duy nhất
+        return not PointSettings.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        # Không cho phép xóa settings
+        return False
+
 
 # Customize admin site
 admin.site.site_header = "STEMIND Administration"

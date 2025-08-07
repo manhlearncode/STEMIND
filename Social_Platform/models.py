@@ -92,6 +92,8 @@ class UserProfile(models.Model):
     bio = models.TextField(max_length=200, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     followers = models.ManyToManyField(CustomUser, related_name='following', blank=True)
+    points = models.IntegerField(default=0)  # Điểm của user
+    last_daily_points = models.DateField(null=True, blank=True)  # Ngày nhận điểm hàng ngày cuối
     
     def __str__(self):
         return self.user.username
@@ -135,3 +137,56 @@ def save_user_profile(sender, instance, **kwargs):
         instance.userprofile.save()
     except UserProfile.DoesNotExist:
         UserProfile.objects.create(user=instance)
+
+
+class PointTransaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('daily', 'Daily Login'),
+        ('upload_file', 'Upload File'),
+        ('create_post', 'Create Post'),
+        ('like_post', 'Like Post'),
+        ('share_post', 'Share Post'),
+        ('view_file', 'View File'),
+        ('download_file', 'Download File'),
+        ('comment', 'Comment'),
+        ('follow', 'Follow User'),
+    ]
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='point_transactions')
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    points = models.IntegerField()  # Có thể âm (trừ điểm) hoặc dương (cộng điểm)
+    description = models.TextField(blank=True)
+    related_object_id = models.IntegerField(null=True, blank=True)  # ID của object liên quan (post, file, etc.)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username}: {self.points} points for {self.get_transaction_type_display()}"
+
+
+class PointSettings(models.Model):
+    """Cài đặt điểm cho các hành động"""
+    daily_login_points = models.IntegerField(default=10)
+    upload_file_points = models.IntegerField(default=20)
+    create_post_points = models.IntegerField(default=15)
+    like_post_points = models.IntegerField(default=2)
+    share_post_points = models.IntegerField(default=5)
+    comment_points = models.IntegerField(default=3)
+    follow_user_points = models.IntegerField(default=5)
+    view_paid_file_cost = models.IntegerField(default=5)
+    download_paid_file_cost = models.IntegerField(default=10)
+    
+    class Meta:
+        verbose_name = "Point Settings"
+        verbose_name_plural = "Point Settings"
+    
+    def __str__(self):
+        return "Point Settings"
+    
+    @classmethod
+    def get_settings(cls):
+        """Get or create point settings"""
+        settings, created = cls.objects.get_or_create(pk=1)
+        return settings
