@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
+from django.db import models
 from .models import Post, Like, Comment, UserProfile, CustomUser, PointTransaction
 from .forms import PostForm, CommentForm
 from .services.point_service import PointService
@@ -230,6 +231,10 @@ def points_history(request):
     transactions = PointTransaction.objects.filter(user=request.user).order_by('-created_at')
     user_points = PointService.get_user_points(request.user)
     
+    # Tổng điểm đã cộng và đã trừ
+    total_earned = transactions.filter(points__gt=0).aggregate(models.Sum('points'))['points__sum'] or 0
+    total_spent = abs(transactions.filter(points__lt=0).aggregate(models.Sum('points'))['points__sum'] or 0)
+    
     # Pagination
     from django.core.paginator import Paginator
     paginator = Paginator(transactions, 20)  # 20 transactions per page
@@ -239,6 +244,8 @@ def points_history(request):
     context = {
         'transactions': page_obj,
         'user_points': user_points,
+        'total_earned': total_earned,
+        'total_spent': total_spent,
     }
     return render(request, 'social/points_history.html', context)
 

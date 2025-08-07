@@ -120,6 +120,14 @@
             <div class="summary-label">Điểm hiện tại</div>
         </div>
         <div class="summary-card">
+            <div class="summary-number text-success">+{{ total_earned }}</div>
+            <div class="summary-label">Tổng điểm đã cộng</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-number text-danger">-{{ total_spent }}</div>
+            <div class="summary-label">Tổng điểm đã trừ</div>
+        </div>
+        <div class="summary-card">
             <div class="summary-number">{{ transactions.paginator.count }}</div>
             <div class="summary-label">Tổng giao dịch</div>
         </div>
@@ -160,7 +168,7 @@
                         <div class="transaction-date">{{ transaction.created_at|date:"d/m/Y H:i" }}</div>
                     </div>
                     <div class="transaction-points {% if transaction.points > 0 %}positive{% else %}negative{% endif %}">
-                        {% if transaction.points > 0 %}+{% endif %}{{ transaction.points }}
+                        {% if transaction.points > 0 %}+{{ transaction.points }}{% else %}<i class="fas fa-minus-circle"></i> {{ transaction.points|default:0 }}{% endif %}
                     </div>
                 </div>
             {% endfor %}
