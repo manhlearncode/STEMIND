@@ -1,93 +1,72 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import Post, Like, Comment, UserProfile
+from .models import CustomUser, Post, Like, Comment, UserProfile
+
+class CustomUserAdmin(UserAdmin):
+    model = CustomUser
+    list_display = ['username', 'email', 'lastname', 'firstname', 'age', 'role', 'address', 'is_staff', 'is_active']
+    list_filter = ['role', 'is_staff', 'is_active', 'date_joined']
+    search_fields = ['username', 'email', 'lastname', 'firstname']
+    
+    fieldsets = UserAdmin.fieldsets + (
+        ('Thông tin cá nhân', {
+            'fields': ('lastname', 'firstname', 'age', 'address', 'role')
+        }),
+    )
+    
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        ('Thông tin cá nhân', {
+            'fields': ('lastname', 'firstname', 'age', 'address', 'role')
+        }),
+    )
+
+admin.site.register(CustomUser, CustomUserAdmin)
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['id', 'author', 'content_preview', 'image_preview', 'like_count', 'comment_count', 'created_at']
-    list_filter = ['created_at', 'updated_at', 'author']
-    search_fields = ['content', 'author__username', 'author__email']
-    readonly_fields = ['created_at', 'updated_at', 'like_count', 'comment_count']
-    list_select_related = ['author']
-    list_per_page = 20
-    date_hierarchy = 'created_at'
+    list_display = ['author', 'content_preview', 'created_at', 'like_count', 'comment_count']
+    list_filter = ['created_at', 'author']
+    search_fields = ['content', 'author__username']
+    readonly_fields = ['like_count', 'comment_count']
     
     def content_preview(self, obj):
-        return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
-    content_preview.short_description = 'Content Preview'
-    
-    def image_preview(self, obj):
-        if obj.image:
-            # Sử dụng presigned URL nếu có S3
-            try:
-                image_url = obj.get_image_presigned_url()
-                if image_url:
-                    return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;"/>', image_url)
-                else:
-                    return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;"/>', obj.image.url)
-            except:
-                return "No preview"
-        return "No image"
-    image_preview.short_description = 'Image'
+        return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
+    content_preview.short_description = 'Nội dung'
 
 @admin.register(Like)
 class LikeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'post_preview', 'created_at']
+    list_display = ['user', 'post', 'created_at']
     list_filter = ['created_at']
     search_fields = ['user__username', 'post__content']
-    readonly_fields = ['created_at']
-    list_select_related = ['user', 'post']
-    list_per_page = 50
-    
-    def post_preview(self, obj):
-        return f"Post #{obj.post.id}: {obj.post.content[:30]}..."
-    post_preview.short_description = 'Post'
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'post_preview', 'content_preview', 'created_at']
+    list_display = ['user', 'post', 'content_preview', 'created_at']
     list_filter = ['created_at']
     search_fields = ['content', 'user__username', 'post__content']
-    readonly_fields = ['created_at']
-    list_select_related = ['user', 'post']
-    list_per_page = 50
-    date_hierarchy = 'created_at'
-    
-    def post_preview(self, obj):
-        return f"Post #{obj.post.id} by {obj.post.author.username}"
-    post_preview.short_description = 'Post'
     
     def content_preview(self, obj):
-        return obj.content[:40] + "..." if len(obj.content) > 40 else obj.content
-    content_preview.short_description = 'Comment'
+        return obj.content[:30] + '...' if len(obj.content) > 30 else obj.content
+    content_preview.short_description = 'Nội dung'
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'bio_preview', 'avatar_preview', 'followers_count', 'following_count']
-    search_fields = ['user__username', 'user__email', 'bio']
-    filter_horizontal = ['followers']  # Để dễ quản lý many-to-many relationships
-    list_select_related = ['user']
-    list_per_page = 20
+    list_display = ['user', 'bio_preview', 'followers_count', 'avatar_display']
+    search_fields = ['user__username', 'bio']
+    readonly_fields = ['followers_count']
     
     def bio_preview(self, obj):
-        return obj.bio[:50] + "..." if len(obj.bio) > 50 else obj.bio
-    bio_preview.short_description = 'Bio Preview'
+        return obj.bio[:50] + '...' if obj.bio and len(obj.bio) > 50 else obj.bio
+    bio_preview.short_description = 'Giới thiệu'
     
-    def avatar_preview(self, obj):
+    def avatar_display(self, obj):
         if obj.avatar:
-            # Sử dụng presigned URL nếu có S3
-            try:
-                avatar_url = obj.get_avatar_presigned_url()
-                if avatar_url:
-                    return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 50%;"/>', avatar_url)
-                else:
-                    return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 50%;"/>', obj.avatar.url)
-            except:
-                return "No preview"
-        return "No avatar"
-    avatar_preview.short_description = 'Avatar'
+            return format_html('<img src="{}" width="50" height="50" style="border-radius: 50%;" />', obj.avatar.url)
+        return "Không có ảnh"
+    avatar_display.short_description = 'Ảnh đại diện'
 
-# Tùy chỉnh admin site header
-admin.site.site_header = "Social Platform Admin"
-admin.site.site_title = "Social Platform Admin Portal"
-admin.site.index_title = "Welcome to Social Platform Administration"
+# Customize admin site
+admin.site.site_header = "STEMIND Administration"
+admin.site.site_title = "STEMIND Admin Portal"
+admin.site.index_title = "Welcome to STEMIND Administration"

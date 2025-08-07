@@ -1,8 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils.text import slugify
 from django.utils import timezone
-from django.conf import settings
 import boto3
 from django.core.files.storage import default_storage
 
@@ -59,7 +58,7 @@ class Category(models.Model):
 class File(models.Model):
     title = models.CharField(unique=True, max_length=255)
     categories = models.ManyToManyField(Category, related_name='files')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='files')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='files')
     file_thumbnail = models.ImageField(upload_to='thumbnails/%y/%m/%d', blank=True, null=True)
     file_description = models.TextField(blank=True, null=True, max_length=500)
     file_urls = models.FileField(upload_to='uploads/%y/%m/%d')
@@ -107,7 +106,7 @@ class File(models.Model):
         verbose_name_plural = "Files"
 
 class Favorite(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favorites')
     file = models.ForeignKey(File, on_delete=models.CASCADE, related_name='favorited_by')
     created_at = models.DateTimeField(auto_now_add=True)
     

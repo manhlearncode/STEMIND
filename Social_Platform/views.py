@@ -3,9 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
-from .models import Post, Like, Comment, UserProfile
+from .models import Post, Like, Comment, UserProfile, CustomUser
 from .forms import PostForm, CommentForm
-from django.contrib.auth.models import User
 
 # Create your views here.
 
@@ -77,7 +76,7 @@ def add_comment(request, post_id):
 
 @login_required
 def profile(request, username):
-    user = get_object_or_404(User, username=username)
+    user = get_object_or_404(CustomUser, username=username)
     posts = Post.objects.filter(author=user).order_by('-created_at')
     liked_posts = Post.objects.filter(likes__user=user).order_by('-created_at')
     
@@ -154,7 +153,7 @@ def check_profile_completion(request):
     """Kiểm tra xem profile đã hoàn thiện chưa"""
     try:
         profile = request.user.userprofile
-        is_complete = bool(profile.firstname and profile.lastname and profile.age and profile.role)
+        is_complete = bool(profile.firstname and profile.lastname and profile.age and profile.role and profile.address)
         return JsonResponse({
             'is_complete': is_complete,
             'profile': {
@@ -162,6 +161,7 @@ def check_profile_completion(request):
                 'lastname': profile.lastname,
                 'age': profile.age,
                 'role': profile.role,
+                'address': profile.address,
                 'role_display': profile.get_role_display() if profile.role else None
             }
         })

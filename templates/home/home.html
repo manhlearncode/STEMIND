@@ -113,14 +113,14 @@
                             Thao tác nhanh
                         </h3>
                         <div class="d-grid gap-2">
+                            <a href="{% url 'search_files' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-search me-2"></i>Tìm kiếm tài liệu
+                            </a>
                             <a href="{% url 'upload_file' %}" class="btn btn-outline-warning">
                                 <i class="fas fa-plus me-2"></i>Tạo tài liệu mới
                             </a>
                             <a href="{% url 'user_favorites' %}" class="btn btn-outline-info">
                                 <i class="fas fa-heart me-2"></i>Tài liệu yêu thích
-                            </a>
-                            <a href="{% url 'search_files' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-flag me-2"></i>Tìm kiếm tài liệu
                             </a>
                         </div>
                     </div>
@@ -137,7 +137,11 @@
                                     {{ user.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="contributor-name">{{ user.username }}</div>
+                                    {%if user.userprofile.role == 'Chuyên gia'%}
+                                    <a href="{% url 'social:profile' user.username %}" style="text-decoration: none; text-underline-offset: none;"><div class="contributor-name" style="color: #006056;">{{ user.username }}</div></a>
+                                    {%else%}
+                                    <a href="{% url 'social:profile' user.username %}" style="text-decoration: none; text-underline-offset: none;"><div class="contributor-name" style="color: #000000;">{{ user.username }}</div></a>
+                                    {%endif%}
                                     <small class="text-muted">{{ user.files.count|default:0 }} tài liệu</small>
                                 </div>
                             </div>

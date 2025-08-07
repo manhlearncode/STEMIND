@@ -247,7 +247,7 @@
                                 {{ user.username|slice:":1"|upper }}
                             </div>
                             <div>
-                                <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                                <a href="{% url 'social:profile' user.username %}"><h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6></a>
                                 <small class="text-muted">{{ user.files.count|default:0 }} tài liệu</small>
                             </div>
                         </div>
@@ -260,7 +260,7 @@
                         <i class="fas fa-star me-2"></i>Người đóng góp nổi bật
                     </div>
                     <div class="sidebar-card-body">
-                        <p class="text-muted mb-0">Chưa có người đóng góp nào.</p>
+                        <p class="text-muted">Không có người đóng góp nổi bật</p>
                     </div>
                 </div>
                 {% endif %}

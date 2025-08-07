@@ -2,7 +2,7 @@ from unicodedata import category
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import File, Category, Favorite
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.db.models import Count, Q
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
@@ -11,8 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .forms import FileUploadForm
 from django.http import HttpResponseRedirect
-from Social_Platform.models import UserProfile
-from Social_Platform.forms import UserProfileForm
+from Social_Platform.models import UserProfile, CustomUser
+from Social_Platform.forms import UserProfileForm, CustomUserCreationForm
     
 
 def file_list_api(request):
@@ -38,7 +38,7 @@ def home(request):
     
     featured_files = File.objects.filter(file_status__in=[0, 1]).order_by('-file_downloads')[:7]
     recently_files = File.objects.filter(file_status__in=[0, 1]).order_by('-created_at')[:10]
-    top_users = User.objects.annotate(num_posts=Count('files')).order_by('-num_posts')[:10]
+    top_users = CustomUser.objects.annotate(num_posts=Count('files')).order_by('-num_posts')[:10]
     context = {
         'parent_categories': parent_categories,
         'child_categories': child_categories,
@@ -64,10 +64,10 @@ def enter(request):
             messages.error(request, 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!')
     return render(request, 'auth/enter.html')    
 
-class RegisterForm(UserCreationForm):
+class RegisterForm(CustomUserCreationForm):
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        model = CustomUser
+        fields = ['username', 'email', 'lastname', 'firstname', 'age', 'address', 'role', 'password1', 'password2']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,6 +79,25 @@ class RegisterForm(UserCreationForm):
         self.fields['email'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'name@example.com'
+        })
+        self.fields['lastname'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Nhập họ của bạn'
+        })
+        self.fields['firstname'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Nhập tên của bạn'
+        })
+        self.fields['age'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Nhập tuổi của bạn'
+        })
+        self.fields['address'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Nhập địa chỉ công tác của bạn'
+        })
+        self.fields['role'].widget.attrs.update({
+            'class': 'form-control'
         })
         self.fields['password1'].widget.attrs.update({
             'class': 'form-control',
@@ -96,8 +115,15 @@ def register(request):
             user = form.save()
             # Tự động đăng nhập sau khi đăng ký
             login(request, user)
-            messages.success(request, 'Tài khoản đã được tạo thành công! Vui lòng hoàn thiện thông tin cá nhân.')
-            return redirect('complete_profile')
+            messages.success(request, 'Tài khoản đã được tạo thành công!')
+            
+            # Kiểm tra xem user đã có đầy đủ thông tin cơ bản chưa
+            if user.firstname and user.lastname and user.age and user.role:
+                messages.success(request, 'Chào mừng bạn đến với STEMIND!')
+                return redirect('home')
+            else:
+                messages.info(request, 'Vui lòng hoàn thiện thông tin cá nhân.')
+                return redirect('basic_info')
     else:
         form = RegisterForm()
     context = {
@@ -106,15 +132,37 @@ def register(request):
     return render(request, 'auth/register.html', context)
 
 @login_required
+def basic_info(request):
+    """Trang điền thông tin cơ bản"""
+    if request.method == 'POST':
+        # Cập nhật thông tin cơ bản vào CustomUser
+        user = request.user
+        user.firstname = request.POST.get('firstname', '')
+        user.lastname = request.POST.get('lastname', '')
+        user.age = request.POST.get('age') or None
+        user.address = request.POST.get('address', '')
+        user.role = request.POST.get('role', '')
+        user.save()
+        
+        messages.success(request, 'Thông tin cơ bản đã được cập nhật!')
+        return redirect('complete_profile')
+    
+    # Hiển thị form với thông tin hiện tại
+    context = {
+        'user': request.user
+    }
+    return render(request, 'auth/basic_info.html', context)
+
+@login_required
 def complete_profile(request):
-    """Trang điều thông tin sau đăng ký"""
+    """Trang điều thông tin sau đăng ký - chỉ cho bio và avatar"""
     try:
         profile = request.user.userprofile
     except UserProfile.DoesNotExist:
         profile = UserProfile.objects.create(user=request.user)
     
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=profile)
+        form = UserProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, 'Đăng ký hoàn tất! Chào mừng bạn đến với STEMIND!')
@@ -142,12 +190,12 @@ def posts_by_category(request, category_name):
         child_cats = category.get_all_children()
         featured_files = File.objects.filter(file_status__in=[0, 1], categories__in=child_cats).order_by('-file_downloads')[:3]
         recently_files = File.objects.filter(file_status__in=[0, 1], categories__in=child_cats).order_by('-created_at')[:15]
-        top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__categories__in=child_cats))).order_by('-num_posts')[:10]
+        top_users = CustomUser.objects.annotate(num_posts=Count('files', filter=Q(files__categories__in=child_cats))).order_by('-num_posts')[:10]
     else:
         # Nếu là category con, lấy files trực tiếp
         featured_files = File.objects.filter(file_status__in=[0, 1], categories=category).order_by('-file_downloads')[:3]
         recently_files = File.objects.filter(file_status__in=[0, 1], categories=category).order_by('-created_at')[:15]
-        top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__categories=category))).order_by('-num_posts')[:10]
+        top_users = CustomUser.objects.annotate(num_posts=Count('files', filter=Q(files__categories=category))).order_by('-num_posts')[:10]
     
     context = {
         'parent_categories': parent_categories,
@@ -176,7 +224,7 @@ def file_detail(request, title):
     
     # Lấy related files từ cùng categories
     related_files = File.objects.filter(file_status=1, categories__in=file_obj.categories.all()).exclude(id=file_obj.id).order_by('-file_downloads')[:5]
-    top_users = User.objects.annotate(num_posts=Count('files', filter=Q(files__categories__in=file_obj.categories.all()))).order_by('-num_posts')[:5]
+    top_users = CustomUser.objects.annotate(num_posts=Count('files', filter=Q(files__categories__in=file_obj.categories.all()))).order_by('-num_posts')[:5]
     
     # Check if user has favorited this file
     is_favorited = False

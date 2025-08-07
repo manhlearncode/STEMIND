@@ -539,3 +539,25 @@
 .contributor-item .fab {
     font-family: "Font Awesome 6 Brands", "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 5 Brands", "Font Awesome 5 Free", "Font Awesome 5 Pro" !important;
 }
+
+.btn-outline-primary:hover {
+    border: 1px solid #006056 !important;
+}
+
+.btn-outline-warning {
+    border: 1px solid #ffc107 !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-outline-info {
+    border: 1px solid #04cdff !important;
+}
+
+.btn-outline-info:hover {
+    background-color: #04cdff;
+    color: #212529;
+}

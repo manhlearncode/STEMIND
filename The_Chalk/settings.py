@@ -164,3 +164,5 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+AUTH_USER_MODEL = 'Social_Platform.CustomUser'

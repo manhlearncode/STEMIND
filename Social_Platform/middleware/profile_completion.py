@@ -1,7 +1,6 @@
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.contrib.auth.models import User
-from Social_Platform.models import UserProfile
+from Social_Platform.models import UserProfile, CustomUser
 
 class ProfileCompletionMiddleware:
     def __init__(self, get_response):
@@ -12,11 +11,14 @@ class ProfileCompletionMiddleware:
         if request.user.is_authenticated:
             # Danh sách URL được phép truy cập mà không cần hoàn thiện profile
             allowed_urls = [
+                '/basic-info/',
                 '/complete-profile/',
                 '/auth/logout/',
                 '/logout/',
                 '/static/',
                 '/media/',
+                '/admin/',
+                '/admin/login/',
             ]
             
             # Kiểm tra xem URL hiện tại có trong danh sách được phép không
@@ -24,15 +26,12 @@ class ProfileCompletionMiddleware:
             is_allowed = any(current_path.startswith(url) for url in allowed_urls)
             
             if not is_allowed:
-                try:
-                    profile = request.user.userprofile
-                    # Kiểm tra xem profile đã được hoàn thiện chưa
-                    if not (profile.firstname and profile.lastname and profile.age and profile.role):
-                        # Nếu chưa hoàn thiện, chuyển hướng đến trang điều thông tin
-                        return redirect('complete_profile')
-                except UserProfile.DoesNotExist:
-                    # Nếu chưa có profile, chuyển hướng đến trang điều thông tin
-                    return redirect('complete_profile')
+                # Kiểm tra xem user đã có đầy đủ thông tin cơ bản chưa
+                user = request.user
+                # Chỉ kiểm tra các trường bắt buộc trong CustomUser (không kiểm tra bio và avatar)
+                if not (user.firstname and user.lastname and user.age and user.role):
+                    # Nếu chưa hoàn thiện, chuyển hướng đến trang điền thông tin cơ bản
+                    return redirect('basic_info')
 
         response = self.get_response(request)
         return response 

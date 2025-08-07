@@ -1,11 +1,36 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
 import boto3
 
+class CustomUser(AbstractUser):
+    """Custom User model với các trường bổ sung"""
+    ROLE_CHOICES = [
+        ('teacher', 'Giáo viên'),
+        ('expert', 'Chuyên gia'),
+    ]
+    
+    # Thêm các trường mới
+    lastname = models.CharField(max_length=100, blank=True, verbose_name='Họ')
+    firstname = models.CharField(max_length=100, blank=True, verbose_name='Tên')
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name='Tuổi')
+    address = models.CharField(max_length=200, blank=True, verbose_name='Địa chỉ công tác')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, verbose_name='Vai trò')
+    
+    class Meta:
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
+        db_table = 'auth_user'  # Sử dụng tên bảng mặc định của Django User
+    
+    def get_full_name(self):
+        """Lấy tên đầy đủ từ lastname và firstname"""
+        if self.lastname and self.firstname:
+            return f"{self.lastname} {self.firstname}"
+        return super().get_full_name() or self.username
+
 class Post(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(max_length=500)
     image = models.ImageField(upload_to='post_images/', blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
@@ -39,7 +64,7 @@ class Post(models.Model):
         return None
 
 class Like(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -50,7 +75,7 @@ class Like(models.Model):
         return f"{self.user.username} likes {self.post.id}"
 
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField(max_length=300)
     created_at = models.DateTimeField(default=timezone.now)
@@ -62,27 +87,17 @@ class Comment(models.Model):
         return f"{self.user.username}: {self.content[:30]}"
 
 class UserProfile(models.Model):
-    ROLE_CHOICES = [
-        ('teacher', 'Giáo viên'),
-        ('expert', 'Chuyên gia'),
-    ]
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    lastname = models.CharField(max_length=100, blank=True, verbose_name='Họ')
-    firstname = models.CharField(max_length=100, blank=True, verbose_name='Tên')
-    age = models.PositiveIntegerField(null=True, blank=True, verbose_name='Tuổi')
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, verbose_name='Vai trò')
-    bio = models.TextField(max_length=200, blank=True)
+    """UserProfile giờ chỉ chứa các thông tin bổ sung không có trong CustomUser"""
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    bio = models.TextField(max_length=200, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    followers = models.ManyToManyField(User, related_name='following', blank=True)
+    followers = models.ManyToManyField(CustomUser, related_name='following', blank=True)
     
     def __str__(self):
         return self.user.username
     
     def get_full_name(self):
-        if self.firstname and self.lastname:
-            return f"{self.lastname} {self.firstname}"
-        return self.user.get_full_name() or self.user.username
+        return self.user.get_full_name()
     
     def followers_count(self):
         return self.followers.count()
@@ -109,12 +124,12 @@ class UserProfile(models.Model):
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=CustomUser)
 def save_user_profile(sender, instance, **kwargs):
     try:
         instance.userprofile.save()
