@@ -29,12 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle form submission
     const searchForm = document.querySelector('.search-form');
     searchForm.addEventListener('submit', function(e) {
-        const query = searchInput.value.trim();
-        if (!query) {
-            e.preventDefault();
-            showMessage('Vui lòng nhập từ khóa tìm kiếm', 'warning');
-            return;
-        }
+        // Allow form submission even without search query
+        // Users can search by categories only
+        
+        // Set flag for scroll after reload
+        localStorage.setItem('scrollToResults', '1');
     });
 
     // Perform real-time search
@@ -92,6 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         realTimeResults.style.display = 'block';
+        
+        // Auto scroll to real-time results if they appear below the fold
+        const realTimeResultsRect = realTimeResults.getBoundingClientRect();
+        if (realTimeResultsRect.bottom > window.innerHeight) {
+            realTimeResults.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest',
+                inline: 'nearest'
+            });
+        }
     }
 
     // Highlight search query in results
@@ -132,16 +141,267 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
-    // Filter functionality
+    // Multi-select category functionality
+    let selectedCategories = new Set();
+    
+    // Initialize selected categories from template
+    document.querySelectorAll('.category-tag').forEach(tag => {
+        const categoryName = tag.dataset.category;
+        selectedCategories.add(categoryName);
+        
+        // Check corresponding checkbox
+        const checkbox = document.querySelector(`input[data-category="${categoryName}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+
+    // Handle category checkbox selection
+    window.handleCategoryCheckbox = function(checkbox) {
+        const categoryName = checkbox.dataset.category;
+        const isParent = !checkbox.dataset.parent;
+        
+        if (checkbox.checked) {
+            // Add category
+            selectedCategories.add(categoryName);
+            
+            // Create tag element
+            const tag = document.createElement('span');
+            tag.className = 'category-tag';
+            tag.dataset.category = categoryName;
+            tag.innerHTML = `
+                ${categoryName}
+                <button type="button" class="tag-remove" onclick="removeCategory('${categoryName}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Add to selected categories container
+            const container = document.getElementById('selectedCategories');
+            container.appendChild(tag);
+            
+            // Add hidden input
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'categories';
+            hiddenInput.value = categoryName;
+            hiddenInput.dataset.category = categoryName;
+            
+            document.getElementById('categoryInputs').appendChild(hiddenInput);
+            
+            // If parent is selected, uncheck all children
+            if (isParent) {
+                const parentName = checkbox.dataset.category;
+                const childCheckboxes = document.querySelectorAll(`input[data-parent="${parentName}"]`);
+                childCheckboxes.forEach(childCheckbox => {
+                    if (childCheckbox.checked) {
+                        childCheckbox.checked = false;
+                        selectedCategories.delete(childCheckbox.dataset.category);
+                        
+                        // Remove child tag
+                        const childTag = document.querySelector(`.category-tag[data-category="${childCheckbox.dataset.category}"]`);
+                        if (childTag) {
+                            childTag.remove();
+                        }
+                        
+                        // Remove child hidden input
+                        const childInput = document.querySelector(`input[data-category="${childCheckbox.dataset.category}"]`);
+                        if (childInput) {
+                            childInput.remove();
+                        }
+                    }
+                });
+            }
+            
+            // If child is selected, uncheck parent
+            if (!isParent) {
+                const parentName = checkbox.dataset.parent;
+                const parentCheckbox = document.querySelector(`input[data-category="${parentName}"]`);
+                if (parentCheckbox && parentCheckbox.checked) {
+                    parentCheckbox.checked = false;
+                    selectedCategories.delete(parentName);
+                    
+                    // Remove parent tag
+                    const parentTag = document.querySelector(`.category-tag[data-category="${parentName}"]`);
+                    if (parentTag) {
+                        parentTag.remove();
+                    }
+                    
+                    // Remove parent hidden input
+                    const parentInput = document.querySelector(`input[data-category="${parentName}"]`);
+                    if (parentInput) {
+                        parentInput.remove();
+                    }
+                }
+            }
+            
+        } else {
+            // Remove category
+            selectedCategories.delete(categoryName);
+            
+            // Remove tag element
+            const tag = document.querySelector(`.category-tag[data-category="${categoryName}"]`);
+            if (tag) {
+                tag.remove();
+            }
+            
+            // Remove hidden input
+            const hiddenInput = document.querySelector(`input[data-category="${categoryName}"]`);
+            if (hiddenInput) {
+                hiddenInput.remove();
+            }
+        }
+        
+        // Update filter status
+        updateFilterStatus();
+    };
+
+    // Add category function (for backward compatibility)
+    window.addCategory = function(categoryName) {
+        // This function is kept for backward compatibility but now uses the new dropdown system
+        console.log('addCategory called for:', categoryName);
+    };
+
+    // Remove category function
+    window.removeCategory = function(categoryName) {
+        selectedCategories.delete(categoryName);
+        
+        // Remove tag element
+        const tag = document.querySelector(`.category-tag[data-category="${categoryName}"]`);
+        if (tag) {
+            tag.remove();
+        }
+        
+        // Remove hidden input
+        const hiddenInput = document.querySelector(`input[data-category="${categoryName}"]`);
+        if (hiddenInput) {
+            hiddenInput.remove();
+        }
+        
+        // Uncheck corresponding checkbox
+        const checkbox = document.querySelector(`input[data-category="${categoryName}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+        
+        // Update filter status
+        updateFilterStatus();
+    };
+
+
+
+    // Clear all categories
+    window.clearAllCategories = function() {
+        selectedCategories.clear();
+        document.getElementById('selectedCategories').innerHTML = '';
+        document.getElementById('categoryInputs').innerHTML = '';
+        
+        // Uncheck all checkboxes
+        const checkboxes = document.querySelectorAll('.category-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Update filter status
+        updateFilterStatus();
+    };
+
+    // Filter form submission - remove auto-submit
     const filterSelects = document.querySelectorAll('.search-filters select');
     filterSelects.forEach(select => {
         select.addEventListener('change', function() {
-            // Auto-submit form when filters change
-            const form = this.closest('form');
-            if (form) {
-                form.submit();
-            }
+            // Remove auto-submit, user must click search button
+            // Just add visual feedback for active filters
+            updateFilterStatus();
         });
+    });
+    
+    // Update filter status visual feedback
+    function updateFilterStatus() {
+        const form = document.querySelector('.search-form');
+        const hasCategories = selectedCategories.size > 0;
+        const hasStatus = document.querySelector('select[name="status"]').value !== '';
+        const hasQuery = document.getElementById('searchInput').value.trim() !== '';
+        
+        if (hasCategories || hasStatus || hasQuery) {
+            form.classList.add('has-filters');
+        } else {
+            form.classList.remove('has-filters');
+        }
+    }
+    
+    // Update filter status when categories change
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('tag-remove') || e.target.closest('.tag-remove')) {
+            setTimeout(updateFilterStatus, 100);
+        }
+    });
+    
+    // Initialize filter status on page load
+    updateFilterStatus();
+    
+    // Add keyboard support for category dropdown
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Close category dropdown on Escape
+            const dropdownBtn = document.querySelector('.category-dropdown-btn');
+            if (dropdownBtn) {
+                const bsDropdown = bootstrap.Dropdown.getInstance(dropdownBtn);
+                if (bsDropdown) {
+                    bsDropdown.hide();
+                }
+            }
+        }
+    });
+    
+    // Add visual feedback when adding categories
+    window.addCategoryWithFeedback = function(categoryName) {
+        addCategory(categoryName);
+        
+        // Show brief success message
+        const container = document.getElementById('selectedCategories');
+        const feedback = document.createElement('div');
+        feedback.className = 'category-feedback';
+        feedback.innerHTML = `<i class="fas fa-check"></i> Đã thêm "${categoryName}"`;
+        feedback.style.cssText = `
+            position: absolute;
+            top: -30px;
+            right: 0;
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        `;
+        
+        container.style.position = 'relative';
+        container.appendChild(feedback);
+        
+        // Animate in
+        setTimeout(() => {
+            feedback.style.opacity = '1';
+            feedback.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            feedback.style.opacity = '0';
+            feedback.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                if (feedback.parentNode) {
+                    feedback.remove();
+                }
+            }, 300);
+        }, 2000);
+    };
+    
+    // Enhanced search input behavior
+    searchInput.addEventListener('input', function() {
+        updateFilterStatus();
     });
 
     // Keyboard navigation for real-time results
@@ -206,6 +466,69 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét trong thời gian sớm nhất.');
         }
     };
+
+    // Khi bấm nút tìm kiếm
+    window.beforeSubmitScroll = function() {
+        localStorage.setItem('scrollToResults', '1');
+    };
+
+    // Khi trang load, kiểm tra xem có cần scroll không
+    window.addEventListener('load', function() {
+        if (localStorage.getItem('scrollToResults') === '1') {
+            // Đợi một chút để đảm bảo DOM đã load hoàn toàn
+            setTimeout(() => {
+                scrollToSearchResults();
+                localStorage.removeItem('scrollToResults');
+                
+                // Thêm hiệu ứng loading cho search results
+                const searchResults = document.querySelector('.search-results');
+                if (searchResults) {
+                    searchResults.classList.add('loading');
+                    setTimeout(() => {
+                        searchResults.classList.remove('loading');
+                    }, 1000);
+                }
+            }, 300);
+        }
+    });
+        
+    // Scroll to search results function
+    function scrollToSearchResults() {
+        const searchResults = document.querySelector('.search-results');
+        if (searchResults) {
+            // Calculate offset to account for fixed header if any
+            const offset = 80; // Adjust this value based on your header height
+            const elementPosition = searchResults.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            
+            // Smooth scroll to results
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+            
+            // Add highlight effect to the results header after scroll
+            setTimeout(() => {
+                const resultsHeader = document.querySelector('.results-header');
+                if (resultsHeader) {
+                    resultsHeader.classList.add('highlight');
+                    
+                    setTimeout(() => {
+                        resultsHeader.classList.remove('highlight');
+                    }, 1000);
+                }
+            }, 500);
+            
+            // Add visual feedback for the scroll button
+            const scrollButton = event?.target;
+            if (scrollButton && scrollButton.classList.contains('btn-outline-info')) {
+                scrollButton.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    scrollButton.style.transform = '';
+                }, 200);
+            }
+        }
+    }
 
     // Initialize search input focus
     searchInput.focus();

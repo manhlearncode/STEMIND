@@ -360,25 +360,30 @@ def search_files(request):
     
     # Start with all files
     files = File.objects.filter(file_status__in=[0, 1])
-    
+
+    # Nếu có từ khóa, lọc thêm theo keyword
     if query:
-        # Search in title, description, category name, and author username
         files = files.filter(
             Q(title__icontains=query) |
             Q(file_description__icontains=query) |
             Q(categories__name__icontains=query) |
             Q(author__username__icontains=query)
         )
-    
+
+    # Nếu có danh mục, lọc theo danh mục
     if categories_filter:
-        # Filter by multiple categories (OR logic)
-        category_q = Q()
-        for category_name in categories_filter:
-            category_q |= Q(categories__name=category_name)
-        files = files.filter(category_q)
-    
-    if status_filter:
-        files = files.filter(file_status=int(status_filter))
+        files = files.filter(categories__name__in=categories_filter).distinct()
+
+    # Nếu có trạng thái, lọc theo trạng thái
+    if status_filter != '':
+        try:
+            files = files.filter(file_status=int(status_filter))
+        except ValueError:
+            pass  # hoặc xử lý nếu status không hợp lệ
+
+    # Cuối cùng sắp xếp
+    files = files.order_by('-file_downloads', '-created_at')
+
     
     # Order by downloads and creation date
     files = files.order_by('-file_downloads', '-created_at')

@@ -9,12 +9,21 @@ from .forms import PostForm, CommentForm
 from .services.point_service import PointService
 # Create your views here.
 
+def check_and_award_daily_points(user):
+    """Wrapper: use PointService to award daily points safely once/day."""
+    return PointService.check_and_award_daily_points(user)
+
 @login_required
 def feed(request):
-    # Check and award daily points
-    success, message = PointService.check_and_award_daily_points(request.user)
-    if success:
-        messages.success(request, message)
+    # Check and award daily points once per day using a dated session key
+    from datetime import date
+    today_str = date.today().isoformat()
+    if request.session.get('daily_points_date') != today_str:
+        success, message = check_and_award_daily_points(request.user)
+        # Regardless of success, set the date to avoid repeated calls on refresh
+        request.session['daily_points_date'] = today_str
+        if success and message:
+            messages.success(request, message)
     
     # Get all posts for now (simplified version)
     posts = Post.objects.all().select_related('author').prefetch_related('likes', 'comments').order_by('-created_at')

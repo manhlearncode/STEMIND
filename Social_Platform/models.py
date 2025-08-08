@@ -17,7 +17,7 @@ class CustomUser(AbstractUser):
     age = models.PositiveIntegerField(null=True, blank=True, verbose_name='Tuổi')
     address = models.CharField(max_length=200, blank=True, verbose_name='Địa chỉ công tác')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, verbose_name='Vai trò')
-    
+        
     class Meta:
         verbose_name = 'User'
         verbose_name_plural = 'Users'

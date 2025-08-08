@@ -55,7 +55,6 @@ document.querySelectorAll('.comment-btn').forEach(btn => {
             this.classList.remove('commented');
         }
     });
-    window.location.reload();
 });
 
 // Comment form submission

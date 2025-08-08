@@ -9,12 +9,11 @@
 <!-- Search Header -->
 <div class="search-header">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-lg-12">
                 <h1 class="search-title">
                     <i class="fas fa-search me-3"></i>Tìm kiếm tài liệu
                 </h1>
-                <p class="search-subtitle">Tìm kiếm trong hàng nghìn tài liệu STEM chất lượng</p>
+                <p class="search-subtitle">Tìm kiếm theo từ khóa hoặc danh mục trong hàng nghìn tài liệu STEM chất lượng</p>
                 
                 <!-- Search Form -->
                 <form method="GET" action="{% url 'search_files' %}" class="search-form">
@@ -23,50 +22,105 @@
                                class="form-control search-input" 
                                name="q" 
                                value="{{ query }}" 
-                               placeholder="Nhập từ khóa tìm kiếm..."
+                               placeholder="Nhập từ khóa tìm kiếm (tùy chọn)..."
                                id="searchInput">
                         <button class="btn btn-primary search-btn" type="submit">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                     
-                                         <!-- Filters -->
-                     <div class="search-filters mt-3">
-                         <div class="row align-items-center justify-content-center">
-                            {% for category in parent_categories %}
-                                <div class="dropdown col-md-2 text-center mb-3">
-                                    <a class="nav-item nav-link dropdown-toggle text-white {% if category.id == active_category_id %}active{% endif %}" 
-                                       data-bs-toggle="dropdown" 
-                                       href="#" 
-                                       role="button" 
-                                       aria-expanded="false"
-                                       style="color: white !important; text-decoration: none; font-weight: 500;">
-                                        {{category.name}}
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="{% url 'search_files' %}?category={{ category.name }}">{{category.name}} (Tất cả)</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        {% for child in category.children.all %}
-                                        <li><a class="dropdown-item" href="{% url 'search_files' %}?category={{ child.name }}">{{child.name}}</a></li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>   
-                            {% endfor %}
-                         </div>
-                         <div class="row mt-3">
-                             <div class="col-md-2">
+                                         <!-- Advanced Filters -->
+                     <div class="search-filters mt-5">
+                         <div class="row">
+                             <!-- Selected Categories Display -->
+                             <div class="col-12 mb-3">
+                                 <label class="filter-label">
+                                     <i class="fas fa-tags me-2"></i>Danh mục đã chọn
+                                 </label>
+                                 <div class="selected-categories" id="selectedCategories">
+                                     <!-- Selected categories will appear here as tags -->
+                                     {% for category in selected_categories %}
+                                     <span class="category-tag" data-category="{{ category }}">
+                                         {{ category }}
+                                         <button type="button" class="tag-remove" onclick="removeCategory('{{ category }}')">
+                                             <i class="fas fa-times"></i>
+                                         </button>
+                                     </span>
+                                     {% endfor %}
+                                 </div>
+                                 <!-- Hidden inputs for selected categories -->
+                                 <div id="categoryInputs">
+                                     {% for category in selected_categories %}
+                                     <input type="hidden" name="categories" value="{{ category }}">
+                                     {% endfor %}
+                                 </div>
+                             </div>
+                             
+                             <!-- Category Checkbox Columns -->
+                             <div class="col-12 mb-3">
+                                 <label class="filter-label">
+                                     <i class="fas fa-folder-tree me-2"></i>Chọn danh mục
+                                 </label>
+                                 <div class="category-columns">
+                                     {% for parent_category in parent_categories %}
+                                     <div class="category-column">
+                                         <div class="category-column-header">
+                                             <i class="fas fa-folder me-2"></i>{{ parent_category.name }}
+                                         </div>
+                                         <div class="category-column-content">
+                                             <!-- Parent category checkbox -->
+                                             <div class="category-checkbox-item">
+                                                 <input type="checkbox" 
+                                                        id="parent_{{ parent_category.id }}" 
+                                                        class="category-checkbox"
+                                                        data-category="{{ parent_category.name }}"
+                                                        onchange="handleCategoryCheckbox(this)">
+                                                 <label for="parent_{{ parent_category.id }}" class="checkbox-label">
+                                                     <i class="fas fa-folder-open me-2"></i>{{ parent_category.name }} (Tất cả)
+                                                 </label>
+                                             </div>
+                                             
+                                             <!-- Child categories checkboxes -->
+                                             {% for child in parent_category.children.all %}
+                                             <div class="category-checkbox-item child-item">
+                                                 <input type="checkbox" 
+                                                        id="child_{{ child.id }}" 
+                                                        class="category-checkbox"
+                                                        data-category="{{ child.name }}"
+                                                        data-parent="{{ parent_category.name }}"
+                                                        onchange="handleCategoryCheckbox(this)">
+                                                 <label for="child_{{ child.id }}" class="checkbox-label">
+                                                     <i class="fas fa-file me-2"></i>{{ child.name }}
+                                                 </label>
+                                             </div>
+                                             {% endfor %}
+                                         </div>
+                                     </div>
+                                     {% endfor %}
+                                 </div>
+                             </div>
+                             
+                             <!-- Status Filter and Action Buttons -->
+                             <div class="col-md-4 mb-3">
+                                 <label class="filter-label">
+                                     <i class="fas fa-money-bill-wave me-2"></i>Trạng thái
+                                 </label>
                                  <select name="status" class="form-select">
                                      <option value="">Tất cả trạng thái</option>
                                      <option value="0" {% if selected_status == '0' %}selected{% endif %}>Miễn phí</option>
                                      <option value="1" {% if selected_status == '1' %}selected{% endif %}>Có phí</option>
                                  </select>
                              </div>
-                             <div class="col-md-3">
-                                 <button type="submit" class="btn btn-outline-primary w-100">
-                                     <i class="fas fa-filter me-2"></i>Lọc
+                             
+                             <div class="col-md-4 mb-3">
+                                 <label class="filter-label opacity-0">Search</label>
+                                 <button type="submit" class="btn btn-outline-primary w-100" onclick="beforeSubmitScroll()">
+                                     <i class="fas fa-search me-2"></i>Tìm kiếm 
                                  </button>
                              </div>
-                             <div class="col-md-3">
+                             
+                             <div class="col-md-4 mb-3">
+                                 <label class="filter-label opacity-0">Clear</label>
                                  <a href="{% url 'search_files' %}" class="btn btn-outline-secondary w-100">
                                      <i class="fas fa-times me-2"></i>Xóa bộ lọc
                                  </a>
@@ -90,6 +144,8 @@
                     <p class="text-muted">
                         {% if query %}
                             Tìm thấy <strong>{{ total_results }}</strong> kết quả cho "<strong>{{ query }}</strong>"
+                        {% elif selected_categories %}
+                            Tìm thấy <strong>{{ total_results }}</strong> kết quả theo danh mục đã chọn
                         {% else %}
                             Hiển thị tất cả tài liệu
                         {% endif %}
@@ -165,6 +221,8 @@
                                 <p class="text-muted">
                                     {% if query %}
                                         Không có tài liệu nào phù hợp với từ khóa "{{ query }}"
+                                    {% elif selected_categories %}
+                                        Không có tài liệu nào phù hợp với danh mục đã chọn
                                     {% else %}
                                         Chưa có tài liệu nào trong hệ thống
                                     {% endif %}
