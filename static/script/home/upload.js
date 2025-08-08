@@ -111,9 +111,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (files.length > 0) {
             const file = files[0];
             
-            // Validate file size (50MB)
-            if (file.size > 50 * 1024 * 1024) {
-                alert('Kích thước tệp quá lớn! Vui lòng chọn tệp nhỏ hơn 50MB.');
+            // Validate file size (500MB)
+            if (file.size > 500 * 1024 * 1024) {
+                alert('Kích thước tệp quá lớn! Vui lòng chọn tệp nhỏ hơn 500MB.');
                 fileInput.value = '';
                 resetUploadArea();
                 return;
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-cloud-upload-alt upload-icon"></i>
             <h4>Kéo thả tệp vào đây hoặc click để chọn</h4>
             <p class="text-muted">Hỗ trợ: PDF, Word, PowerPoint, Excel, Text, ZIP, RAR</p>
-            <p class="text-muted">Kích thước tối đa: 50MB</p>
+            <p class="text-muted">Kích thước tối đa: 500MB</p>
         `;
     }
 

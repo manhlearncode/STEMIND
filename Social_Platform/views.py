@@ -13,13 +13,15 @@ from .services.point_service import PointService
 def feed(request):
     
     # Get all posts for now (simplified version)
-    posts = Post.objects.all().select_related('author').prefetch_related('likes', 'comments').order_by('-created_at')
+    posts = Post.objects.all().select_related('author').prefetch_related('likes__user', 'comments').order_by('-created_at')
     
-    # Thêm presigned URLs cho posts
+    # Thêm presigned URLs cho posts và thông tin like
     for post in posts:
         post.image_url = post.get_image_presigned_url() if post.image else None
         if hasattr(post.author, 'userprofile'):
             post.author.userprofile.avatar_url = post.author.userprofile.get_avatar_presigned_url() if post.author.userprofile.avatar else None
+        # Thêm thông tin về user hiện tại đã like post này chưa
+        post.is_liked_by_user = post.is_liked_by(request.user)
     
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)

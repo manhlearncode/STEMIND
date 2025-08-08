@@ -46,11 +46,11 @@ def upload_file(request):
         session_id = request.POST.get('session_id', '')
         user_id = request.user.id if request.user.is_authenticated else None
         
-        # Validate file size (max 10MB)
-        if uploaded_file.size > 10 * 1024 * 1024:
+        # Validate file size (max 500MB)
+        if uploaded_file.size > 500 * 1024 * 1024:
             return JsonResponse({
                 'success': False,
-                'error': 'File quá lớn. Kích thước tối đa là 10MB'
+                'error': 'File quá lớn. Kích thước tối đa là 500MB'
             }, status=400)
         
         # Get or create session

@@ -51,6 +51,18 @@ document.addEventListener('DOMContentLoaded', function() {
             likeCount.style.color = '#f91880';
         }
     });
+    
+    // Đảm bảo các nút like chưa được like có màu mặc định
+    document.querySelectorAll('.like-btn:not(.liked)').forEach(btn => {
+        const heartIcon = btn.querySelector('i.fa-heart');
+        const likeCount = btn.querySelector('.like-count');
+        if (heartIcon) {
+            heartIcon.style.color = '#536471';
+        }
+        if (likeCount) {
+            likeCount.style.color = '#536471';
+        }
+    });
 });
 
 // Like functionality
@@ -75,8 +87,8 @@ document.querySelectorAll('.like-btn').forEach(btn => {
                 likeCount.style.color = '#f91880';
             } else {
                 this.classList.remove('liked');
-                heartIcon.style.color = '';
-                likeCount.style.color = '';
+                heartIcon.style.color = '#536471';
+                likeCount.style.color = '#536471';
             }
             
             // Hiển thị thông báo điểm nếu có

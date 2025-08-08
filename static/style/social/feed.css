@@ -233,6 +233,19 @@
     color: #f91880 !important;
 }
 
+/* Màu mặc định cho nút like khi chưa like */
+.post-action.like-btn {
+    color: #536471;
+}
+
+.post-action.like-btn i.fa-heart {
+    color: #536471;
+}
+
+.post-action.like-btn .like-count {
+    color: #536471;
+}
+
 .post-action.commented {
     color: #1d9bf0;
 }

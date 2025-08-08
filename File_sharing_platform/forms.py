@@ -78,7 +78,7 @@ class FileUploadForm(forms.ModelForm):
         help_texts = {
             'title': 'Tên tài liệu phải là duy nhất',
             'categories': 'Chọn một hoặc nhiều danh mục con (không chọn danh mục cha)',
-            'file_urls': 'Chọn file PDF, Word, PowerPoint, Excel, Text, ZIP hoặc RAR (tối đa 50MB)',
+            'file_urls': 'Chọn file PDF, Word, PowerPoint, Excel, Text, ZIP hoặc RAR (tối đa 500MB)',
             'file_thumbnail': 'Tải ảnh đại diện cho tài liệu (tối đa 5MB)',
             'file_price': 'Nhập giá bằng VNĐ (0 = miễn phí)'
         }
@@ -109,9 +109,9 @@ class FileUploadForm(forms.ModelForm):
         file = self.cleaned_data.get('file_urls')
         
         if file and hasattr(file, 'size'):
-            # Kiểm tra kích thước file (50MB)
-            if file.size > 50 * 1024 * 1024:
-                raise forms.ValidationError('Kích thước file không được vượt quá 50MB.')
+            # Kiểm tra kích thước file (500MB)
+            if file.size > 500 * 1024 * 1024:
+                raise forms.ValidationError('Kích thước file không được vượt quá 500MB.')
             
             # Kiểm tra định dạng file
             allowed_extensions = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.zip', '.rar']

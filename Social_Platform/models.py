@@ -48,6 +48,10 @@ class Post(models.Model):
     def comment_count(self):
         return self.comments.count()
     
+    def is_liked_by(self, user):
+        """Kiểm tra xem user đã like post này chưa"""
+        return self.likes.filter(user=user).exists()
+    
     def get_image_presigned_url(self, expires_in=3600):
         """Lấy presigned URL cho ảnh post"""
         if self.image and self.image.name:
