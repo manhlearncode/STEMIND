@@ -142,9 +142,7 @@
                 <div class="transaction-item">
                     <div class="transaction-info">
                         <div class="transaction-type">
-                            {% if transaction.transaction_type == 'daily' %}
-                                <i class="fas fa-calendar-day"></i> Điểm hàng ngày
-                            {% elif transaction.transaction_type == 'upload_file' %}
+                            {% if transaction.transaction_type == 'upload_file' %}
                                 <i class="fas fa-upload"></i> Upload tài liệu
                             {% elif transaction.transaction_type == 'create_post' %}
                                 <i class="fas fa-plus-circle"></i> Tạo bài viết

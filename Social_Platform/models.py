@@ -93,7 +93,6 @@ class UserProfile(models.Model):
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     followers = models.ManyToManyField(CustomUser, related_name='following', blank=True)
     points = models.IntegerField(default=0)  # Điểm của user
-    last_daily_points = models.DateField(null=True, blank=True)  # Ngày nhận điểm hàng ngày cuối
     
     def __str__(self):
         return self.user.username
@@ -141,7 +140,6 @@ def save_user_profile(sender, instance, **kwargs):
 
 class PointTransaction(models.Model):
     TRANSACTION_TYPES = [
-        ('daily', 'Daily Login'),
         ('upload_file', 'Upload File'),
         ('create_post', 'Create Post'),
         ('like_post', 'Like Post'),
@@ -168,7 +166,6 @@ class PointTransaction(models.Model):
 
 class PointSettings(models.Model):
     """Cài đặt điểm cho các hành động"""
-    daily_login_points = models.IntegerField(default=10)
     upload_file_points = models.IntegerField(default=20)
     create_post_points = models.IntegerField(default=15)
     like_post_points = models.IntegerField(default=2)

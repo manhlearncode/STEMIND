@@ -58,33 +58,7 @@ class PointService:
         except Exception as e:
             return False, str(e)
     
-    @staticmethod
-    def check_and_award_daily_points(user):
-        """Kiểm tra và cộng điểm hàng ngày"""
-        try:
-            profile, created = UserProfile.objects.get_or_create(user=user)
-            today = date.today()
-            
-            # Kiểm tra xem hôm nay đã nhận điểm chưa
-            if profile.last_daily_points == today:
-                return False, "Daily points already awarded today"
-            
-            settings = PointSettings.get_settings()
-            success, message = PointService.award_points(
-                user=user,
-                transaction_type='daily',
-                points=settings.daily_login_points,
-                description=f"Daily login bonus for {today}"
-            )
-            
-            if success:
-                profile.last_daily_points = today
-                profile.save()
-                return True, f"Daily bonus: {settings.daily_login_points} points!"
-            
-            return False, message
-        except Exception as e:
-            return False, str(e)
+
     
     @staticmethod
     def handle_post_creation(user, post_id):

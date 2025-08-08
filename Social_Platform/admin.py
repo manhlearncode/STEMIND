@@ -81,7 +81,7 @@ class PointTransactionAdmin(admin.ModelAdmin):
 @admin.register(PointSettings)
 class PointSettingsAdmin(admin.ModelAdmin):
     list_display = [
-        'daily_login_points', 'upload_file_points', 'create_post_points',
+        'upload_file_points', 'create_post_points',
         'like_post_points', 'share_post_points', 'comment_points',
         'follow_user_points', 'view_paid_file_cost', 'download_paid_file_cost'
     ]
