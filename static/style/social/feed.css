@@ -348,3 +348,52 @@
         gap: 1rem;
     }
 }
+
+/* Point Notification Styles */
+.alert-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.alert-success .btn-close {
+    filter: invert(1);
+}
+
+.alert-success i {
+    color: #fff;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.alert-warning .btn-close {
+    filter: invert(1);
+}
+
+.alert-warning i {
+    color: #fff;
+}
+
+/* Animation for point notifications */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.alert.position-fixed {
+    animation: slideInRight 0.3s ease-out;
+}

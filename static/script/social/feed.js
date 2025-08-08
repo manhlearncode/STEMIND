@@ -1,3 +1,32 @@
+// Use global point notification system if available
+function showPointNotification(message, type = 'success') {
+    if (typeof window.showPointNotification === 'function') {
+        return window.showPointNotification(message, type);
+    }
+    
+    // Fallback for older browsers or if global system not loaded
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+    
+    // Choose icon based on type
+    const icon = type === 'success' ? 'fa-coins' : 'fa-exclamation-triangle';
+    
+    notification.innerHTML = `
+        <i class="fas ${icon} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 4000);
+}
+
 // Character counter
 document.querySelector('.post-input').addEventListener('input', function() {
     const maxLength = 500;
@@ -31,6 +60,10 @@ document.querySelectorAll('.like-btn').forEach(btn => {
             likeCount.textContent = data.like_count;
             if (data.liked) {
                 this.classList.add('liked');
+                // Show point notification if available
+                if (data.point_message) {
+                    showPointNotification(data.point_message, 'success');
+                }
             } else {
                 this.classList.remove('liked');
             }
@@ -110,6 +143,11 @@ document.querySelectorAll('.comment-form').forEach(form => {
                 
                 // Clear input
                 input.value = '';
+                
+                // Show point notification if available
+                if (data.point_message) {
+                    showPointNotification(data.point_message, 'success');
+                }
             } else {
                 console.error('Error adding comment:', data.error);
                 alert('Failed to add comment. Please try again.');
@@ -128,14 +166,56 @@ function sharePost(postId) {
             title: 'Check out this post on STEMind',
             text: 'Interesting post from the STEM community',
             url: window.location.origin + `/social/post/${postId}/`
+        }).then(() => {
+            // Show point notification for sharing
+            showPointNotification('+5 points for sharing post!', 'success');
         });
     } else {
         // Fallback - copy to clipboard
         navigator.clipboard.writeText(window.location.origin + `/social/post/${postId}/`).then(() => {
             alert('Post link copied to clipboard!');
+            // Show point notification for sharing
+            showPointNotification('+5 points for sharing post!', 'success');
         });
     }
 }
+
+// Follow functionality with point notification
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.follow-btn')) {
+        const followBtn = e.target.closest('.follow-btn');
+        const username = followBtn.dataset.username;
+        
+        fetch(`/social/follow/${username}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update follow button state
+                if (data.is_following) {
+                    followBtn.classList.add('following');
+                    followBtn.textContent = 'Following';
+                } else {
+                    followBtn.classList.remove('following');
+                    followBtn.textContent = 'Follow';
+                }
+                
+                // Show point notification if available
+                if (data.message && data.message.includes('points')) {
+                    const pointMessage = data.message.split('. ').pop(); // Get the point message part
+                    showPointNotification(pointMessage, 'success');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+});
 
 // Image preview
 document.getElementById('image').addEventListener('change', function() {

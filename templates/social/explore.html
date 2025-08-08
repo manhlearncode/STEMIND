@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %}Social Feed - STEMIND{% endblock %}
+{% block title %}Explore - STEMIND{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'style/social/feed.css' %}">
@@ -11,41 +11,7 @@
 <div class="social-container">
     <!-- Header -->
     <div class="social-header">
-        <h1><i class="fas fa-home me-2"></i>Social Feed</h1>
-    </div>
-
-    <!-- Post Form -->
-    <div class="post-form-container">
-        <form method="post" enctype="multipart/form-data" class="post-form" id="postForm">
-            {% csrf_token %}
-            <div class="user-avatar">
-                {{ user.username|slice:":1"|upper }}
-            </div>
-            <div class="post-form-content">
-                <textarea 
-                    name="content" 
-                    class="post-input" 
-                    placeholder="What's happening in STEM world?"
-                    maxlength="500"
-                    required
-                ></textarea>
-                <div class="post-form-actions">
-                    <div class="post-form-actions-left">
-                        <label for="image" class="post-action" style="cursor: pointer;">
-                            <i class="fas fa-image"></i>
-                            <span>Image</span>
-                        </label>
-                        <input type="file" id="image" name="image" accept="image/*" style="display: none;">
-                    </div>
-                    <div class="post-form-actions-right">
-                        <span id="charCount" style="color: #536471; font-size: 0.9rem;">500</span>
-                        <button type="submit" class="post-button" id="postButton">
-                            Post
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
+        <h1><i class="fas fa-compass me-2"></i>Explore</h1>
     </div>
 
     <!-- Posts Feed -->
@@ -122,26 +88,13 @@
     {% else %}
         <div class="empty-feed">
             <div class="empty-feed-icon">
-                <i class="fas fa-feather"></i>
+                <i class="fas fa-compass"></i>
             </div>
-            <h3>No posts yet</h3>
-            <p>Be the first to share something in the STEM community!</p>
+            <h3>No posts to explore</h3>
+            <p>Start sharing content to see it here!</p>
         </div>
     {% endif %}
 </div>
-
-<!-- Success/Error Messages -->
-{% if messages %}
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        <i class="fas fa-{% if message.tags == 'success' %}coins{% else %}exclamation-circle{% endif %} me-2"></i>
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
 
 <!-- Point Notifications from Context -->
 {% if point_notifications %}
@@ -161,4 +114,4 @@
 
 {% block extra_js %}
 <script src="{% static 'script/social/feed.js' %}"></script>
-{% endblock %} 
+{% endblock %}
