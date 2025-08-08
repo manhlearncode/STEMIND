@@ -84,9 +84,19 @@ class FileUploadForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        # Cập nhật choices cho file_status theo model
-        self.fields['file_status'].choices = [(0, 'Free'), (1, 'For sales')]
+        
+        # Lưu user instance để sử dụng trong validation
+        self.user = user
+        
+        # Cập nhật choices cho file_status theo role của user
+        if user and user.role == 'expert':
+            self.fields['file_status'].choices = [(0, 'Free'), (1, 'For sales')]
+        else:
+            self.fields['file_status'].choices = [(0, 'Free')]
+            # Set default value to Free for non-experts
+            self.fields['file_status'].initial = 0
         
         # Chỉ hiển thị categories con (không hiển thị categories cha)
         self.fields['categories'].queryset = Category.objects.filter(parent__isnull=False)
@@ -150,6 +160,15 @@ class FileUploadForm(forms.ModelForm):
             raise forms.ValidationError('Tiêu đề này đã tồn tại. Vui lòng chọn tiêu đề khác.')
             
         return title
+
+    def clean_file_status(self):
+        file_status = self.cleaned_data.get('file_status')
+        
+        # Kiểm tra quyền đăng tài liệu tính phí
+        if file_status == 1 and (not hasattr(self, 'user') or not self.user or self.user.role != 'expert'):
+            raise forms.ValidationError('Chỉ chuyên gia mới có thể đăng tài liệu tính phí.')
+            
+        return file_status
 
     def clean_categories(self):
         categories = self.cleaned_data.get('categories')

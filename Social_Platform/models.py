@@ -146,6 +146,8 @@ class PointTransaction(models.Model):
         ('share_post', 'Share Post'),
         ('view_file', 'View File'),
         ('download_file', 'Download File'),
+        ('view_free_file', 'View Free File'),
+        ('download_free_file', 'Download Free File'),
         ('comment', 'Comment'),
         ('follow', 'Follow User'),
     ]
@@ -174,6 +176,8 @@ class PointSettings(models.Model):
     follow_user_points = models.IntegerField(default=5)
     view_paid_file_cost = models.IntegerField(default=5)
     download_paid_file_cost = models.IntegerField(default=10)
+    view_free_file_cost = models.IntegerField(default=1)  # Điểm trừ khi xem tài liệu free
+    download_free_file_cost = models.IntegerField(default=5)  # Điểm trừ khi download tài liệu free
     
     class Meta:
         verbose_name = "Point Settings"

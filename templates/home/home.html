@@ -5,6 +5,26 @@
 {% endblock %}
 
 {% block content %}
+<!-- Toast Notifications Container -->
+<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header {% if message.tags == 'error' %}bg-danger text-white{% elif message.tags == 'success' %}bg-success text-white{% elif message.tags == 'warning' %}bg-warning text-dark{% else %}bg-info text-white{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                    <strong class="me-auto">
+                        {% if message.tags == 'error' %}Lỗi{% elif message.tags == 'success' %}Thành công{% elif message.tags == 'warning' %}Cảnh báo{% else %}Thông báo{% endif %}
+                    </strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
@@ -90,7 +110,16 @@
                         </div>
                         <div class="recent-item-content">
                             <h4 class="recent-item-title">{{ file.title }}</h4>
-                            <p class="recent-item-date">{{ file.created_at|timesince }} trước bởi {{ file.author.username }}</p>
+                            <div class="recent-item-meta">
+                                <p class="recent-item-date">{{ file.created_at|timesince }} trước bởi {{ file.author.username }}</p>
+                                <div class="recent-item-price">
+                                    {% if file.file_status == 0 %}
+                                        <span class="badge bg-success">Miễn phí</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ file.file_price|floatformat:0 }} VNĐ</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </a>
                 </article>
@@ -159,5 +188,31 @@
 
 {% block extra_js %}
 <script src="{% static 'script/home/home.js' %}"></script>
+<script>
+// Auto-hide toast notifications after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const toasts = document.querySelectorAll('.toast');
+    toasts.forEach(function(toast) {
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            toast.classList.add('hide');
+            setTimeout(function() {
+                toast.remove();
+            }, 300);
+        }, 5000);
+        
+        // Manual close button
+        const closeBtn = toast.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                toast.classList.add('hide');
+                setTimeout(function() {
+                    toast.remove();
+                }, 300);
+            });
+        }
+    });
+});
+</script>
 {% endblock %}
     

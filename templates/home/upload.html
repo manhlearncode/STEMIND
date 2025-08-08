@@ -218,8 +218,18 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="{{ form.file_status.id_for_label }}" class="form-label">{{ form.file_status.label }}</label>
-                        {{ form.file_status }}
-                        <div class="form-text">Chọn "Free" để chia sẻ miễn phí, hoặc "For sales" để bán tài liệu</div>
+                        {% if user.role == 'expert' %}
+                            {{ form.file_status }}
+                            <div class="form-text">Chọn "Free" để chia sẻ miễn phí, hoặc "For sales" để bán tài liệu</div>
+                        {% else %}
+                            <select name="file_status" id="id_file_status" class="form-select" required>
+                                <option value="0" selected>Free</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                Chỉ chuyên gia mới có thể đăng tài liệu tính phí. Bạn hiện tại chỉ có thể đăng tài liệu miễn phí.
+                            </div>
+                        {% endif %}
                         {% if form.file_status.errors %}
                             <div class="error-message">
                                 {% for error in form.file_status.errors %}

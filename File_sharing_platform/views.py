@@ -223,15 +223,25 @@ def file_detail(request, title):
     child_categories = Category.objects.filter(parent__isnull=False)
     file_obj = get_object_or_404(File, title=title)
     
-    # Deduct points for viewing paid file
+    # Handle points deduction for viewing files
     can_view = True
-    if request.user.is_authenticated and file_obj.file_status == 1:  # Paid file
-        success, message = PointService.handle_view_paid_file(request.user, file_obj.id)
-        if not success:
-            messages.error(request, message)
-            can_view = False
-        else:
-            messages.info(request, message)
+    point_message = None
+    
+    if request.user.is_authenticated:
+        if file_obj.file_status == 1:  # For sale file - không trừ điểm khi view
+            can_view = True
+            # Không trừ điểm cho file for sale khi view
+        else:  # Free file
+            success, message = PointService.handle_view_free_file(request.user, file_obj.id)
+            if not success:
+                messages.error(request, f"Bạn cần ít nhất 1 điểm để xem tài liệu này. Hãy upload tài liệu để nhận điểm.")
+                can_view = False
+                return redirect('home')
+            else:
+                point_message = message
+        
+        if point_message:
+            messages.info(request, point_message)
     
     # Lấy related files từ cùng categories
     related_files = File.objects.filter(file_status=1, categories__in=file_obj.categories.all()).exclude(id=file_obj.id).order_by('-file_downloads')[:5]
@@ -256,14 +266,18 @@ def file_detail(request, title):
 def download_file(request, file_id):
     file_obj = get_object_or_404(File, id=file_id)
     
-    # Deduct points for downloading paid file
-    if request.user.is_authenticated and file_obj.file_status == 1:  # Paid file
-        success, message = PointService.handle_download_paid_file(request.user, file_obj.id)
-        if not success:
-            messages.error(request, message)
-            return redirect('file_detail', title=file_obj.title)
-        else:
-            messages.info(request, message)
+    # Handle points deduction for downloading files
+    if request.user.is_authenticated:
+        if file_obj.file_status == 1:  # For sale file - không trừ điểm khi download
+            # Không trừ điểm cho file for sale khi download
+            pass
+        else:  # Free file
+            success, message = PointService.handle_download_free_file(request.user, file_obj.id)
+            if not success:
+                messages.error(request, f"Bạn cần ít nhất 5 điểm để download tài liệu này. Hiện tại bạn có {PointService.get_user_points(request.user)} điểm.")
+                return redirect('home')
+            else:
+                messages.info(request, message)
     
     file_obj.file_downloads += 1
     file_obj.save(update_fields=['file_downloads'])
@@ -280,10 +294,21 @@ def upload_file(request):
         return redirect('enter')
     
     if request.method == 'POST':
-        form = FileUploadForm(request.POST, request.FILES)
+        form = FileUploadForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             file_obj = form.save(commit=False)
             file_obj.author = request.user
+            
+            # Kiểm tra quyền đăng tài liệu tính phí
+            if file_obj.file_status == 1 and request.user.role != 'expert':
+                messages.error(request, 'Chỉ chuyên gia mới có thể đăng tài liệu tính phí.')
+                context = {
+                    'form': form,
+                    'parent_categories': parent_categories,
+                    'child_categories': child_categories
+                }
+                return render(request, 'home/upload.html', context)
+            
             file_obj.save()
             form.save_m2m()  # <-- Thêm dòng này để lưu categories
             
@@ -295,7 +320,7 @@ def upload_file(request):
         else:
             messages.error(request, 'Có lỗi xảy ra khi tải lên. Vui lòng kiểm tra lại thông tin.')
     else:
-        form = FileUploadForm()
+        form = FileUploadForm(user=request.user)
     
     context = {
         'form': form,

@@ -124,6 +124,11 @@ class PointService:
     def handle_view_paid_file(user, file_id):
         """Trừ điểm khi xem tài liệu có phí"""
         settings = PointSettings.get_settings()
+        current_points = PointService.get_user_points(user)
+        
+        if current_points < settings.view_paid_file_cost:
+            return False, f"Bạn cần ít nhất {settings.view_paid_file_cost} điểm để xem tài liệu này. Hiện tại bạn có {current_points} điểm."
+        
         return PointService.deduct_points(
             user=user,
             transaction_type='view_file',
@@ -136,11 +141,50 @@ class PointService:
     def handle_download_paid_file(user, file_id):
         """Trừ điểm khi download tài liệu có phí"""
         settings = PointSettings.get_settings()
+        current_points = PointService.get_user_points(user)
+        
+        if current_points < settings.download_paid_file_cost:
+            return False, f"Bạn cần ít nhất {settings.download_paid_file_cost} điểm để download tài liệu này. Hiện tại bạn có {current_points} điểm."
+        
         return PointService.deduct_points(
             user=user,
             transaction_type='download_file',
             points=settings.download_paid_file_cost,
             description="Downloaded a paid file",
+            related_object_id=file_id
+        )
+    
+    @staticmethod
+    def handle_view_free_file(user, file_id):
+        """Trừ điểm khi xem tài liệu free"""
+        settings = PointSettings.get_settings()
+        current_points = PointService.get_user_points(user)
+        
+        if current_points < settings.view_free_file_cost:
+            return False, f"Bạn cần ít nhất {settings.view_free_file_cost} điểm để xem tài liệu này. Hiện tại bạn có {current_points} điểm."
+        
+        return PointService.deduct_points(
+            user=user,
+            transaction_type='view_free_file',
+            points=settings.view_free_file_cost,
+            description="Viewed a free file",
+            related_object_id=file_id
+        )
+    
+    @staticmethod
+    def handle_download_free_file(user, file_id):
+        """Trừ điểm khi download tài liệu free"""
+        settings = PointSettings.get_settings()
+        current_points = PointService.get_user_points(user)
+        
+        if current_points < settings.download_free_file_cost:
+            return False, f"Bạn cần ít nhất {settings.download_free_file_cost} điểm để download tài liệu này. Hiện tại bạn có {current_points} điểm."
+        
+        return PointService.deduct_points(
+            user=user,
+            transaction_type='download_free_file',
+            points=settings.download_free_file_cost,
+            description="Downloaded a free file",
             related_object_id=file_id
         )
     
