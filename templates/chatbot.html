@@ -345,20 +345,110 @@
         }
 
         .input-container {
-            display: flex;
-            align-items: center;
-            background: #f8fafc;
+            background: white;
             border-radius: 25px;
-            padding: 6px;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 96, 101, 0.05);
+            padding: 15px 20px;
+            box-shadow: 0 4px 20px rgba(0, 96, 101, 0.1);
+            border: 1px solid rgba(0, 96, 101, 0.1);
+            position: relative;
         }
 
         .input-container:focus-within {
             border-color: #006065;
             box-shadow: 0 0 0 4px rgba(0, 96, 101, 0.1);
             background: white;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-button {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .file-button:hover {
+            background: #e0e0e0;
+            color: #333;
+            transform: scale(1.05);
+        }
+
+        .file-upload-area {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .uploaded-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #495057;
+            max-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .uploaded-file:hover {
+            border-color: #006065;
+            box-shadow: 0 2px 8px rgba(0, 96, 101, 0.1);
+        }
+
+        .uploaded-file .file-name {
+            margin-right: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .uploaded-file .file-size {
+            font-size: 10px;
+            color: #6c757d;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .uploaded-file .remove-file {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 4px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .uploaded-file .remove-file:hover {
+            color: #c82333;
+            transform: scale(1.1);
         }
 
         .message-input {
@@ -629,15 +719,24 @@
 
             <div class="input-area">
                 <div class="input-container">
-                    <textarea 
-                        class="message-input" 
-                        id="messageInput" 
-                        placeholder="Nhập tin nhắn của bạn..."
-                        rows="1"
-                    ></textarea>
-                    <button class="send-button" id="sendButton" onclick="sendMessage()">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
+                    <div class="file-upload-area" id="fileUploadArea" style="display: none;">
+                        <div class="uploaded-files" id="uploadedFiles"></div>
+                    </div>
+                    <div class="input-row">
+                        <button class="file-button" id="fileButton" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <textarea 
+                            class="message-input" 
+                            id="messageInput" 
+                            placeholder="Nhập tin nhắn của bạn..."
+                            rows="1"
+                        ></textarea>
+                        <button class="send-button" id="sendButton" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <input type="file" id="fileInput" style="display: none;" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv">
                 </div>
             </div>
         </div>
@@ -647,6 +746,7 @@
         // Global variables
         let currentSessionId = null;
         let chatHistory = [];
+        let uploadedFiles = []; // Array to store uploaded file IDs
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -671,6 +771,7 @@
         function setupEventListeners() {
             const messageInput = document.getElementById('messageInput');
             const sendButton = document.getElementById('sendButton');
+            const fileInput = document.getElementById('fileInput');
 
             // Auto-resize textarea
             messageInput.addEventListener('input', function() {
@@ -685,13 +786,135 @@
                     sendMessage();
                 }
             });
+
+            // Handle file selection
+            fileInput.addEventListener('change', handleFileSelection);
+        }
+
+        function handleFileSelection(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                uploadFile(file);
+            });
+
+            // Clear the input
+            event.target.value = '';
+        }
+
+        function uploadFile(file) {
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File quá lớn. Kích thước tối đa là 10MB');
+                return;
+            }
+
+            // Show file in upload area
+            addFileToUploadArea(file);
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('session_id', currentSessionId);
+
+            fetch('/chatbot/upload/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store file ID for later use
+                    uploadedFiles.push({
+                        id: data.file_id,
+                        name: data.file_name,
+                        size: data.file_size,
+                        type: data.file_type
+                    });
+                    
+                    // Update file display with success
+                    updateFileDisplay(file.name, data.file_id, true);
+                } else {
+                    alert('Lỗi upload file: ' + data.error);
+                    removeFileFromUploadArea(file.name);
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                alert('Lỗi upload file. Vui lòng thử lại.');
+                removeFileFromUploadArea(file.name);
+            });
+        }
+
+        function addFileToUploadArea(file) {
+            const uploadArea = document.getElementById('fileUploadArea');
+            const uploadedFilesDiv = document.getElementById('uploadedFiles');
+            
+            const fileElement = document.createElement('div');
+            fileElement.className = 'uploaded-file';
+            fileElement.id = `file-${file.name}`;
+            
+            fileElement.innerHTML = `
+                <span class="file-name">${file.name}</span>
+                <span class="file-size">${formatFileSize(file.size)}</span>
+                <button class="remove-file" onclick="removeFile('${file.name}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            uploadedFilesDiv.appendChild(fileElement);
+            uploadArea.style.display = 'block';
+        }
+
+        function updateFileDisplay(fileName, fileId, success) {
+            const fileElement = document.getElementById(`file-${fileName}`);
+            if (fileElement) {
+                if (success) {
+                    fileElement.style.borderColor = '#28a745';
+                    fileElement.style.backgroundColor = '#f8fff9';
+                } else {
+                    fileElement.style.borderColor = '#dc3545';
+                    fileElement.style.backgroundColor = '#fff8f8';
+                }
+            }
+        }
+
+        function removeFile(fileName) {
+            // Remove from uploadedFiles array
+            uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
+            
+            // Remove from UI
+            removeFileFromUploadArea(fileName);
+            
+            // Hide upload area if no files
+            if (uploadedFiles.length === 0) {
+                document.getElementById('fileUploadArea').style.display = 'none';
+            }
+        }
+
+        function removeFileFromUploadArea(fileName) {
+            const fileElement = document.getElementById(`file-${fileName}`);
+            if (fileElement) {
+                fileElement.remove();
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
             
-            if (!message) return;
+            if (!message && uploadedFiles.length === 0) return;
 
             // Add user message to UI
             addMessageToUI(message, 'user');
@@ -703,6 +926,13 @@
             // Show typing indicator
             showTypingIndicator();
             
+            // Prepare data for API
+            const requestData = {
+                message: message,
+                session_id: currentSessionId,
+                file_ids: uploadedFiles.map(file => file.id)
+            };
+            
             // Send to server
             fetch('/chatbot/api/', {
                 method: 'POST',
@@ -710,10 +940,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({
-                    message: message,
-                    session_id: currentSessionId
-                })
+                body: JSON.stringify(requestData)
             })
             .then(response => response.json())
             .then(data => {
@@ -729,6 +956,11 @@
                     
                     // Save to chat history
                     saveChatToHistory(message, response);
+                    
+                    // Clear uploaded files
+                    uploadedFiles = [];
+                    document.getElementById('fileUploadArea').style.display = 'none';
+                    document.getElementById('uploadedFiles').innerHTML = '';
                 } else {
                     addMessageToUI('Xin lỗi, có lỗi xảy ra: ' + data.error, 'bot');
                 }

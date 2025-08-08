@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 import uuid
 import os
+import mimetypes
 
 def get_upload_path(instance, filename):
     """Generate upload path for chat files"""
@@ -81,3 +82,18 @@ class FileAttachment(models.Model):
     
     def is_document(self):
         return self.file_type == 'document'
+    
+    def get_file_type_from_mime(self, mime_type):
+        """Determine file type from MIME type"""
+        if mime_type.startswith('image/'):
+            return 'image'
+        elif mime_type.startswith('video/'):
+            return 'video'
+        elif mime_type.startswith('audio/'):
+            return 'audio'
+        elif mime_type in ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+                          'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                          'text/plain', 'text/csv']:
+            return 'document'
+        else:
+            return 'other'
