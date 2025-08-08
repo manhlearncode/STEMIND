@@ -85,6 +85,18 @@ class PointService:
         )
     
     @staticmethod
+    def handle_unlike_post(user, post_id):
+        """Trừ điểm khi hủy like post"""
+        settings = PointSettings.get_settings()
+        return PointService.deduct_points(
+            user=user,
+            transaction_type='unlike_post',
+            points=settings.like_post_points,  # Trừ số điểm bằng với số điểm đã cộng khi like
+            description="Unliked a post",
+            related_object_id=post_id
+        )
+    
+    @staticmethod
     def handle_comment(user, post_id):
         """Cộng điểm khi comment"""
         settings = PointSettings.get_settings()

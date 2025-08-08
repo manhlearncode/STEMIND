@@ -143,6 +143,7 @@ class PointTransaction(models.Model):
         ('upload_file', 'Upload File'),
         ('create_post', 'Create Post'),
         ('like_post', 'Like Post'),
+        ('unlike_post', 'Unlike Post'),  # Thêm type mới cho unlike
         ('share_post', 'Share Post'),
         ('view_file', 'View File'),
         ('download_file', 'Download File'),
@@ -168,14 +169,11 @@ class PointTransaction(models.Model):
 
 class PointSettings(models.Model):
     """Cài đặt điểm cho các hành động"""
-    upload_file_points = models.IntegerField(default=20)
-    create_post_points = models.IntegerField(default=15)
-    like_post_points = models.IntegerField(default=2)
-    share_post_points = models.IntegerField(default=5)
-    comment_points = models.IntegerField(default=3)
-    follow_user_points = models.IntegerField(default=5)
-    view_paid_file_cost = models.IntegerField(default=5)
-    download_paid_file_cost = models.IntegerField(default=10)
+    upload_file_points = models.IntegerField(default=10)
+    create_post_points = models.IntegerField(default=1)  # Giảm từ 15 xuống 1
+    like_post_points = models.IntegerField(default=1)    # Giảm từ 2 xuống 1
+    share_post_points = models.IntegerField(default=1)
+    comment_points = models.IntegerField(default=1)      # Giảm từ 3 xuống 1
     view_free_file_cost = models.IntegerField(default=1)  # Điểm trừ khi xem tài liệu free
     download_free_file_cost = models.IntegerField(default=5)  # Điểm trừ khi download tài liệu free
     

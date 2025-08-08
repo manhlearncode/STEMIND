@@ -207,11 +207,30 @@
 }
 
 .post-action.liked {
-    color: #f91880;
+    color: #f91880 !important;
 }
 
 .post-action.liked:hover {
-    background: rgba(249, 24, 128, 0.1);
+    background: rgba(249, 24, 128, 0.1) !important;
+    color: #f91880 !important;
+}
+
+.post-action.liked i,
+.post-action.liked i.fa-heart {
+    color: #f91880 !important;
+}
+
+.post-action.liked .like-count {
+    color: #f91880 !important;
+}
+
+/* Đảm bảo tim hồng hiển thị đúng khi page load */
+.like-btn.liked i.fa-heart {
+    color: #f91880 !important;
+}
+
+.like-btn.liked .like-count {
+    color: #f91880 !important;
 }
 
 .post-action.commented {

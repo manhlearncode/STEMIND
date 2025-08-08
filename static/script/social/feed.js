@@ -38,11 +38,27 @@ document.querySelector('.post-input').addEventListener('input', function() {
     }
 });
 
+// Đảm bảo tim hồng hiển thị đúng khi page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Kiểm tra và áp dụng style cho các nút like đã được like
+    document.querySelectorAll('.like-btn.liked').forEach(btn => {
+        const heartIcon = btn.querySelector('i.fa-heart');
+        const likeCount = btn.querySelector('.like-count');
+        if (heartIcon) {
+            heartIcon.style.color = '#f91880';
+        }
+        if (likeCount) {
+            likeCount.style.color = '#f91880';
+        }
+    });
+});
+
 // Like functionality
 document.querySelectorAll('.like-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const postId = this.dataset.postId;
         const likeCount = this.querySelector('.like-count');
+        const heartIcon = this.querySelector('i.fa-heart');
         
         fetch(`/social/like/${postId}/`, {
             method: 'POST',
@@ -55,12 +71,21 @@ document.querySelectorAll('.like-btn').forEach(btn => {
             likeCount.textContent = data.like_count;
             if (data.liked) {
                 this.classList.add('liked');
-                // Show point notification if available
-                if (data.point_message) {
-                    showPointNotification(data.point_message, 'success');
-                }
+                heartIcon.style.color = '#f91880';
+                likeCount.style.color = '#f91880';
             } else {
                 this.classList.remove('liked');
+                heartIcon.style.color = '';
+                likeCount.style.color = '';
+            }
+            
+            // Hiển thị thông báo điểm nếu có
+            if (data.point_message) {
+                if (data.point_message.includes("Không thể")) {
+                    showPointNotification(data.point_message, 'warning');
+                } else {
+                    showPointNotification(data.point_message, 'success');
+                }
             }
         })
         .catch(error => {

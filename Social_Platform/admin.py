@@ -83,17 +83,13 @@ class PointSettingsAdmin(admin.ModelAdmin):
     list_display = [
         'upload_file_points', 'create_post_points',
         'like_post_points', 'share_post_points', 'comment_points',
-        'follow_user_points', 'view_paid_file_cost', 'download_paid_file_cost',
         'view_free_file_cost', 'download_free_file_cost'
     ]
     
     fieldsets = (
         ('Điểm cộng cho hoạt động', {
             'fields': ('upload_file_points', 'create_post_points', 'like_post_points', 
-                      'share_post_points', 'comment_points', 'follow_user_points')
-        }),
-        ('Điểm trừ cho tài liệu có phí', {
-            'fields': ('view_paid_file_cost', 'download_paid_file_cost')
+                      'share_post_points', 'comment_points')
         }),
         ('Điểm trừ cho tài liệu free', {
             'fields': ('view_free_file_cost', 'download_free_file_cost')

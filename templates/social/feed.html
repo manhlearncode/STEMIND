@@ -74,8 +74,8 @@
                 <div class="post-action-group">
                     <button class="post-action like-btn {% if request.user in post.likes.all %}liked{% endif %}" 
                             data-post-id="{{ post.id }}">
-                        <i class="fas fa-heart"></i>
-                        <span class="like-count">{{ post.like_count }}</span>
+                        <i class="fas fa-heart" {% if request.user in post.likes.all %}style="color: #f91880;"{% endif %}></i>
+                        <span class="like-count" {% if request.user in post.likes.all %}style="color: #f91880;"{% endif %}>{{ post.like_count }}</span>
                     </button>
                     
                     <button class="post-action comment-btn" data-post-id="{{ post.id }}">

@@ -57,11 +57,20 @@ def like_post(request, post_id):
     
     point_message = None
     if not created:
+        # User đã like rồi, bây giờ unlike
         like.delete()
         liked = False
+        # Trừ điểm khi unlike
+        success, point_message = PointService.handle_unlike_post(request.user, post_id)
+        if not success:
+            # Nếu không đủ điểm để trừ, không cho phép unlike
+            like, created = Like.objects.get_or_create(user=request.user, post=post)
+            liked = True
+            point_message = "Không thể hủy like: " + point_message
     else:
+        # User chưa like, bây giờ like
         liked = True
-        # Award points for liking post
+        # Cộng điểm khi like
         success, point_message = PointService.handle_like_post(request.user, post_id)
     
     response_data = {
