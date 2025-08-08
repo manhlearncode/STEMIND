@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'style/social/profile.css' %}">
 <style>
 .points-header {
-    background: linear-gradient(135deg, #006056 0%, #009885 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 2rem;
     border-radius: 15px;
@@ -93,7 +93,7 @@
 .summary-number {
     font-size: 2rem;
     font-weight: bold;
-    color: #006056;
+    color: #667eea;
     margin-bottom: 0.5rem;
 }
 
@@ -101,34 +101,6 @@
     color: #666;
     font-size: 0.9rem;
 }
-
-.btn-outline-primary {
-    margin-bottom: 10px;
-    background-color: #fff;
-    color: #006056;
-    border: 1px solid #006056;
-}
-
-.btn-outline-primary:hover {
-    background-color: #006056;
-    border: 1px solid #006056;
-    color: white;
-}
-
-.btn-outline-secondary {
-    margin-bottom: 10px;
-    background-color: #fff;
-    color: #006056;
-    border: 1px solid #006056;
-}
-
-.btn-outline-secondary:hover {
-    background-color: #006056;
-    border: 1px solid #006056;
-    color: white;
-}
-
-
 </style>
 {% endblock %}
 
@@ -253,19 +225,4 @@
         </a>
     </div>
 </div>
-
-<!-- Point Notifications from Context -->
-{% if point_notifications %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        {% for notification in point_notifications %}
-            setTimeout(function() {
-                if (typeof showPointNotification !== 'undefined') {
-                    showPointNotification('{{ notification.message|escapejs }}', '{{ notification.type }}');
-                }
-            }, {{ forloop.counter }} * 500);
-        {% endfor %}
-    });
-</script>
-{% endif %}
 {% endblock %}

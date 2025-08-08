@@ -72,19 +72,4 @@
 
 {% block extra_js %}
 <script src="{% static 'script/social/liked_posts.js' %}"></script>
-{% endblock %}
-
-<!-- Point Notifications from Context -->
-{% if point_notifications %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        {% for notification in point_notifications %}
-            setTimeout(function() {
-                if (typeof showPointNotification !== 'undefined') {
-                    showPointNotification('{{ notification.message|escapejs }}', '{{ notification.type }}');
-                }
-            }, {{ forloop.counter }} * 500);
-        {% endfor %}
-    });
-</script>
-{% endif %} 
+{% endblock %} 

@@ -7,7 +7,6 @@ from django.db import models
 from .models import Post, Like, Comment, UserProfile, CustomUser, PointTransaction
 from .forms import PostForm, CommentForm
 from .services.point_service import PointService
-from .utils import add_point_notification, get_and_clear_point_notifications
 # Create your views here.
 
 @login_required
@@ -33,8 +32,7 @@ def feed(request):
             success, point_message = PointService.handle_post_creation(request.user, post.id)
             
             if success and point_message:
-                add_point_notification(request, point_message, 'success')
-                messages.success(request, 'Post created successfully!')
+                messages.success(request, f'Post created successfully! {point_message}')
             else:
                 messages.success(request, 'Post created successfully!')
             
@@ -45,14 +43,10 @@ def feed(request):
     # Get user points for display
     user_points = PointService.get_user_points(request.user)
     
-    # Get point notifications from session
-    point_notifications = get_and_clear_point_notifications(request)
-    
     context = {
         'posts': posts,
         'form': form,
         'user_points': user_points,
-        'point_notifications': point_notifications,
     }
     return render(request, 'social/feed.html', context)
 
@@ -152,16 +146,12 @@ def profile(request, username):
     except UserProfile.DoesNotExist:
         is_following = False
     
-    # Get point notifications from session
-    point_notifications = get_and_clear_point_notifications(request)
-    
     context = {
         'profile_user': user,
         'profile': profile,
         'posts': posts,
         'liked_posts': liked_posts,
         'is_following': is_following,
-        'point_notifications': point_notifications,
     }
     return render(request, 'social/profile.html', context)
 
@@ -176,13 +166,9 @@ def liked_posts(request):
         if hasattr(post.author, 'userprofile'):
             post.author.userprofile.avatar_url = post.author.userprofile.get_avatar_presigned_url() if post.author.userprofile.avatar else None
 
-    # Get point notifications from session
-    point_notifications = get_and_clear_point_notifications(request)
-
     context = {
         'posts': liked_posts,
-        'title': 'Liked Posts',
-        'point_notifications': point_notifications,
+        'title': 'Liked Posts'
     }
     return render(request, 'social/liked_posts.html', context)
 
@@ -226,7 +212,7 @@ def follow_user(request, username):
             # Award points for following user
             success, point_message = PointService.handle_follow_user(request.user, user_to_follow.id)
             if success and point_message:
-                add_point_notification(request, point_message, 'success')
+                message += f'. {point_message}'
         
         followers_count = profile.followers_count()
         print(f"New follow status: {is_following}, Followers count: {followers_count}")
@@ -268,15 +254,11 @@ def points_history(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Get point notifications from session
-    point_notifications = get_and_clear_point_notifications(request)
-    
     context = {
         'transactions': page_obj,
         'user_points': user_points,
         'total_earned': total_earned,
         'total_spent': total_spent,
-        'point_notifications': point_notifications,
     }
     return render(request, 'social/points_history.html', context)
 
@@ -313,12 +295,8 @@ def explore(request):
             post.author.userprofile.avatar_url = post.author.userprofile.get_avatar_presigned_url() if post.author.userprofile.avatar else None
     
 
-    # Get point notifications from session
-    point_notifications = get_and_clear_point_notifications(request)
-
     context = {
         'posts': posts,
-        'point_notifications': point_notifications,
     }
     return render(request, 'social/explore.html', context)
 
@@ -335,25 +313,17 @@ def followers_list(request, username):
             if hasattr(follower, 'userprofile') and follower.userprofile.avatar:
                 follower.userprofile.avatar_url = follower.userprofile.get_avatar_presigned_url()
         
-        # Get point notifications from session
-        point_notifications = get_and_clear_point_notifications(request)
-        
         context = {
             'profile_user': user,
             'followers': followers,
-            'title': f'Followers of {user.get_full_name() or user.username}',
-            'point_notifications': point_notifications,
+            'title': f'Followers of {user.get_full_name() or user.username}'
         }
         return render(request, 'social/followers_list.html', context)
     except UserProfile.DoesNotExist:
-        # Get point notifications from session
-        point_notifications = get_and_clear_point_notifications(request)
-        
         context = {
             'profile_user': user,
             'followers': [],
-            'title': f'Followers of {user.get_full_name() or user.username}',
-            'point_notifications': point_notifications,
+            'title': f'Followers of {user.get_full_name() or user.username}'
         }
         return render(request, 'social/followers_list.html', context)
 
@@ -372,13 +342,9 @@ def following_list(request, username):
         if hasattr(followed_user, 'userprofile') and followed_user.userprofile.avatar:
             followed_user.userprofile.avatar_url = followed_user.userprofile.get_avatar_presigned_url()
     
-    # Get point notifications from session
-    point_notifications = get_and_clear_point_notifications(request)
-    
     context = {
         'profile_user': user,
         'following': following,
-        'title': f'Following by {user.get_full_name() or user.username}',
-        'point_notifications': point_notifications,
+        'title': f'Following by {user.get_full_name() or user.username}'
     }
     return render(request, 'social/following_list.html', context)

@@ -1,10 +1,5 @@
-// Use global point notification system if available
+// Function to show point notification
 function showPointNotification(message, type = 'success') {
-    if (typeof window.showPointNotification === 'function') {
-        return window.showPointNotification(message, type);
-    }
-    
-    // Fallback for older browsers or if global system not loaded
     const notification = document.createElement('div');
     notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
