@@ -397,7 +397,7 @@ def search_files(request):
 
     # Nếu có danh mục, lọc theo danh mục
     if categories_filter:
-        files = files.filter(categories__name__in=categories_filter).distinct()
+        files = files.filter(categories__name__in=categories_filter)
 
     # Nếu có trạng thái, lọc theo trạng thái
     if status_filter != '':
@@ -406,12 +406,8 @@ def search_files(request):
         except ValueError:
             pass  # hoặc xử lý nếu status không hợp lệ
 
-    # Cuối cùng sắp xếp
-    files = files.order_by('-file_downloads', '-created_at')
-
-    
-    # Order by downloads and creation date
-    files = files.order_by('-file_downloads', '-created_at')
+    # Cuối cùng sắp xếp và loại bỏ duplicate
+    files = files.distinct().order_by('-file_downloads', '-created_at')
     
     # Get categories for filter dropdown
     parent_categories = Category.objects.filter(parent__isnull=True)
@@ -443,7 +439,7 @@ def search_api(request):
         Q(file_description__icontains=query) |
         Q(categories__name__icontains=query) |
         Q(author__username__icontains=query)
-    ).order_by('-file_downloads', '-created_at')[:10]
+    ).distinct().order_by('-file_downloads', '-created_at')[:10]
     
     data = []
     for file in files:
