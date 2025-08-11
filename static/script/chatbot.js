@@ -580,28 +580,29 @@ function clearChat() {
     }
 }
 
-function exportChat() {
-    if (!currentSessionId || !sessions[currentSessionId] || sessions[currentSessionId].messages.length === 0) {
-        alert('No messages to export');
-        return;
-    }
-    
-    const session = sessions[currentSessionId];
-    const exportData = {
-        title: session.title,
-        createdAt: session.createdAt,
-        lastUpdated: session.lastUpdated,
-        messages: session.messages
-    };
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chat_${session.title.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
+// TEMPORARILY DISABLED - Export functionality
+// function exportChat() {
+//     if (!currentSessionId || !sessions[currentSessionId] || sessions[currentSessionId].messages.length === 0) {
+//         alert('No messages to export');
+//         return;
+//     }
+//     
+//     const session = sessions[currentSessionId];
+//     const exportData = {
+//         title: session.title,
+//         createdAt: session.createdAt,
+//         lastUpdated: session.lastUpdated,
+//         messages: session.messages
+//     };
+//     
+//     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+//     const url = URL.createObjectURL(blob);
+//     const a = document.createElement('a');
+//     a.href = url;
+//     a.download = `chat_${session.title.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.json`;
+//     a.click();
+//     URL.revokeObjectURL(url);
+// }
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
