@@ -14,6 +14,8 @@ from django.http import HttpResponseRedirect
 from Social_Platform.models import UserProfile, CustomUser
 from Social_Platform.forms import UserProfileForm, CustomUserCreationForm
 from Social_Platform.services.point_service import PointService
+from django.utils import timezone
+from datetime import timedelta
     
 
 def file_list_api(request):
@@ -299,15 +301,18 @@ def upload_file(request):
             file_obj = form.save(commit=False)
             file_obj.author = request.user
             
-            # Kiểm tra quyền đăng tài liệu tính phí
-            if file_obj.file_status == 1 and request.user.role != 'expert':
-                messages.error(request, 'Chỉ chuyên gia mới có thể đăng tài liệu tính phí.')
-                context = {
-                    'form': form,
-                    'parent_categories': parent_categories,
-                    'child_categories': child_categories
-                }
-                return render(request, 'home/upload.html', context)
+            # Kiểm tra quyền đăng tài liệu tính phí - tài khoản phải được tạo ít nhất 1 ngày
+            if file_obj.file_status == 1:
+                # Kiểm tra xem tài khoản đã được tạo ít nhất 1 ngày chưa
+                one_day_ago = timezone.now() - timedelta(days=1)
+                if request.user.date_joined > one_day_ago:
+                    messages.error(request, 'Bạn cần có tài khoản ít nhất 1 ngày để đăng tài liệu có phí.')
+                    context = {
+                        'form': form,
+                        'parent_categories': parent_categories,
+                        'child_categories': child_categories
+                    }
+                    return render(request, 'home/upload.html', context)
             
             file_obj.save()
             form.save_m2m()  # <-- Thêm dòng này để lưu categories
@@ -322,10 +327,17 @@ def upload_file(request):
     else:
         form = FileUploadForm(user=request.user)
     
+    # Kiểm tra quyền upload tài liệu có phí
+    can_upload_paid = False
+    if request.user.is_authenticated:
+        one_day_ago = timezone.now() - timedelta(days=1)
+        can_upload_paid = request.user.date_joined <= one_day_ago
+    
     context = {
         'form': form,
         'parent_categories': parent_categories,
-        'child_categories': child_categories
+        'child_categories': child_categories,
+        'can_upload_paid': can_upload_paid
     }
     return render(request, 'home/upload.html', context)
 

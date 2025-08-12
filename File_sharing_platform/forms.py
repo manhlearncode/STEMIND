@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import File, Category, FileExtension
 from Social_Platform.models import CustomUser
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 
 class RegisterForm(UserCreationForm):
@@ -95,13 +97,17 @@ class FileUploadForm(forms.ModelForm):
         # Lưu user instance để sử dụng trong validation
         self.user = user
         
-        # Cập nhật choices cho file_status theo role của user
-        if user and user.role == 'expert':
-            self.fields['file_status'].choices = [(0, 'Free'), (1, 'For sales')]
-        else:
-            self.fields['file_status'].choices = [(0, 'Free')]
-            # Set default value to Free for non-experts
-            self.fields['file_status'].initial = 0
+        # Cập nhật choices cho file_status theo thời gian tạo tài khoản của user
+        if user:
+            # Kiểm tra xem tài khoản đã được tạo ít nhất 1 ngày chưa
+            one_day_ago = timezone.now() - timedelta(days=1)
+            if user.date_joined <= one_day_ago:
+                self.fields['file_status'].choices = [(0, 'Free'), (1, 'For sales')]
+            else:
+                self.fields['file_status'].choices = [(0, 'Free')]
+      
+
+        self.fields['file_status'].initial = 0
         
         # Chỉ hiển thị categories con (không hiển thị categories cha)
         self.fields['categories'].queryset = Category.objects.filter(parent__isnull=False)
@@ -169,9 +175,15 @@ class FileUploadForm(forms.ModelForm):
     def clean_file_status(self):
         file_status = self.cleaned_data.get('file_status')
         
-        # Kiểm tra quyền đăng tài liệu tính phí
-        if file_status == 1 and (not hasattr(self, 'user') or not self.user or self.user.role != 'expert'):
-            raise forms.ValidationError('Chỉ chuyên gia mới có thể đăng tài liệu tính phí.')
+        # Kiểm tra quyền đăng tài liệu tính phí - tài khoản phải được tạo ít nhất 1 ngày
+        if file_status == 1:
+            if not hasattr(self, 'user') or not self.user:
+                raise forms.ValidationError('Vui lòng đăng nhập để đăng tài liệu có phí.')
+            
+            # Kiểm tra xem tài khoản đã được tạo ít nhất 1 ngày chưa
+            one_day_ago = timezone.now() - timedelta(days=1)
+            if self.user.date_joined > one_day_ago:
+                raise forms.ValidationError('Bạn cần có tài khoản ít nhất 1 ngày để đăng tài liệu có phí.')
             
         return file_status
 
