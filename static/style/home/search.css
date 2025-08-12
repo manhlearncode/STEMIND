@@ -120,7 +120,7 @@
     margin-top: 3rem;
     min-height: 400px;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     margin-left: auto;
     margin-right: auto;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
@@ -441,6 +441,24 @@
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     font-weight: 500;
+    height: 3.5rem;
+}
+
+/* Filter row layout optimization */
+.search-filters .row:last-child {
+    margin: 0 -0.5rem;
+}
+
+.search-filters .col-md-3 {
+    padding: 0 0.5rem;
+}
+
+.search-filters .form-select,
+.search-filters .btn {
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .search-filters .form-select:focus {
@@ -976,8 +994,10 @@ html {
         gap: 1rem;
     }
     
-    .search-filters .col-md-4 {
+    .search-filters .col-md-3 {
         margin-bottom: 1rem;
+        width: 50%;
+        flex: 0 0 50%;
     }
     
     .file-card {
@@ -1022,6 +1042,17 @@ html {
         max-width: 98%;
         margin-left: auto;
         margin-right: auto;
+    }
+    
+    .search-filters .col-md-3 {
+        width: 100%;
+        flex: 0 0 100%;
+        margin-bottom: 0.75rem;
+    }
+    
+    .search-filters .form-select,
+    .search-filters .btn {
+        height: 3rem;
     }
     
     .results-header h3 {

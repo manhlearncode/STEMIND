@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, File, Favorite
+from .models import Category, File, Favorite, FileExtension
 from django.utils.html import format_html
 
 @admin.register(Category)
@@ -67,4 +67,16 @@ class FavoriteAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
     search_fields = ['user__username', 'file__title']
     readonly_fields = ['created_at']
+
+@admin.register(FileExtension)
+class FileExtensionAdmin(admin.ModelAdmin):
+    list_display = ['extension_type', 'created_at', 'updated_at']
+    search_fields = ['extension']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('extension_type',)
+        }),
+    )
 

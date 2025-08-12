@@ -55,9 +55,93 @@ class Category(models.Model):
             current = current.parent
         return ' > '.join(reversed(path))
     
+class FileExtension(models.Model):
+    EXTENSION_TYPES = [
+        ('document', 'Văn bản'),
+        ('presentation', 'Bài thuyết trình'),
+        ('image', 'Ảnh'),
+        ('video', 'Video'),
+        ('archive', 'Nén'),
+        ('other', 'Khác')
+    ]
+    
+    extension_type = models.CharField(max_length=20, choices=EXTENSION_TYPES, default='other')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.get_extension_type_display()
+    
+    def get_all_extensions(self):
+        return FileExtension.objects.all()
+    
+    @classmethod
+    def get_extension_type_by_file_extension(cls, file_extension):
+        """Tự động xác định loại extension dựa trên file extension"""
+        extension_mapping = {
+            # Documents
+            'pdf': 'document',
+            'doc': 'document', 
+            'docx': 'document',
+            'txt': 'document',
+            'rtf': 'document',
+            'odt': 'document',
+            
+            # Presentations
+            'ppt': 'presentation',
+            'pptx': 'presentation',
+            'odp': 'presentation',
+            
+            # Spreadsheets (cũng thuộc documents)
+            'xls': 'document',
+            'xlsx': 'document',
+            'ods': 'document',
+            
+            # Images
+            'jpg': 'image',
+            'jpeg': 'image', 
+            'png': 'image',
+            'gif': 'image',
+            'webp': 'image',
+            'bmp': 'image',
+            'svg': 'image',
+            
+            # Videos
+            'mp4': 'video',
+            'avi': 'video',
+            'mov': 'video',
+            'wmv': 'video',
+            'flv': 'video',
+            'webm': 'video',
+            'mkv': 'video',
+            
+            # Archives
+            'zip': 'archive',
+            'rar': 'archive',
+            '7z': 'archive',
+            'tar': 'archive',
+            'gz': 'archive',
+        }
+        
+        return extension_mapping.get(file_extension.lower(), 'other')
+    
+    @classmethod
+    def get_or_create_extension(cls, file_extension):
+        """Lấy hoặc tạo extension object dựa trên extension_type"""
+        extension_type = cls.get_extension_type_by_file_extension(file_extension)
+        
+        # Tìm hoặc tạo FileExtension dựa trên extension_type
+        extension_obj, created = cls.objects.get_or_create(
+            extension_type=extension_type,
+            defaults={}
+        )
+        return extension_obj
+    
+    
 class File(models.Model):
     title = models.CharField(unique=True, max_length=255)
     categories = models.ManyToManyField(Category, related_name='files')
+    extension = models.ForeignKey(FileExtension, on_delete=models.CASCADE, related_name='files', null=True, blank=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='files')
     file_thumbnail = models.ImageField(upload_to='thumbnails/%y/%m/%d', blank=True, null=True)
     file_description = models.TextField(blank=True, null=True, max_length=500)

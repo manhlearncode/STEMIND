@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import File, Category
+from .models import File, Category, FileExtension
 from Social_Platform.models import CustomUser
 
 
@@ -34,6 +34,7 @@ class FileUploadForm(forms.ModelForm):
     class Meta:
         model = File
         fields = ['title', 'categories', 'file_description', 'file_urls', 'file_thumbnail', 'file_status', 'file_price']
+        # Extension sẽ được tự động set, không cần user chọn
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -41,6 +42,10 @@ class FileUploadForm(forms.ModelForm):
             }),
             'categories': forms.CheckboxSelectMultiple(attrs={
                 'class': 'form-check-input'
+            }),
+            'extension': forms.Select(attrs={
+                'class': 'form-select',
+                'onchange': 'updatePriceVisibility()'
             }),
             'file_description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -182,4 +187,26 @@ class FileUploadForm(forms.ModelForm):
         if parent_categories.exists():
             raise forms.ValidationError('Không thể chọn danh mục cha. Vui lòng chỉ chọn các danh mục con.')
             
-        return categories 
+        return categories
+    
+    def save(self, commit=True):
+        """Override save để tự động set extension"""
+        instance = super().save(commit=False)
+        
+        # Tự động set extension dựa trên file được upload
+        if instance.file_urls:
+            try:
+                file_extension = instance.file_urls.name.split('.')[-1].lower()
+                extension_obj = FileExtension.get_or_create_extension(file_extension)
+                instance.extension = extension_obj
+            except Exception as e:
+                # Nếu có lỗi với FileExtension, bỏ qua và tiếp tục
+                print(f"Warning: Could not set extension: {e}")
+                pass
+        
+        if commit:
+            instance.save()
+            # Lưu many-to-many relationships
+            self.save_m2m()
+        
+        return instance 

@@ -29,11 +29,11 @@
                         </button>
                     </div>
                     
-                                         <!-- Advanced Filters -->
-                     <div class="search-filters mt-5">
-                         <div class="row">
+                    <!-- Advanced Filters -->
+                    <div class="search-filters mt-5">
+                         <div class="row justify-content-center">
                              <!-- Selected Categories Display -->
-                             <div class="col-12 mb-3">
+                                <div class="col-12 mb-3">
                                  <label class="filter-label">
                                      <i class="fas fa-tags me-2"></i>Danh mục đã chọn
                                  </label>
@@ -57,7 +57,7 @@
                              </div>
                              
                              <!-- Category Checkbox Columns -->
-                             <div class="col-12 mb-3">
+                            <div class="col-12 mb-3">
                                  <label class="filter-label">
                                      <i class="fas fa-folder-tree me-2"></i>Chọn danh mục
                                  </label>
@@ -68,18 +68,6 @@
                                              <i class="fas fa-folder me-2"></i>{{ parent_category.name }}
                                          </div>
                                          <div class="category-column-content">
-                                             <!-- Parent category checkbox -->
-                                             <div class="category-checkbox-item">
-                                                 <input type="checkbox" 
-                                                        id="parent_{{ parent_category.id }}" 
-                                                        class="category-checkbox"
-                                                        data-category="{{ parent_category.name }}"
-                                                        onchange="handleCategoryCheckbox(this)">
-                                                 <label for="parent_{{ parent_category.id }}" class="checkbox-label">
-                                                     <i class="fas fa-folder-open me-2"></i>{{ parent_category.name }} (Tất cả)
-                                                 </label>
-                                             </div>
-                                             
                                              <!-- Child categories checkboxes -->
                                              {% for child in parent_category.children.all %}
                                              <div class="category-checkbox-item child-item">
@@ -100,26 +88,41 @@
                                  </div>
                              </div>
                              
-                             <!-- Status Filter and Action Buttons -->
-                             <div class="col-md-4 mb-3">
-                                 <label class="filter-label">
-                                     <i class="fas fa-money-bill-wave me-2"></i>Trạng thái
-                                 </label>
-                                 <select name="status" class="form-select">
-                                     <option value="">Tất cả trạng thái</option>
-                                     <option value="0" {% if selected_status == '0' %}selected{% endif %}>Miễn phí</option>
-                                     <option value="1" {% if selected_status == '1' %}selected{% endif %}>Có phí</option>
-                                 </select>
-                             </div>
+                            <!-- Status Filter -->
+                             <div class="col-md-3 mb-2">
+                                <label class="filter-label">
+                                    <i class="fas fa-money-bill-wave me-2"></i>Trạng thái
+                                </label>
+                                <select name="status" class="form-select">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="0" {% if selected_status == '0' %}selected{% endif %}>Miễn phí</option>
+                                    <option value="1" {% if selected_status == '1' %}selected{% endif %}>Có phí</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Extension Type Filter -->
+                            <div class="col-md-3 mb-2">
+                                <label class="filter-label">
+                                    <i class="fas fa-file-alt me-2"></i>Loại tài liệu
+                                </label>
+                                <select name="extension_type" class="form-select">
+                                    <option value="">Tất cả loại</option>
+                                    {% for type_code, type_name in extension_types %}
+                                    <option value="{{ type_code }}" {% if selected_extension_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                              
-                             <div class="col-md-4 mb-3">
+                             <!-- Search Button -->
+                             <div class="col-md-3 mb-2">
                                  <label class="filter-label opacity-0">Search</label>
                                  <button type="submit" class="btn btn-outline-primary w-100" onclick="beforeSubmitScroll()">
                                      <i class="fas fa-search me-2"></i>Tìm kiếm 
                                  </button>
                              </div>
                              
-                             <div class="col-md-4 mb-3">
+                             <!-- Clear Button -->
+                             <div class="col-md-3 mb-2">
                                  <label class="filter-label opacity-0">Clear</label>
                                  <a href="{% url 'search_files' %}" class="btn btn-outline-secondary w-100">
                                      <i class="fas fa-times me-2"></i>Xóa bộ lọc
@@ -128,7 +131,7 @@
                          </div>
                      </div>
                 </form>
-            </div>
+            </div>      
         </div>
     </div>
 </div>
@@ -194,6 +197,7 @@
                                         </p>
                                         <div class="file-meta">
                                             <span class="category-badge">{{ file.categories.first.name }}</span>
+                                            <span class="extension-badge">{{ file.extension.get_extension_type_display }}</span>
                                             <span class="author">bởi {{ file.author.username }}</span>
                                         </div>
                                         <div class="file-stats">

@@ -72,3 +72,4 @@ logs/
 *.temp
 
 env_file.txt
+*_embedding.json

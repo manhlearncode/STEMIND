@@ -1,7 +1,7 @@
 from unicodedata import category
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, JsonResponse
-from .models import File, Category, Favorite
+from .models import File, Category, Favorite, FileExtension
 from django.conf import settings
 from django.db.models import Count, Q
 from django.contrib.auth.forms import UserCreationForm
@@ -378,10 +378,11 @@ def about(request):
     return render(request, 'home/about.html')
 
 def search_files(request):
-    """Search files by title, description, category, or author"""
+    """Search files by title, description, category, author, or extension"""
     query = request.GET.get('q', '').strip()
     categories_filter = request.GET.getlist('categories')  # Lấy multiple categories
     status_filter = request.GET.get('status', '')
+    extension_type_filter = request.GET.get('extension_type', '')  # Thêm extension type filter
     
     # Start with all files
     files = File.objects.filter(file_status__in=[0, 1])
@@ -392,7 +393,8 @@ def search_files(request):
             Q(title__icontains=query) |
             Q(file_description__icontains=query) |
             Q(categories__name__icontains=query) |
-            Q(author__username__icontains=query)
+            Q(author__username__icontains=query) |
+            Q(extension__extension__icontains=query)
         )
 
     # Nếu có danh mục, lọc theo danh mục
@@ -406,6 +408,10 @@ def search_files(request):
         except ValueError:
             pass  # hoặc xử lý nếu status không hợp lệ
 
+    # Nếu có extension type, lọc theo extension type
+    if extension_type_filter:
+        files = files.filter(extension__extension_type=extension_type_filter)
+
     # Cuối cùng sắp xếp và loại bỏ duplicate
     files = files.distinct().order_by('-file_downloads', '-created_at')
     
@@ -413,13 +419,18 @@ def search_files(request):
     parent_categories = Category.objects.filter(parent__isnull=True)
     child_categories = Category.objects.filter(parent__isnull=False)
     
+    # Get extension types for filter dropdown
+    extension_types = FileExtension.EXTENSION_TYPES
+    
     context = {
         'files': files,
         'parent_categories': parent_categories,
         'child_categories': child_categories,
+        'extension_types': extension_types,
         'query': query,
         'selected_categories': categories_filter,  # Pass selected categories to template
         'selected_status': status_filter,
+        'selected_extension_type': extension_type_filter,
         'total_results': files.count()
     }
     
@@ -438,7 +449,8 @@ def search_api(request):
         Q(title__icontains=query) |
         Q(file_description__icontains=query) |
         Q(categories__name__icontains=query) |
-        Q(author__username__icontains=query)
+        Q(author__username__icontains=query) |
+        Q(extension__extension__icontains=query)
     ).distinct().order_by('-file_downloads', '-created_at')[:10]
     
     data = []
