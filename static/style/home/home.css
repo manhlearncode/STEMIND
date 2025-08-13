@@ -721,27 +721,3 @@
         padding: 0.5rem 0.75rem;
     }
 }
-
-/* Introduction video styles */
-.intro-video-container {
-    width: 100%;
-    background: #f8f9fa;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.intro-video-container video {
-    width: 100%;
-    height: auto;
-    display: block;
-    background: #000;
-}
-
-.intro-video-container video::-webkit-media-controls {
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 0 0 8px 8px;
-}
-
-.intro-video-container video::-webkit-media-controls-panel {
-    background: rgba(0, 0, 0, 0.7);
-}

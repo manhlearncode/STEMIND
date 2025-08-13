@@ -130,20 +130,10 @@
                 <div class="sidebar-section">
                     <div class="sidebar-card">
                         <h3 class="sidebar-title">
-                            <i class="fas fa-play-circle me-2"></i>
-                            Video giới thiệu
+                            <i class="fas fa-info-circle me-2"></i>
+                            Giới thiệu
                         </h3>
-                        <div class="intro-video-container">
-                            <video controls 
-                                   preload="metadata"
-                                   style="width: 100%; border-radius: 8px;">
-                                <source src="{% static 'images/STEMIND.mov' %}" type="video/quicktime">
-                                <source src="{% static 'images/STEMIND.mov' %}" type="video/mp4">
-                                <p>Trình duyệt của bạn không hỗ trợ video. 
-                                   <a href="{% static 'images/STEMIND.mov' %}" target="_blank">Tải xuống video</a>
-                                </p>
-                            </video>
-                        </div>
+                        <p>STEMIND là nền tảng trực tuyến tích hợp AI được thiết kế để giúp giáo viên nhanh chóng thiết kế bài giảng STEM, tìm kiếm tài liệu học tập phù hợp và tổ chức các hoạt động. Với giao diện thân thiện, tiết kiệm thời gian, nâng cao chất lượng giảng dạy và kết nối cộng đồng.</p>
                     </div>
                     {% if user.is_authenticated %}
                     <div class="sidebar-card">
