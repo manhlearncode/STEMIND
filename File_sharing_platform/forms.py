@@ -56,7 +56,7 @@ class FileUploadForm(forms.ModelForm):
             }),
             'file_urls': forms.FileInput(attrs={
                 'class': 'form-control',
-                'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar'
+                'accept': '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv'
             }),
             'file_thumbnail': forms.FileInput(attrs={
                 'class': 'form-control',
@@ -85,7 +85,7 @@ class FileUploadForm(forms.ModelForm):
         help_texts = {
             'title': 'Tên tài liệu phải là duy nhất',
             'categories': 'Chọn một hoặc nhiều danh mục con (không chọn danh mục cha)',
-            'file_urls': 'Chọn file PDF, Word, PowerPoint, Excel, Text, ZIP hoặc RAR (tối đa 500MB)',
+            'file_urls': 'Chọn file PDF, Word, PowerPoint, Excel, Text, ảnh (JPG, PNG, GIF, WEBP) hoặc video (MP4, AVI, MOV, WMV, FLV, WEBM, MKV) (tối đa 500MB)',
             'file_thumbnail': 'Tải ảnh đại diện cho tài liệu (tối đa 5MB)',
             'file_price': 'Nhập giá bằng VNĐ (0 = miễn phí)'
         }
@@ -125,10 +125,10 @@ class FileUploadForm(forms.ModelForm):
                 raise forms.ValidationError('Kích thước file không được vượt quá 500MB.')
             
             # Kiểm tra định dạng file
-            allowed_extensions = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.zip', '.rar']
+            allowed_extensions = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv']
             file_extension = file.name.lower().split('.')[-1]
             if f'.{file_extension}' not in allowed_extensions:
-                raise forms.ValidationError('Định dạng file không được hỗ trợ. Vui lòng chọn file PDF, Word, PowerPoint, Excel, Text, ZIP hoặc RAR.')
+                raise forms.ValidationError('Định dạng file không được hỗ trợ. Vui lòng chọn file PDF, Word, PowerPoint, Excel, Text, ảnh (JPG, PNG, GIF, WEBP) hoặc video (MP4, AVI, MOV, WMV, FLV, WEBM, MKV).')
         elif not file:
             raise forms.ValidationError('Vui lòng chọn tệp để tải lên.')
             

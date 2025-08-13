@@ -117,6 +117,10 @@
                                 <span class="badge bg-primary">DOC</span>
                             {% elif file.file_urls.url|slice:"-4:" == ".ppt" or file.file_urls.url|slice:"-5:" == ".pptx" %}
                                 <span class="badge bg-warning">PPT</span>
+                            {% elif file.file_urls.name|slice:"-4:" == ".jpg" or file.file_urls.name|slice:"-4:" == ".png" or file.file_urls.name|slice:"-5:" == ".jpeg" or file.file_urls.name|slice:"-4:" == ".gif" or file.file_urls.name|slice:"-5:" == ".webp" %}
+                                <span class="badge bg-success">IMG</span>
+                            {% elif file.file_urls.name|slice:"-4:" == ".mp4" or file.file_urls.name|slice:"-4:" == ".avi" or file.file_urls.name|slice:"-4:" == ".mov" or file.file_urls.name|slice:"-4:" == ".wmv" or file.file_urls.name|slice:"-4:" == ".flv" or file.file_urls.name|slice:"-5:" == ".webm" or file.file_urls.name|slice:"-4:" == ".mkv" %}
+                                <span class="badge bg-info">VIDEO</span>
                             {% else %}
                                 <span class="badge bg-secondary">FILE</span>
                             {% endif %}
@@ -158,24 +162,103 @@
                                     Trình duyệt của bạn không hỗ trợ hiển thị tài liệu Word.
                                 </iframe>
 
-                            {% elif file.file_urls.name|slice:"-4:" == ".jpg" or file.file_urls.name|slice:"-4:" == ".png" or file.file_urls.name|slice:"-5:" == ".jpeg" or file.file_urls.name|slice:"-4:" == ".gif" %}
+                            {% elif file.file_urls.name|slice:"-4:" == ".jpg" or file.file_urls.name|slice:"-4:" == ".png" or file.file_urls.name|slice:"-5:" == ".jpeg" or file.file_urls.name|slice:"-4:" == ".gif" or file.file_urls.name|slice:"-5:" == ".webp" %}
                                 <!-- Image Viewer -->
-                                <iframe src="https://docs.google.com/gview?url={{ file.get_presigned_url|urlencode }}&embedded=true"
-                                        width="100%" height="600px"
-                                        onload="hideLoading()"
-                                        title="Document Viewer"
-                                        frameborder="0">
-                                    Trình duyệt của bạn không hỗ trợ hiển thị tài liệu Word.
-                                </iframe>
-                            {% elif file.file_urls.name|slice:"-4:" == ".mp4" or file.file_urls.name|slice:"-4:" == ".avi" or file.file_urls.name|slice:"-4:" == ".mov" %}
+                                <div class="image-viewer">
+                                    <img src="{{ file.get_presigned_url }}" 
+                                         alt="{{ file.title }}" 
+                                         class="img-fluid" 
+                                         onload="hideLoading()">
+                                </div>
+                            {% elif file.file_urls.name|slice:"-4:" == ".mp4" or file.file_urls.name|slice:"-4:" == ".avi" or file.file_urls.name|slice:"-4:" == ".mov" or file.file_urls.name|slice:"-4:" == ".wmv" or file.file_urls.name|slice:"-4:" == ".flv" or file.file_urls.name|slice:"-5:" == ".webm" or file.file_urls.name|slice:"-4:" == ".mkv" %}
                                 <!-- Video Player -->
-                                <iframe src="https://docs.google.com/gview?url={{ file.get_presigned_url|urlencode }}&embedded=true"
-                                        width="100%" height="600px"
+                                <div class="video-viewer">
+                                    {% if file.file_urls.name|slice:"-4:" == ".mp4" or file.file_urls.name|slice:"-5:" == ".webm" %}
+                                        <!-- Native HTML5 Video for MP4/WEBM -->
+                                        <video controls 
+                                               crossorigin="anonymous"
+                                               onloadeddata="hideLoading()"
+                                               oncanplay="hideLoading()"
+                                               onerror="showVideoFallback(this);"
+                                               preload="metadata"
+                                               style="width: 100%; height: 100%;">
+                                            <source src="{{ file.get_presigned_url }}" type="video/{% if file.file_urls.name|slice:'-4:' == '.mp4' %}mp4{% else %}webm{% endif %}">
+                                            <!-- Fallback for browsers that don't support HTML5 video -->
+                                            <object data="{{ file.get_presigned_url }}" 
+                                                    type="video/{% if file.file_urls.name|slice:'-4:' == '.mp4' %}mp4{% else %}webm{% endif %}"
+                                                    width="100%" height="100%">
+                                                <p>Trình duyệt của bạn không hỗ trợ video HTML5. 
+                                                   <a href="{{ file.get_presigned_url }}" target="_blank">Tải xuống video</a>
+                                                </p>
+                                            </object>
+                                        </video>
+                                    {% else %}
+                                        <!-- Advanced video player for other formats -->
+                                        <div class="advanced-video-container">
+                                            <!-- Try HTML5 video first -->
+                                            <video controls 
+                                                   crossorigin="anonymous"
+                                                   onloadeddata="hideLoading()"
+                                                   oncanplay="hideLoading()"
+                                                   onerror="showAdvancedFallback(this);"
+                                                   preload="metadata"
+                                                   style="width: 100%; height: 100%;">
+                                                {% if file.file_urls.name|slice:"-4:" == ".avi" %}
+                                                    <source src="{{ file.get_presigned_url }}" type="video/avi">
+                                                    <source src="{{ file.get_presigned_url }}" type="video/x-msvideo">
+                                                {% elif file.file_urls.name|slice:"-4:" == ".mov" %}
+                                                    <source src="{{ file.get_presigned_url }}" type="video/quicktime">
+                                                    <source src="{{ file.get_presigned_url }}" type="video/mp4">
+                                                {% elif file.file_urls.name|slice:"-4:" == ".wmv" %}
+                                                    <source src="{{ file.get_presigned_url }}" type="video/x-ms-wmv">
+                                                    <source src="{{ file.get_presigned_url }}" type="video/x-ms-asf">
+                                                {% elif file.file_urls.name|slice:"-4:" == ".flv" %}
+                                                    <source src="{{ file.get_presigned_url }}" type="video/x-flv">
+                                                {% elif file.file_urls.name|slice:"-4:" == ".mkv" %}
+                                                    <source src="{{ file.get_presigned_url }}" type="video/x-matroska">
+                                                    <source src="{{ file.get_presigned_url }}" type="video/webm">
+                                                {% endif %}
+                                                <!-- Fallback message -->
+                                                <div class="video-html5-fallback">
+                                                    <p>Trình duyệt không hỗ trợ định dạng này</p>
+                                                </div>
+                                            </video>
+                                            
+                                            <!-- Alternative viewers -->
+                                            <div class="alternative-viewers" style="display: none;">
+                                                <!-- Google Drive Viewer -->
+                                                <div class="viewer-option mb-3">
+                                                    <h6><i class="fab fa-google-drive me-2"></i>Google Drive Viewer</h6>
+                                                    <iframe src="https://drive.google.com/viewerng/viewer?embedded=true&url={{ file.get_presigned_url|urlencode }}"
+                                                            width="100%" height="100%" frameborder="0"
+                                                            onload="hideLoading()"
+                                                            onerror="this.style.display='none'">
+                                                    </iframe>
+                                                </div>
+                                                
+                                                <!-- Office Online Viewer -->
+                                                <div class="viewer-option mb-3">
+                                                    <h6><i class="fas fa-file-video me-2"></i>Office Online Viewer</h6>
+                                                    <iframe src="https://view.officeapps.live.com/op/view.aspx?src={{ file.get_presigned_url|urlencode }}"
+                                                            width="100%" height="100%" frameborder="0"
                                         onload="hideLoading()"
-                                        title="Document Viewer"
-                                        frameborder="0">
-                                    Trình duyệt của bạn không hỗ trợ hiển thị tài liệu Word.
+                                                            onerror="this.style.display='none'">
                                 </iframe>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <script>
+                                            hideLoading();
+                                            // Auto-fallback after 5 seconds if video doesn't load
+                                            setTimeout(function() {
+                                                const video = document.querySelector('.advanced-video-container video');
+                                                if (video && video.readyState === 0) {
+                                                    showAdvancedFallback(video);
+                                                }
+                                            }, 5000);
+                                        </script>
+                                    {% endif %}
+                                </div>
                             {% else %}
                                 <!-- File Preview Placeholder -->
                                 <div class="file-viewer">

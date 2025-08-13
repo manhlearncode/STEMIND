@@ -12,6 +12,36 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     // Hide loading overlay after a delay if onload events don't trigger
     setTimeout(hideLoading, 3000);
+    
+    // Debug video loading
+    const video = document.querySelector('video');
+    if (video) {
+        console.log('Video element found:', video.src);
+        
+        video.addEventListener('loadstart', () => {
+            console.log('Video: Load started');
+        });
+        
+        video.addEventListener('loadedmetadata', () => {
+            console.log('Video: Metadata loaded');
+        });
+        
+        video.addEventListener('loadeddata', () => {
+            console.log('Video: Data loaded');
+            hideLoading();
+        });
+        
+        video.addEventListener('canplay', () => {
+            console.log('Video: Can play');
+            hideLoading();
+        });
+        
+        video.addEventListener('error', (e) => {
+            console.error('Video error:', e);
+            console.error('Video error details:', video.error);
+            hideLoading();
+        });
+    }
 });
 
 function hideLoading() {
@@ -19,6 +49,96 @@ function hideLoading() {
     if (loadingOverlay) {
         loadingOverlay.style.display = 'none';
     }
+}
+
+function showVideoFallback(videoElement) {
+    console.error('Video failed to load, showing fallback');
+    hideLoading();
+    
+    // Create fallback content
+    const fallbackHTML = `
+        <div class="video-fallback">
+            <div class="video-placeholder">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3" style="color: #dc3545;"></i>
+                <h5>Không thể phát video</h5>
+                <p class="text-muted mb-3">Video có thể bị lỗi hoặc định dạng không được hỗ trợ</p>
+                <a href="${videoElement.querySelector('source').src}" 
+                   class="btn btn-primary" 
+                   target="_blank">
+                    <i class="fas fa-download me-2"></i>Tải xuống video
+                </a>
+            </div>
+        </div>
+    `;
+    
+    // Replace video with fallback
+    const videoViewer = videoElement.closest('.video-viewer');
+    if (videoViewer) {
+        videoViewer.innerHTML = fallbackHTML;
+    }
+}
+
+function showAdvancedFallback(videoElement) {
+    console.error('Advanced video failed to load, showing fallback options');
+    hideLoading();
+    
+    // Hide the video element
+    if (videoElement) {
+        videoElement.style.display = 'none';
+    }
+    
+    // Show the final fallback
+    const container = videoElement.closest('.advanced-video-container');
+    if (container) {
+        const finalFallback = container.querySelector('.final-fallback');
+        if (finalFallback) {
+            finalFallback.style.display = 'block';
+        }
+    }
+}
+
+function tryAlternativeViewers(buttonElement) {
+    const container = buttonElement.closest('.advanced-video-container');
+    if (container) {
+        const alternativeViewers = container.querySelector('.alternative-viewers');
+        const finalFallback = container.querySelector('.final-fallback');
+        
+        if (alternativeViewers && finalFallback) {
+            // Hide final fallback and show alternative viewers
+            finalFallback.style.display = 'none';
+            alternativeViewers.style.display = 'block';
+            
+            // Add back button
+            const backButton = document.createElement('button');
+            backButton.className = 'btn btn-outline-secondary mb-3';
+            backButton.innerHTML = '<i class="fas fa-arrow-left me-2"></i>Quay lại';
+            backButton.onclick = function() {
+                alternativeViewers.style.display = 'none';
+                finalFallback.style.display = 'block';
+            };
+            alternativeViewers.insertBefore(backButton, alternativeViewers.firstChild);
+        }
+    }
+}
+
+function openInNewTab(url) {
+    window.open(url, '_blank');
+}
+
+// Add video format detection
+function detectVideoFormat(filename) {
+    const extension = filename.toLowerCase().split('.').pop();
+    const formats = {
+        'mp4': { type: 'video/mp4', supported: true },
+        'webm': { type: 'video/webm', supported: true },
+        'avi': { type: 'video/x-msvideo', supported: false },
+        'mov': { type: 'video/quicktime', supported: false },
+        'wmv': { type: 'video/x-ms-wmv', supported: false },
+        'flv': { type: 'video/x-flv', supported: false },
+        'mkv': { type: 'video/x-matroska', supported: false }
+    };
+    
+    return formats[extension] || { type: 'video/mp4', supported: false };
 }
 
 function shareFile() {

@@ -120,11 +120,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Validate file type
-            const allowedTypes = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.zip', '.rar'];
+            const allowedTypes = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'];
             const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
             
             if (!allowedTypes.includes(fileExtension)) {
-                alert('Định dạng tệp không được hỗ trợ! Vui lòng chọn tệp PDF, Word, PowerPoint, Excel, Text, ZIP hoặc RAR.');
+                alert('Định dạng tệp không được hỗ trợ! Vui lòng chọn tệp PDF, Word, PowerPoint, Excel, Text, ảnh (JPG, PNG, GIF, WEBP) hoặc video (MP4, AVI, MOV, WMV, FLV, WEBM, MKV).');
                 fileInput.value = '';
                 resetUploadArea();
                 return;
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dragDropArea.querySelector('.upload-content').innerHTML = `
             <i class="fas fa-cloud-upload-alt upload-icon"></i>
             <h4>Kéo thả tệp vào đây hoặc click để chọn</h4>
-            <p class="text-muted">Hỗ trợ: PDF, Word, PowerPoint, Excel, Text, ZIP, RAR</p>
+            <p class="text-muted">Hỗ trợ: PDF, Word, PowerPoint, Excel, Text, ảnh (JPG, PNG, GIF, WEBP), video (MP4, AVI, MOV, WMV, FLV, WEBM, MKV)</p>
             <p class="text-muted">Kích thước tối đa: 500MB</p>
         `;
     }
