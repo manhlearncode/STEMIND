@@ -28,12 +28,12 @@
                 {% else %}
                 <li><a href="{% url 'enter' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Trợ lý AI</a></li>
                 {% endif %}
+                <li><a href="{% url 'home' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Tài liệu</a></li>
                 {% if user.is_authenticated %}
                 <li><a href="{% url 'social:feed' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Cộng đồng</a></li>
                 {% else %}
                 <li><a href="{% url 'enter' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Cộng đồng</a></li>
                 {% endif %}
-                <li><a href="{% url 'search_files' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Tìm kiếm</a></li>
                 <li><a href="{% url 'about' %}" class="nav-link px-2" style="color:black; font-weight: bold; margin: 0px 20px; align-items: bottom;">Về chúng tôi</a></li>
             </ul>
             {% if user.is_authenticated %}
@@ -63,6 +63,7 @@
                     {{ user.username|slice:":1"|upper }}
                 </a>
                 <ul class="dropdown-menu text-small">
+                    <li><a class="dropdown-item" href="{% url 'search_files' %}">Tìm kiếm tài liệu</a></li>
                     <li><a class="dropdown-item" href="{% url 'upload_file' %}">Tạo tài liệu mới</a></li>
                     <li><a class="dropdown-item" href="{% url 'user_favorites' %}">Tài liệu yêu thích</a></li>
                     <li><a class="dropdown-item" href="{% url 'social:liked_posts' %}">Bài viết đã like</a></li>

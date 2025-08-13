@@ -405,8 +405,7 @@ def search_files(request):
             Q(title__icontains=query) |
             Q(file_description__icontains=query) |
             Q(categories__name__icontains=query) |
-            Q(author__username__icontains=query) |
-            Q(extension__extension__icontains=query)
+            Q(author__username__icontains=query)
         )
 
     # Nếu có danh mục, lọc theo danh mục
@@ -461,8 +460,7 @@ def search_api(request):
         Q(title__icontains=query) |
         Q(file_description__icontains=query) |
         Q(categories__name__icontains=query) |
-        Q(author__username__icontains=query) |
-        Q(extension__extension__icontains=query)
+        Q(author__username__icontains=query)
     ).distinct().order_by('-file_downloads', '-created_at')[:10]
     
     data = []

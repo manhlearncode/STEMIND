@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'File_sharing_platform',
-    'Chatbot',
+    'Chatbot',  
     'Social_Platform',
     'storages',
 ]
