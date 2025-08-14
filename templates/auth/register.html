@@ -51,16 +51,17 @@
                class="form-control" 
                id="{{ form.username.id_for_label }}" 
                name="username" 
-               placeholder="Tên người dùng"
+               placeholder="Tên tài khoản"
                required
                autocomplete="username"
                data-step="1">
         <label for="{{ form.username.id_for_label }}">
-            <i class="fas fa-user me-2"></i>Tên người dùng
+            <i class="fas fa-user me-2"></i>Tên tài khoản
         </label>
         <div class="field-requirements">
             <small class="text-muted">3-30 ký tự, chỉ gồm chữ cái, số và dấu gạch dưới</small>
         </div>
+        <div class="username-validation" id="usernameValidation"></div>
         {% if form.username.errors %}
             <div class="invalid-feedback">
                 {% for error in form.username.errors %}

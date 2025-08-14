@@ -52,17 +52,36 @@ document.addEventListener('DOMContentLoaded', function() {
     usernameInput.addEventListener('input', function() {
         const value = this.value;
         const isValid = /^[a-zA-Z0-9_]{3,30}$/.test(value);
+        const validation = document.getElementById('usernameValidation');
         
         if (value.length === 0) {
             this.classList.remove('is-valid', 'is-invalid');
+            validation.innerHTML = '';
             formState.username = false;
         } else if (isValid) {
             this.classList.remove('is-invalid');
             this.classList.add('is-valid');
+            validation.innerHTML = '<i class="fas fa-check"></i> Tên tài khoản hợp lệ';
+            validation.className = 'username-validation valid';
             formState.username = true;
         } else {
             this.classList.remove('is-valid');
             this.classList.add('is-invalid');
+            
+            // Specific error messages
+            let errorMessage = '';
+            if (value.length < 3) {
+                errorMessage = '<i class="fas fa-times"></i> Tên tài khoản phải có ít nhất 3 ký tự';
+            } else if (value.length > 30) {
+                errorMessage = '<i class="fas fa-times"></i> Tên tài khoản không được quá 30 ký tự';
+            } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+                errorMessage = '<i class="fas fa-times"></i> Tên tài khoản chỉ được chứa chữ cái, số và dấu gạch dưới';
+            } else {
+                errorMessage = '<i class="fas fa-times"></i> Tên tài khoản không hợp lệ';
+            }
+            
+            validation.innerHTML = errorMessage;
+            validation.className = 'username-validation invalid';
             formState.username = false;
         }
         

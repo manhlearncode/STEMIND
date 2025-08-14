@@ -167,9 +167,9 @@
                                 </div>
                                 <div>
                                     {%if user.userprofile.role == 'Chuyên gia'%}
-                                    <a href="{% url 'social:profile' user.username %}" style="text-decoration: none; text-underline-offset: none;"><div class="contributor-name" style="color: #006056;">{{ user.username }}</div></a>
+                                    <a href="{% url 'social:profile' user.get_full_name %}" style="text-decoration: none; text-underline-offset: none;"><div class="contributor-name" style="color: #006056;">{{ user.get_full_name }}</div></a>
                                     {%else%}
-                                    <a href="{% url 'social:profile' user.username %}" style="text-decoration: none; text-underline-offset: none;"><div class="contributor-name" style="color: #000000;">{{ user.username }}</div></a>
+                                    <a href="{% url 'social:profile' user.get_full_name %}" style="text-decoration: none; text-underline-offset: none;"><div class="contributor-name" style="color: #000000;">{{ user.get_full_name }}</div></a>
                                     {%endif%}
                                     <small class="text-muted">{{ user.files.count|default:0 }} tài liệu</small>
                                 </div>

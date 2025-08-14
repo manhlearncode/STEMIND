@@ -190,6 +190,28 @@
     color: #dc3545;
 }
 
+/* Username Validation */
+.username-validation {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.username-validation.valid {
+    color: #198754;
+}
+
+.username-validation.invalid {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border-left: 3px solid #dc3545;
+}
+
 /* Field Requirements */
 .field-requirements {
     margin-top: 0.5rem;

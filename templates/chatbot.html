@@ -663,6 +663,10 @@
                 <i class="fas fa-plus"></i> Cuộc trò chuyện mới
             </button>
             
+            <button class="new-chat-btn" onclick="showFileManager()" style="margin-top: 10px;">
+                <i class="fas fa-folder-open"></i> Quản lý Files
+            </button>
+            
             <button class="clear-all-btn" onclick="clearAllSessions()">
                 <i class="fas fa-trash"></i> Xóa tất cả
             </button>
@@ -916,8 +920,14 @@
             
             if (!message && uploadedFiles.length === 0) return;
 
-            // Add user message to UI
-            addMessageToUI(message, 'user');
+            // Add user message to UI with attachments
+            const attachments = uploadedFiles.map(file => ({
+                id: file.id,
+                name: file.name,
+                size: file.size,
+                type: file.type
+            }));
+            addMessageToUI(message, 'user', attachments);
             
             // Clear input
             messageInput.value = '';
@@ -948,11 +958,18 @@
                 
                 if (data.success) {
                     const response = data.response;
-                    if (typeof response === 'object' && response.text) {
-                        addMessageToUI(response.text, 'bot');
+                    let botText = '';
+                    let botFiles = [];
+                    
+                    if (typeof response === 'object') {
+                        botText = response.text || '';
+                        botFiles = response.files || [];
                     } else {
-                        addMessageToUI(response, 'bot');
+                        botText = response;
                     }
+                    
+                    // Add bot message with files
+                    addMessageToUI(botText, 'bot', botFiles);
                     
                     // Save to chat history
                     saveChatToHistory(message, response);
@@ -1110,11 +1127,18 @@
                 
                 if (data.success) {
                     const response = data.response;
-                    if (typeof response === 'object' && response.text) {
-                        addMessageToUI(response.text, 'bot');
+                    let botText = '';
+                    let botFiles = [];
+                    
+                    if (typeof response === 'object') {
+                        botText = response.text || '';
+                        botFiles = response.files || [];
                     } else {
-                        addMessageToUI(response, 'bot');
+                        botText = response;
                     }
+                    
+                    // Add bot message with files
+                    addMessageToUI(botText, 'bot', botFiles);
                     
                     // Save to chat history
                     saveChatToHistory(`${topic} cho môn ${subject} của ${grade}.`, response);
@@ -1129,7 +1153,7 @@
             });
         }
 
-        function addMessageToUI(content, sender) {
+        function addMessageToUI(content, sender, attachments = []) {
             const messagesContainer = document.getElementById('messagesContainer');
             const typingIndicator = document.getElementById('typingIndicator');
             
@@ -1145,6 +1169,85 @@
             
             const textDiv = document.createElement('div');
             textDiv.innerHTML = formatMessage(content);
+            
+            // Add file attachments if any
+            if (attachments && attachments.length > 0) {
+                const attachmentsDiv = document.createElement('div');
+                attachmentsDiv.className = 'message-attachments';
+                attachmentsDiv.style.marginTop = '10px';
+                
+                attachments.forEach(attachment => {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'attachment-file';
+                    fileDiv.style.cssText = `
+                        display: flex;
+                        align-items: center;
+                        padding: 8px 12px;
+                        background: rgba(0, 96, 101, 0.1);
+                        border-radius: 8px;
+                        margin: 5px 0;
+                        border: 1px solid rgba(0, 96, 101, 0.2);
+                    `;
+                    
+                    const fileIcon = document.createElement('i');
+                    fileIcon.className = getFileIcon(attachment.type);
+                    fileIcon.style.cssText = `
+                        margin-right: 10px;
+                        color: #006065;
+                        font-size: 16px;
+                    `;
+                    
+                    const fileInfo = document.createElement('div');
+                    fileInfo.style.flex = '1';
+                    
+                    const fileName = document.createElement('div');
+                    fileName.textContent = attachment.name;
+                    fileName.style.cssText = `
+                        font-weight: 600;
+                        color: #333;
+                        font-size: 14px;
+                    `;
+                    
+                    const fileSize = document.createElement('div');
+                    fileSize.textContent = attachment.size;
+                    fileSize.style.cssText = `
+                        color: #666;
+                        font-size: 12px;
+                        margin-top: 2px;
+                    `;
+                    
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+                    downloadBtn.style.cssText = `
+                        background: #006065;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 6px 10px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        transition: all 0.3s ease;
+                    `;
+                    downloadBtn.onclick = () => downloadFile(attachment.id);
+                    downloadBtn.onmouseover = () => {
+                        downloadBtn.style.background = '#00897B';
+                        downloadBtn.style.transform = 'scale(1.05)';
+                    };
+                    downloadBtn.onmouseout = () => {
+                        downloadBtn.style.background = '#006065';
+                        downloadBtn.style.transform = 'scale(1)';
+                    };
+                    
+                    fileInfo.appendChild(fileName);
+                    fileInfo.appendChild(fileSize);
+                    fileDiv.appendChild(fileIcon);
+                    fileDiv.appendChild(fileInfo);
+                    fileDiv.appendChild(downloadBtn);
+                    attachmentsDiv.appendChild(fileDiv);
+                });
+                
+                contentDiv.appendChild(attachmentsDiv);
+            }
             
             const timeDiv = document.createElement('div');
             timeDiv.className = 'message-time';
@@ -1173,6 +1276,121 @@
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
+        }
+
+        function getFileIcon(fileType) {
+            const icons = {
+                'image': 'fas fa-image',
+                'document': 'fas fa-file-alt',
+                'audio': 'fas fa-music',
+                'video': 'fas fa-video',
+                'other': 'fas fa-file'
+            };
+            return icons[fileType] || icons['other'];
+        }
+
+        function downloadFile(fileId) {
+            const downloadUrl = `/chatbot/download-file/${fileId}/`;
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showFileManager() {
+            // Fetch and display all user files
+            fetch('/chatbot/files/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayFileManager(data.files);
+                    } else {
+                        alert('Lỗi: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching files:', error);
+                    alert('Lỗi kết nối tới server');
+                });
+        }
+
+        function displayFileManager(files) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+            `;
+            
+            modalContent.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #006065;">Quản lý Files</h3>
+                    <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">&times;</button>
+                </div>
+                <div id="fileList">
+                    ${files.length === 0 ? '<p style="text-align: center; color: #666;">Chưa có file nào</p>' : ''}
+                </div>
+            `;
+            
+            const fileList = modalContent.querySelector('#fileList');
+            
+            files.forEach(file => {
+                const fileDiv = document.createElement('div');
+                fileDiv.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    padding: 12px;
+                    border: 1px solid #eee;
+                    border-radius: 8px;
+                    margin-bottom: 10px;
+                    background: #f9f9f9;
+                `;
+                
+                fileDiv.innerHTML = `
+                    <i class="${getFileIcon(file.type)}" style="margin-right: 12px; color: #006065; font-size: 18px;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #333;">${file.name}</div>
+                        <div style="font-size: 12px; color: #666;">
+                            ${file.size} • ${file.type} • ${new Date(file.uploaded_at).toLocaleDateString('vi-VN')}
+                        </div>
+                    </div>
+                    <button onclick="downloadFile(${file.id})" style="background: #006065; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 12px;">
+                        <i class="fas fa-download"></i> Tải xuống
+                    </button>
+                `;
+                
+                fileList.appendChild(fileDiv);
+            });
+            
+            modal.appendChild(modalContent);
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+            
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
         }
 
         function showTypingIndicator() {

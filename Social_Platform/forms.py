@@ -3,6 +3,14 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Post, Comment, UserProfile, CustomUser
 
 class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'lastname', 'firstname', 'age', 'address', 'role', 'password1', 'password2']
+        labels = {
+            'username': 'Tên tài khoản',
+            'email': 'Địa chỉ email',
+        }
+    
     lastname = forms.CharField(
         max_length=100,
         required=False,
@@ -52,10 +60,6 @@ class CustomUserCreationForm(UserCreationForm):
         }),
         label='Vai trò'
     )
-    
-    class Meta:
-        model = CustomUser
-        fields = ['username', 'email', 'lastname', 'firstname', 'age', 'address', 'role', 'password1', 'password2']
 
 class PostForm(forms.ModelForm):
     class Meta:

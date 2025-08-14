@@ -10,4 +10,7 @@ urlpatterns = [
     path('user-profile/', views.user_profile_view, name='user_profile'),
     path('list-users/', views.list_users_view, name='list_users'),
     path('page/', views.chatbot_page, name='chatbot_page'),
+    path('download-file/<int:file_id>/', views.download_chat_file, name='download_chat_file'),
+    path('files/', views.list_chat_files, name='list_chat_files'),
+    path('files/<str:session_id>/', views.list_chat_files, name='list_session_files'),
 ]

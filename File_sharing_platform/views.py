@@ -77,7 +77,7 @@ class RegisterForm(CustomUserCreationForm):
         # Add CSS classes for Bootstrap styling
         self.fields['username'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'username'
+            'placeholder': 'Tên tài khoản'
         })
         self.fields['email'].widget.attrs.update({
             'class': 'form-control',
