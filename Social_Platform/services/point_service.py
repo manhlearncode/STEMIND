@@ -26,7 +26,19 @@ class PointService:
                 profile.points += points
                 profile.save()
                 
-                return True, f"Awarded {points} points for {transaction_type}"
+                # Tạo thông báo tiếng Việt đẹp hơn
+                transaction_messages = {
+                    'upload_file': f'🎉 Chúc mừng! Bạn đã nhận được {points} điểm khi tải lên tài liệu',
+                    'create_post': f'🎉 Chúc mừng! Bạn đã nhận được {points} điểm khi tạo bài viết mới',
+                    'like_post': f'👍 Bạn đã nhận được {points} điểm khi thích bài viết',
+                    'comment': f'💬 Bạn đã nhận được {points} điểm khi bình luận',
+                    'follow': f'👥 Bạn đã nhận được {points} điểm khi theo dõi người dùng',
+                    'daily_login': f'🌅 Chào buổi sáng! Bạn đã nhận được {points} điểm đăng nhập hàng ngày',
+                    'profile_completion': f'✅ Bạn đã nhận được {points} điểm khi hoàn thành hồ sơ'
+                }
+                
+                message = transaction_messages.get(transaction_type, f'Bạn đã nhận được {points} điểm')
+                return True, message
         except Exception as e:
             return False, str(e)
     
@@ -39,7 +51,7 @@ class PointService:
                 
                 # Kiểm tra xem user có đủ điểm không
                 if profile.points < points:
-                    return False, f"Insufficient points. You have {profile.points} points but need {points}"
+                    return False, f"❌ Bạn không đủ điểm. Hiện tại bạn có {profile.points} điểm nhưng cần {points} điểm"
                 
                 # Tạo transaction record (với điểm âm)
                 PointTransaction.objects.create(
@@ -54,7 +66,17 @@ class PointService:
                 profile.points -= points
                 profile.save()
                 
-                return True, f"Deducted {points} points for {transaction_type}"
+                # Tạo thông báo tiếng Việt đẹp hơn
+                transaction_messages = {
+                    'view_free_file': f'👁️ Đã trừ {points} điểm khi xem tài liệu miễn phí',
+                    'download_free_file': f'📥 Đã trừ {points} điểm khi tải xuống tài liệu miễn phí',
+                    'view_file': f'👁️ Đã trừ {points} điểm khi xem tài liệu có phí',
+                    'download_file': f'📥 Đã trừ {points} điểm khi tải xuống tài liệu có phí',
+                    'unlike_post': f'👎 Đã trừ {points} điểm khi hủy thích bài viết'
+                }
+                
+                message = transaction_messages.get(transaction_type, f'Đã trừ {points} điểm')
+                return True, message
         except Exception as e:
             return False, str(e)
     

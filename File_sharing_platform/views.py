@@ -236,7 +236,7 @@ def file_detail(request, title):
         else:  # Free file
             success, message = PointService.handle_view_free_file(request.user, file_obj.id)
             if not success:
-                messages.error(request, f"Bạn cần ít nhất 1 điểm để xem tài liệu này. Hãy upload tài liệu để nhận điểm.")
+                messages.error(request, f"❌ Bạn cần ít nhất 1 điểm để xem tài liệu này. Hãy upload tài liệu để nhận điểm.")
                 can_view = False
                 return redirect('home')
             else:
@@ -276,7 +276,7 @@ def download_file(request, file_id):
         else:  # Free file
             success, message = PointService.handle_download_free_file(request.user, file_obj.id)
             if not success:
-                messages.error(request, f"Bạn cần ít nhất 5 điểm để download tài liệu này. Hiện tại bạn có {PointService.get_user_points(request.user)} điểm.")
+                messages.error(request, f"❌ Bạn cần ít nhất 5 điểm để download tài liệu này. Hiện tại bạn có {PointService.get_user_points(request.user)} điểm.")
                 return redirect('home')
             else:
                 messages.info(request, message)
@@ -292,7 +292,7 @@ def upload_file(request):
     parent_categories = Category.objects.filter(parent__isnull=True)
     child_categories = Category.objects.filter(parent__isnull=False)
     if not request.user.is_authenticated:
-        messages.error(request, 'Vui lòng đăng nhập để tải lên tài liệu.')
+        messages.error(request, '❌ Vui lòng đăng nhập để tải lên tài liệu.')
         return redirect('enter')
     
     if request.method == 'POST':
@@ -306,7 +306,7 @@ def upload_file(request):
                 # Kiểm tra xem tài khoản đã được tạo ít nhất 1 ngày chưa
                 one_day_ago = timezone.now() - timedelta(days=1)
                 if request.user.date_joined > one_day_ago:
-                    messages.error(request, 'Bạn cần có tài khoản ít nhất 1 ngày để đăng tài liệu có phí.')
+                    messages.error(request, '⏰ Bạn cần có tài khoản ít nhất 1 ngày để đăng tài liệu có phí.')
                     context = {
                         'form': form,
                         'parent_categories': parent_categories,
@@ -318,12 +318,14 @@ def upload_file(request):
             form.save_m2m()  # <-- Thêm dòng này để lưu categories
             
             # Award points for file upload
-            PointService.handle_file_upload(request.user, file_obj.id)
+            success, point_message = PointService.handle_file_upload(request.user, file_obj.id)
             
-            messages.success(request, 'Tài liệu đã được tải lên thành công!')
+            messages.success(request, '🎉 Tài liệu đã được tải lên thành công!')
+            if point_message:
+                messages.info(request, point_message)
             return redirect('home')
         else:
-            messages.error(request, 'Có lỗi xảy ra khi tải lên. Vui lòng kiểm tra lại thông tin.')
+            messages.error(request, '❌ Có lỗi xảy ra khi tải lên. Vui lòng kiểm tra lại thông tin.')
     else:
         form = FileUploadForm(user=request.user)
     

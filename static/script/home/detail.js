@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
         csrfToken.value = '{{ csrf_token }}';
         document.body.appendChild(csrfToken);
     }
+    
+    // Enhanced notification handling
+    enhanceNotifications();
 });
 document.addEventListener('DOMContentLoaded', function() {
     // Hide loading overlay after a delay if onload events don't trigger
@@ -233,3 +236,80 @@ if (typeof gtag !== 'undefined') {
         'file_author': '{{ file.author.username }}'
     });
 }
+
+// Enhanced notification system
+function enhanceNotifications() {
+    const alerts = document.querySelectorAll('.alert');
+    
+    alerts.forEach((alert, index) => {
+        // Add staggered animation delay
+        alert.style.animationDelay = `${index * 0.15}s`;
+        
+        // Auto-hide after 6 seconds for info messages (trừ điểm)
+        if (alert.classList.contains('alert-info')) {
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.style.animation = 'slideOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                    setTimeout(() => {
+                        if (alert.parentNode) {
+                            alert.remove();
+                        }
+                    }, 500);
+                }
+            }, 6000);
+        }
+        
+        // Auto-hide after 8 seconds for success messages (cộng điểm)
+        if (alert.classList.contains('alert-success')) {
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.style.animation = 'slideOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                    setTimeout(() => {
+                        if (alert.parentNode) {
+                            alert.remove();
+                        }
+                    }, 500);
+                }
+            }, 8000);
+        }
+        
+        // Enhanced close button with smooth animation
+        const closeBtn = alert.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                alert.style.animation = 'slideOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 500);
+            });
+        }
+        
+        // Add subtle entrance effect
+        alert.style.opacity = '0';
+        alert.style.transform = 'translateX(100%) scale(0.95)';
+        
+        setTimeout(() => {
+            alert.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            alert.style.opacity = '1';
+            alert.style.transform = 'translateX(0) scale(1)';
+        }, index * 150);
+    });
+}
+
+// Add slideOutRight animation to CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%) scale(0.95);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
