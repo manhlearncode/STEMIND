@@ -172,10 +172,11 @@
 
                             {% elif file.file_urls.name|slice:"-4:" == ".jpg" or file.file_urls.name|slice:"-4:" == ".png" or file.file_urls.name|slice:"-5:" == ".jpeg" or file.file_urls.name|slice:"-4:" == ".gif" or file.file_urls.name|slice:"-5:" == ".webp" %}
                                 <!-- Image Viewer -->
-                                <div class="image-viewer">
+                                <div class="image-viewer" style="height: 600px; display: flex; align-items: center; justify-content: center;">
                                     <img src="{{ file.get_presigned_url }}" 
                                          alt="{{ file.title }}" 
                                          class="img-fluid" 
+                                         style="max-height: 100%; max-width: 100%; object-fit: contain;"
                                          onload="hideLoading()">
                                 </div>
                             {% elif file.file_urls.name|slice:"-4:" == ".mp4" or file.file_urls.name|slice:"-4:" == ".avi" or file.file_urls.name|slice:"-4:" == ".mov" or file.file_urls.name|slice:"-4:" == ".wmv" or file.file_urls.name|slice:"-4:" == ".flv" or file.file_urls.name|slice:"-5:" == ".webm" or file.file_urls.name|slice:"-4:" == ".mkv" %}
@@ -269,11 +270,17 @@
                                 </div>
                             {% else %}
                                 <!-- File Preview Placeholder -->
-                                <div class="file-viewer">
+                                <div class="file-viewer" style="height: 600px;">
                                     <div class="file-placeholder">
-                                        <i class="fas fa-file-alt"></i>
-                                        <h5>{{ file.file_urls.name|default:"Tài liệu" }}</h5>
-                                        <p class="text-muted">Nhấn nút bên dưới để tải xuống hoặc xem tài liệu</p>
+                                        <i class="fas fa-file-alt fa-4x mb-3" style="color: #6c757d;"></i>
+                                        <h5 class="mb-3">{{ file.file_urls.name|default:"Tài liệu" }}</h5>
+                                        <p class="text-muted mb-4">Nhấn nút bên dưới để tải xuống hoặc xem tài liệu</p>
+                                        <div class="file-info">
+                                            <p class="text-info">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                Định dạng: {{ file.file_urls.name|slice:"-4:"|upper }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             {% endif %}
