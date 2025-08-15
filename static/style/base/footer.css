@@ -196,6 +196,27 @@
     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
+/* Specific social link styles */
+.social-link[aria-label="Facebook"]:hover {
+    background: linear-gradient(135deg, #1877f2 0%, #0d6efd 100%);
+    box-shadow: 0 8px 20px rgba(24, 119, 242, 0.3);
+}
+
+.social-link[aria-label="Gmail"]:hover {
+    background: linear-gradient(135deg, #ea4335 0%, #d93025 100%);
+    box-shadow: 0 8px 20px rgba(234, 67, 53, 0.3);
+}
+
+.social-link[aria-label="Zalo"]:hover {
+    background: linear-gradient(135deg, #0068ff 0%, #0052cc 100%);
+    box-shadow: 0 8px 20px rgba(0, 104, 255, 0.3);
+}
+
+.social-link[aria-label="Technical Support"]:hover {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3);
+}
+
 /* Back to Top */
 .back-to-top {
     position: fixed;
@@ -269,6 +290,16 @@
 .contact-item i,
 .back-to-top i {
     font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 5 Free", "Font Awesome 5 Pro" !important;
+}
+
+/* Social link icon specific styles */
+.social-link i {
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.social-link:hover i {
+    transform: scale(1.1);
 }
 .social-link .fab,
 .footer-links .fab,

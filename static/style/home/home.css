@@ -640,6 +640,21 @@
     background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
 }
 
+/* Special styling for like notifications */
+.toast-header.bg-like {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+/* Special styling for comment notifications */
+.toast-header.bg-comment {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+}
+
+/* Special styling for point deduction notifications */
+.toast-header.bg-point-deduction {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%) !important;
+}
+
 .toast-body {
     padding: 1rem;
     background: white;

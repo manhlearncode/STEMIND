@@ -10,10 +10,10 @@
     {% if messages %}
         {% for message in messages %}
             <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header {% if message.tags == 'error' %}bg-danger text-white{% elif message.tags == 'success' %}bg-success text-white{% elif message.tags == 'warning' %}bg-warning text-dark{% else %}bg-info text-white{% endif %}">
-                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                <div class="toast-header {% if message.tags == 'error' %}bg-danger text-white{% elif message.tags == 'success' %}bg-success text-white{% elif message.tags == 'warning' %}bg-warning text-dark{% elif '👍' in message %}bg-like text-white{% elif '💬' in message %}bg-comment text-white{% else %}bg-info text-white{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% elif '👍' in message %}thumbs-up{% elif '💬' in message %}comment{% else %}info-circle{% endif %} me-2"></i>
                     <strong class="me-auto">
-                        {% if message.tags == 'error' %}Lỗi{% elif message.tags == 'success' %}Thành công{% elif message.tags == 'warning' %}Cảnh báo{% else %}Thông báo{% endif %}
+                        {% if message.tags == 'error' %}Lỗi{% elif message.tags == 'success' %}Thành công{% elif message.tags == 'warning' %}Cảnh báo{% elif '👍' in message %}Thích bài viết{% elif '💬' in message %}Bình luận{% else %}Thông báo{% endif %}
                     </strong>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>

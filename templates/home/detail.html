@@ -8,26 +8,25 @@
 {% endblock %}
 
 {% block content %}
-<!-- Point Notifications -->
-{% if messages %}
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {% if '🎉' in message or '👍' in message or '💬' in message or '👥' in message or '🌅' in message or '✅' in message %}
-            {{ message|safe }}
-        {% elif '👁️' in message or '📥' in message or '👎' in message %}
-            {{ message|safe }}
-        {% elif '❌' in message %}
-            {{ message|safe }}
-        {% else %}
-            <i class="fas fa-{% if message.tags == 'success' %}coins{% elif message.tags == 'info' %}info-circle{% else %}exclamation-circle{% endif %} me-2"></i>
-            {{ message }}
-        {% endif %}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
-    </div>
-    {% endfor %}
+<!-- Toast Notifications Container -->
+<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header {% if message.tags == 'error' %}bg-danger text-white{% elif message.tags == 'success' %}bg-success text-white{% elif message.tags == 'warning' %}bg-warning text-dark{% elif '📥' in message %}bg-point-deduction text-white{% elif '👍' in message %}bg-like text-white{% elif '💬' in message %}bg-comment text-white{% else %}bg-info text-white{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-triangle{% elif '📥' in message %}minus-circle{% elif '👍' in message %}thumbs-up{% elif '💬' in message %}comment{% else %}info-circle{% endif %} me-2"></i>
+                    <strong class="me-auto">
+                        {% if message.tags == 'error' %}Lỗi{% elif message.tags == 'success' %}Thành công{% elif message.tags == 'warning' %}Cảnh báo{% elif '📥' in message %}Trừ điểm{% elif '👍' in message %}Thích bài viết{% elif '💬' in message %}Bình luận{% else %}Thông báo{% endif %}
+                    </strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 </div>
-{% endif %}
 
 <!-- File Hero Section -->
 <section class="file-hero">
@@ -417,4 +416,30 @@
     </div>
 </section>
 <script src="{% static 'script/home/detail.js' %}"></script>
+<script>
+// Auto-hide toast notifications after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const toasts = document.querySelectorAll('.toast');
+    toasts.forEach(function(toast) {
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            toast.classList.add('hide');
+            setTimeout(function() {
+                toast.remove();
+            }, 300);
+        }, 5000);
+        
+        // Manual close button
+        const closeBtn = toast.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                toast.classList.add('hide');
+                setTimeout(function() {
+                    toast.remove();
+                }, 300);
+            });
+        }
+    });
+});
+</script>
 {% endblock content %}
