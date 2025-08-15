@@ -1,13 +1,12 @@
 import asyncio
-import concurrent.futures
 import os
 import json
 import numpy as np
 from typing import List, Tuple, Optional
 from sklearn.metrics.pairwise import cosine_similarity
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
-import google.generativeai as genai
+import openai
 from .user_embedding_service import UserEmbeddingService
 
 load_dotenv()
@@ -15,7 +14,7 @@ load_dotenv()
 class UserEmbeddingService:
     def __init__(self):
         self._ensure_event_loop()
-        self.embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        self.embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
 
     def _ensure_event_loop(self):
         try:
@@ -83,15 +82,16 @@ class UserEmbeddingService:
 
 class RAGChatbotService:
     def __init__(self, embeddings_file='stem_embeddings.json'):
-        self.api_key = os.getenv("GOOGLE_API_KEY")
+        self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            raise ValueError("OPENAI_API_KEY not found in environment variables")
 
-        genai.configure(api_key=self.api_key)
+        openai.api_key = self.api_key
         self.embeddings_file = embeddings_file
         self.chunks = []
         self.embeddings = []
         self.user_embedding_service = UserEmbeddingService()
+        self.embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
         self.load_embeddings()
 
     def load_embeddings(self):
@@ -109,30 +109,27 @@ class RAGChatbotService:
         else:
             print(f"File embeddings không tồn tại: {self.embeddings_file}")
 
-    def get_gemini_embedding(self, text):
+    def get_openai_embedding(self, text):
         try:
-            embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-            return embeddings.embed_query(text)
+            return self.embeddings_model.embed_query(text)
         except Exception as e:
-            print(f"Lỗi khi tạo embedding: {e}")
+            print(f"Lỗi khi tạo embedding OpenAI: {e}")
             return None
 
-    # def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
-    #     try:
-    #         user_chunks = self.user_embedding_service.get_user_context(user_id, query, top_k)
-    #         global_chunks = self.get_global_context(query, top_k)
-    #         all_chunks = user_chunks + global_chunks
-    #         if all_chunks:
-    #             context = "\n".join(all_chunks)
-    #             prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung), hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
-    #             model = genai.GenerativeModel("gemini-2.0-flash-exp")
-    #             response = model.generate_content(prompt)
-    #             return response.text
-    #         else:
-    #             return self._fallback_to_gemini(query)
-    #     except Exception as e:
-    #         print(f"Lỗi trong RAG với user context: {e}")
-    #         return self._fallback_to_gemini(query)
+    def _generate_with_openai(self, prompt: str):
+        """Sinh câu trả lời bằng OpenAI GPT-4o-mini"""
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "Bạn là trợ lý AI lĩnh vực STEM, luôn trả lời ngắn gọn, rõ ràng."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2
+            )
+            return response.choices[0].message["content"].strip()
+        except Exception as e:
+            return f"Xin lỗi, có lỗi xảy ra khi xử lý: {str(e)}"
 
     def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
         try:
@@ -140,18 +137,17 @@ class RAGChatbotService:
             global_chunks = self.get_global_context(query, top_k)
             all_chunks = user_chunks + global_chunks
 
-            if not all_chunks:  # Nếu không có dữ liệu nào
-                print("⚠️ Không có dữ liệu user hoặc global. Sử dụng Gemini.")
-                return self._fallback_to_gemini(query)
+            if not all_chunks:
+                print("⚠️ Không có dữ liệu user hoặc global. Sử dụng OpenAI trực tiếp.")
+                return self._generate_with_openai(query)
 
             context = "\n".join(all_chunks)
-            prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung) và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
-            model = genai.GenerativeModel("gemini-2.0-flash-exp")
-            response = model.generate_content(prompt)
+            prompt = f"""Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung) và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+            answer = self._generate_with_openai(prompt)
 
-            if not response.text or len(response.text.strip()) < 50:
-                print("⚠️ Trả lời không hợp lệ. Sử dụng Gemini.")
-                return self._fallback_to_gemini(query)
+            if not answer or len(answer.strip()) < 50:
+                print("⚠️ Trả lời không hợp lệ. Sử dụng OpenAI trực tiếp.")
+                return self._generate_with_openai(query)
             
             BAD_PHRASES = [
                 "tôi không tìm thấy", 
@@ -159,44 +155,20 @@ class RAGChatbotService:
                 "không đủ dữ liệu", 
                 "tài liệu không đề cập"
             ]
-
-            if any(phrase in response.text.lower() for phrase in BAD_PHRASES):
-                print("⚠️ Trả lời không hợp lệ. Sử dụng Gemini.")
-                return self._fallback_to_gemini(query)
+            if any(phrase in answer.lower() for phrase in BAD_PHRASES):
+                print("⚠️ Trả lời không hợp lệ. Sử dụng OpenAI trực tiếp.")
+                return self._generate_with_openai(query)
             
-            return response.text
+            return answer
         except Exception as e:
             print(f"Lỗi trong RAG với user context: {e}")
-            return self._fallback_to_gemini(query)
-
-    # def answer_question(self, query, top_k=3):
-    #     try:
-    #         query_embedding = self.get_gemini_embedding(query)
-    #         if not query_embedding:
-    #             return self._fallback_to_gemini(query)
-
-    #         query_embedding = np.array(query_embedding).reshape(1, -1)
-    #         similarities = cosine_similarity(query_embedding, self.embeddings)[0]
-    #         top_indices = np.argsort(similarities)[-top_k:][::-1]
-    #         relevant_chunks = [self.chunks[i] for i in top_indices if similarities[i] > 0.3]
-
-    #         if relevant_chunks:
-    #             context = "\n".join(relevant_chunks)
-    #             prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên tài liệu sau, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
-    #             model = genai.GenerativeModel("gemini-2.0-flash-exp")
-    #             response = model.generate_content(prompt)
-    #             return response.text
-    #         else:
-    #             return self._fallback_to_gemini(query)
-    #     except Exception as e:
-    #         print(f"Lỗi trong RAG: {e}")
-    #         return self._fallback_to_gemini(query)
+            return self._generate_with_openai(query)
 
     def answer_question(self, query, top_k=3):
         try:
-            query_embedding = self.get_gemini_embedding(query)
+            query_embedding = self.get_openai_embedding(query)
             if not query_embedding:
-                return self._fallback_to_gemini(query)
+                return self._generate_with_openai(query)
 
             query_embedding = np.array(query_embedding).reshape(1, -1)
             similarities = cosine_similarity(query_embedding, self.embeddings)[0]
@@ -204,17 +176,16 @@ class RAGChatbotService:
             relevant_chunks = [self.chunks[i] for i in top_indices if similarities[i] > 0.3]
 
             if not relevant_chunks:
-                print("⚠️ Không tìm được chunk nào phù hợp. Sử dụng Gemini.")
-                return self._fallback_to_gemini(query)
+                print("⚠️ Không tìm được chunk nào phù hợp. Sử dụng OpenAI trực tiếp.")
+                return self._generate_with_openai(query)
 
             context = "\n".join(relevant_chunks)
-            prompt = f"""Bạn là trợ lý AI lĩnh vực STEM. Dựa trên tài liệu sau và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
-            model = genai.GenerativeModel("gemini-2.0-flash-exp")
-            response = model.generate_content(prompt)
+            prompt = f"""Dựa trên tài liệu sau và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+            answer = self._generate_with_openai(prompt)
 
-            if not response.text or len(response.text.strip()) < 50:
-                print("⚠️ Trả lời không hợp lệ. Sử dụng Gemini.")
-                return self._fallback_to_gemini(query)
+            if not answer or len(answer.strip()) < 50:
+                print("⚠️ Trả lời không hợp lệ. Sử dụng OpenAI trực tiếp.")
+                return self._generate_with_openai(query)
             
             BAD_PHRASES = [
                 "tôi không tìm thấy", 
@@ -222,21 +193,19 @@ class RAGChatbotService:
                 "không đủ dữ liệu", 
                 "tài liệu không đề cập"
             ]
-
-            if any(phrase in response.text.lower() for phrase in BAD_PHRASES):
-                return self._fallback_to_gemini(query)
+            if any(phrase in answer.lower() for phrase in BAD_PHRASES):
+                return self._generate_with_openai(query)
             
-            return response.text
+            return answer
         except Exception as e:
             print(f"Lỗi trong RAG: {e}")
-            return self._fallback_to_gemini(query)
-
+            return self._generate_with_openai(query)
 
     def get_global_context(self, query: str, top_k: int = 3):
         if not self.chunks or len(self.embeddings) == 0:
             return []
         try:
-            query_embedding = self.get_gemini_embedding(query)
+            query_embedding = self.get_openai_embedding(query)
             if not query_embedding:
                 return []
             query_embedding = np.array(query_embedding).reshape(1, -1)
@@ -246,15 +215,6 @@ class RAGChatbotService:
         except Exception as e:
             print(f"Lỗi khi lấy global context: {e}")
             return []
-
-    def _fallback_to_gemini(self, query):
-        try:
-            prompt = f"""Bạn là một trợ lý AI thông minh. Hãy trả lời câu hỏi sau: {query}\n\nTrả lời:"""
-            model = genai.GenerativeModel("gemini-2.0-flash-exp")
-            response = model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return f"Xin lỗi, có lỗi xảy ra khi xử lý: {str(e)}"
 
     def get_user_profile(self, user_id: str):
         return self.user_embedding_service.get_user_profile(user_id)

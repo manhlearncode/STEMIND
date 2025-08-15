@@ -3,14 +3,16 @@ import json
 import numpy as np
 from typing import List, Tuple, Optional
 from sklearn.metrics.pairwise import cosine_similarity
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class UserEmbeddingService:
     def __init__(self):
-        self.embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        # Sử dụng OpenAI embeddings
+        self.embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")  
+        # Hoặc "text-embedding-3-large" nếu cần độ chính xác cao hơn
     
     def load_user_embeddings(self, user_id: str) -> Tuple[List[str], np.ndarray]:
         """
@@ -95,4 +97,4 @@ class UserEmbeddingService:
             if filename.startswith('user_') and filename.endswith('_embeddings.json'):
                 user_id = filename.replace('user_', '').replace('_embeddings.json', '')
                 users.append(user_id)
-        return users 
+        return users
