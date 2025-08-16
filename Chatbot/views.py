@@ -256,53 +256,215 @@ def list_users_view(request):
     return JsonResponse({'users': users})
 
 def generate_content_file(user_message, bot_response, session):
-    """Generate a downloadable file based on chatbot response"""
+    """Generate a downloadable HTML file based on chatbot response"""
     try:
         # Determine file type based on user request
         file_type = 'document'
-        file_extension = '.txt'
-        mime_type = 'text/plain'
+        file_extension = '.html'
+        mime_type = 'text/html'
         
         if any(keyword in user_message.lower() for keyword in ['bài giảng', 'lesson plan']):
-            filename = f"Bai_giang_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            filename = f"Bai_giang_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
             content_type = 'Bài giảng'
+            icon_class = 'fas fa-chalkboard-teacher'
+            color_class = 'primary'
         elif any(keyword in user_message.lower() for keyword in ['bài tập', 'exercise']):
-            filename = f"Bai_tap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            filename = f"Bai_tap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
             content_type = 'Bài tập'
+            icon_class = 'fas fa-tasks'
+            color_class = 'success'
         elif any(keyword in user_message.lower() for keyword in ['bài kiểm tra', 'test', 'quiz']):
-            filename = f"Bai_kiem_tra_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            filename = f"Bai_kiem_tra_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
             content_type = 'Bài kiểm tra'
+            icon_class = 'fas fa-question-circle'
+            color_class = 'warning'
         else:
-            filename = f"Noi_dung_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            filename = f"Noi_dung_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
             content_type = 'Nội dung'
+            icon_class = 'fas fa-file-alt'
+            color_class = 'info'
         
-        # Create file content
-        file_content = f"""
-{content_type} - Được tạo bởi STEMIND AI
-{"="*50}
-
-Câu hỏi của bạn:
-{user_message}
-
-{"="*50}
-
-Nội dung được tạo:
-{bot_response}
-
-{"="*50}
-Được tạo vào: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
-Tạo bởi: STEMIND AI Assistant
-"""
+        # Create HTML content with beautiful styling
+        html_content = f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{content_type} - STEMIND AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }}
+        .header::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }}
+        .header h1 {{
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }}
+        .header .icon {{
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+            position: relative;
+            z-index: 1;
+        }}
+        .content {{
+            padding: 40px;
+        }}
+        .section {{
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            background: #f8f9fa;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }}
+        .section h3 {{
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }}
+        .section h3 i {{
+            color: #764ba2;
+        }}
+        .user-message {{
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left-color: #2196f3;
+        }}
+        .bot-response {{
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-left-color: #9c27b0;
+        }}
+        .footer {{
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+        }}
+        .footer .logo {{
+            font-weight: bold;
+            color: #667eea;
+        }}
+        .timestamp {{
+            background: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 25px;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: #495057;
+        }}
+        .badge {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+        @media print {{
+            body {{
+                background: white;
+                padding: 0;
+            }}
+            .container {{
+                box-shadow: none;
+                border-radius: 0;
+            }}
+            .header {{
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="{icon_class} icon"></i>
+            <h1>{content_type}</h1>
+            <div class="badge">STEMIND AI</div>
+        </div>
+        
+        <div class="content">
+            <div class="section user-message">
+                <h3><i class="fas fa-user"></i> Câu hỏi của bạn</h3>
+                <p>{user_message}</p>
+            </div>
+            
+            <div class="section bot-response">
+                <h3><i class="fas fa-robot"></i> Nội dung được tạo</h3>
+                <div>{bot_response.replace(chr(10), '<br>')}</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="timestamp">
+                <i class="fas fa-clock"></i> Được tạo vào: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
+            </div>
+            <br>
+            <div class="logo">STEMIND AI Assistant</div>
+            <small>Hệ thống trí tuệ nhân tạo giáo dục</small>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+<script>
+    alert('Nhấn tổ hợp phím Ctrl + P để in ra');
+</script>
+</html>"""
         
         # Create file object
-        file_obj = ContentFile(file_content.encode('utf-8'))
+        file_obj = ContentFile(html_content.encode('utf-8'))
         file_obj.name = filename
         
         # Create a bot message for the file
         file_message = ChatMessage.objects.create(
             session=session,
             message_type='bot',
-            content=f'Đã tạo file: {filename}'
+            content=f'Đã tạo file HTML: {filename}'
         )
         
         # Create file attachment
@@ -311,7 +473,7 @@ Tạo bởi: STEMIND AI Assistant
             file=file_obj,
             original_name=filename,
             file_type=file_type,
-            file_size=len(file_content.encode('utf-8')),
+            file_size=len(html_content.encode('utf-8')),
             mime_type=mime_type
         )
         
@@ -389,6 +551,11 @@ def list_chat_files(request, session_id=None):
             # Tạo presigned URL cho mỗi file
             download_url = attachment.get_presigned_url()
             
+            # Thêm preview URL cho HTML files
+            preview_url = None
+            if attachment.is_html():
+                preview_url = f'/chatbot/preview-html/{attachment.id}/'
+            
             files_data.append({
                 'id': attachment.id,
                 'name': attachment.original_name,
@@ -399,7 +566,9 @@ def list_chat_files(request, session_id=None):
                 'session_id': attachment.message.session.session_id,
                 'session_title': attachment.message.session.title,
                 'download_url': download_url,
-                'file_url': download_url  # Thêm file_url để tương thích
+                'file_url': download_url,  # Thêm file_url để tương thích
+                'preview_url': preview_url,  # Thêm preview URL cho HTML files
+                'is_html': attachment.is_html(),  # Thêm flag để frontend biết
             })
         
         return JsonResponse({
@@ -446,6 +615,55 @@ def test_download(request, file_id):
                 'file_path': attachment.file.name if attachment.file else None
             }
         })
+        
+    except FileAttachment.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'File không tồn tại'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@login_required
+def preview_html_file(request, file_id):
+    """Preview HTML file trực tiếp trong browser"""
+    try:
+        from django.http import HttpResponse
+        
+        # Lấy file attachment
+        attachment = FileAttachment.objects.get(id=file_id)
+        
+        # Kiểm tra quyền truy cập
+        if not request.user.is_staff and attachment.message.session.user != request.user:
+            return JsonResponse({
+                'success': False,
+                'error': 'Không có quyền truy cập file này'
+            }, status=403)
+        
+        # Kiểm tra xem có phải HTML file không
+        if not attachment.is_html():
+            return JsonResponse({
+                'success': False,
+                'error': 'Chỉ có thể preview HTML files'
+            }, status=400)
+        
+        # Đọc nội dung file
+        if hasattr(attachment.file, 'read'):
+            attachment.file.seek(0)
+            html_content = attachment.file.read().decode('utf-8')
+            
+            # Trả về HTML content
+            response = HttpResponse(html_content, content_type='text/html')
+            response['Content-Disposition'] = f'inline; filename="{attachment.original_name}"'
+            return response
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Không thể đọc file'
+            }, status=500)
         
     except FileAttachment.DoesNotExist:
         return JsonResponse({

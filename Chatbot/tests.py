@@ -131,6 +131,59 @@ class FileAttachmentDownloadTest(TestCase):
         self.assertIsInstance(size_display, str)
         self.assertIn('B', size_display)  # Should contain 'B' for bytes
         
+    def test_html_file_detection(self):
+        """Test HTML file detection"""
+        # Tạo HTML file attachment
+        html_attachment = FileAttachment.objects.create(
+            message=self.message,
+            file=self.test_file,
+            original_name='test.html',
+            file_type='html',
+            file_size=len(self.test_file_content),
+            mime_type='text/html'
+        )
+        
+        self.assertTrue(html_attachment.is_html())
+        self.assertTrue(html_attachment.is_document())
+        
+    def test_file_type_from_mime(self):
+        """Test file type detection from MIME type"""
+        # Test HTML MIME type
+        html_type = FileAttachment.get_file_type_from_mime('text/html')
+        self.assertEqual(html_type, 'html')
+        
+        # Test document MIME types
+        doc_type = FileAttachment.get_file_type_from_mime('application/pdf')
+        self.assertEqual(doc_type, 'document')
+        
+        # Test image MIME type
+        img_type = FileAttachment.get_file_type_from_mime('image/jpeg')
+        self.assertEqual(img_type, 'image')
+        
+    def test_generate_html_file(self):
+        """Test HTML file generation"""
+        from .views import generate_content_file
+        
+        # Test HTML file generation
+        attachment = generate_content_file(
+            user_message="Tạo bài giảng về toán học",
+            bot_response="Đây là nội dung bài giảng về toán học...",
+            session=self.session
+        )
+        
+        self.assertIsNotNone(attachment)
+        self.assertEqual(attachment.file_type, 'html')
+        self.assertEqual(attachment.mime_type, 'text/html')
+        self.assertTrue(attachment.original_name.endswith('.html'))
+        
+        # Test file content contains HTML
+        if hasattr(attachment.file, 'read'):
+            attachment.file.seek(0)
+            content = attachment.file.read().decode('utf-8')
+            self.assertIn('<!DOCTYPE html>', content)
+            self.assertIn('STEMIND AI', content)
+            self.assertIn('Bài giảng', content)
+        
     def tearDown(self):
         # Cleanup test files
         if self.attachment.file:

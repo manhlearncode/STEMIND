@@ -49,6 +49,7 @@ class FileAttachment(models.Model):
     FILE_TYPES = [
         ('image', 'Image'),
         ('document', 'Document'),
+        ('html', 'HTML Document'),
         ('audio', 'Audio'),
         ('video', 'Video'),
         ('other', 'Other'),
@@ -103,7 +104,10 @@ class FileAttachment(models.Model):
         return self.file_type == 'image'
     
     def is_document(self):
-        return self.file_type == 'document'
+        return self.file_type in ['document', 'html']
+    
+    def is_html(self):
+        return self.file_type == 'html'
     
     def get_file_type_from_mime(self, mime_type):
         """Determine file type from MIME type"""
@@ -113,6 +117,8 @@ class FileAttachment(models.Model):
             return 'video'
         elif mime_type.startswith('audio/'):
             return 'audio'
+        elif mime_type == 'text/html':
+            return 'html'
         elif mime_type in ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
                           'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                           'text/plain', 'text/csv']:

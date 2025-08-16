@@ -23,8 +23,8 @@ class ChatMessageAdmin(admin.ModelAdmin):
 
 @admin.register(FileAttachment)
 class FileAttachmentAdmin(admin.ModelAdmin):
-    list_display = ['original_name', 'file_type', 'file_size_display', 'message', 'uploaded_at']
-    list_filter = ['file_type', 'uploaded_at']
+    list_display = ['original_name', 'file_type', 'file_size_display', 'message', 'uploaded_at', 'is_html_file']
+    list_filter = ['file_type', 'uploaded_at', 'mime_type']
     search_fields = ['original_name', 'message__content']
     readonly_fields = ['uploaded_at', 'file_size', 'mime_type']
     ordering = ['-uploaded_at']
@@ -32,3 +32,11 @@ class FileAttachmentAdmin(admin.ModelAdmin):
     def file_size_display(self, obj):
         return obj.get_file_size_display()
     file_size_display.short_description = 'File Size'
+    
+    def is_html_file(self, obj):
+        return obj.is_html()
+    is_html_file.boolean = True
+    is_html_file.short_description = 'HTML File'
+    
+    list_display_links = ['original_name']
+    list_per_page = 25
