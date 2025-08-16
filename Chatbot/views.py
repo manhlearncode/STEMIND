@@ -452,7 +452,7 @@ def generate_content_file(user_message, bot_response, session):
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 <script>
-    alert('Nhấn tổ hợp phím Ctrl + P để in ra');
+    alert('Nhấn tổ hợp phím Ctrl + P để in ra \n Nhấn tổ hợp phím Ctrl + S để lưu file');
 </script>
 </html>"""
         
