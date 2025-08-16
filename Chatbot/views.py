@@ -298,7 +298,7 @@ def generate_content_file(user_message, bot_response, session):
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -308,11 +308,12 @@ def generate_content_file(user_message, bot_response, session):
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0, 102, 86, 0.15);
             overflow: hidden;
+            border: 2px solid #e8f5f3;
         }}
         .header {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #006056 0%, #008069 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -325,14 +326,14 @@ def generate_content_file(user_message, bot_response, session):
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.2"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.4;
         }}
         .header h1 {{
             margin: 0;
             font-size: 2.5rem;
             font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
             position: relative;
             z-index: 1;
         }}
@@ -345,17 +346,19 @@ def generate_content_file(user_message, bot_response, session):
         }}
         .content {{
             padding: 40px;
+            background: #fafbfc;
         }}
         .section {{
             margin-bottom: 30px;
             padding: 25px;
             border-radius: 15px;
-            border-left: 5px solid #667eea;
-            background: #f8f9fa;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #006056;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 102, 86, 0.08);
+            border: 1px solid #e8f5f3;
         }}
         .section h3 {{
-            color: #667eea;
+            color: #006056;
             margin-bottom: 15px;
             font-weight: 600;
             display: flex;
@@ -363,37 +366,40 @@ def generate_content_file(user_message, bot_response, session):
             gap: 10px;
         }}
         .section h3 i {{
-            color: #764ba2;
+            color: #006056;
         }}
         .user-message {{
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border-left-color: #2196f3;
+            background: linear-gradient(135deg, #f0f9f7 0%, #e8f5f3 100%);
+            border-left-color: #006056;
+            border: 1px solid #d4edda;
         }}
         .bot-response {{
-            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-            border-left-color: #9c27b0;
+            background: linear-gradient(135deg, #f8fcfb 0%, #f0f9f7 100%);
+            border-left-color: #006056;
+            border: 1px solid #d1ecf1;
         }}
         .footer {{
             background: #f8f9fa;
             padding: 20px;
             text-align: center;
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid #e8f5f3;
             color: #6c757d;
         }}
         .footer .logo {{
             font-weight: bold;
-            color: #667eea;
+            color: #006056;
         }}
         .timestamp {{
-            background: #e9ecef;
+            background: #e8f5f3;
             padding: 10px 15px;
             border-radius: 25px;
             display: inline-block;
             font-size: 0.9rem;
-            color: #495057;
+            color: #006056;
+            border: 1px solid #d4edda;
         }}
         .badge {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #006056 0%, #008069 100%);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -401,6 +407,7 @@ def generate_content_file(user_message, bot_response, session):
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 1px;
+            box-shadow: 0 2px 8px rgba(0, 102, 86, 0.3);
         }}
         @media print {{
             body {{
@@ -410,11 +417,13 @@ def generate_content_file(user_message, bot_response, session):
             .container {{
                 box-shadow: none;
                 border-radius: 0;
+                border: none;
             }}
             .header {{
-                background: #667eea !important;
+                background: #fff !important;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
+                color: #006056;
             }}
         }}
     </style>
@@ -452,7 +461,8 @@ def generate_content_file(user_message, bot_response, session):
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 <script>
-    alert('Nhấn tổ hợp phím Ctrl + P để in ra \n Nhấn tổ hợp phím Ctrl + S để lưu file');
+    alert('Nhấn tổ hợp phím Ctrl + P để in ra');
+    alert('Nhấn tổ hợp phím Ctrl + S để lưu file');
 </script>
 </html>"""
         
