@@ -327,11 +327,10 @@ def chatbot_page(request):
 
 @login_required
 def download_chat_file(request, file_id):
-    """Download file từ chatbot"""
+    """Download file từ chatbot sử dụng S3 presigned URL"""
     try:
-        from django.http import FileResponse, Http404
+        from django.http import HttpResponseRedirect, JsonResponse
         from django.conf import settings
-        import os
         
         # Lấy file attachment
         attachment = FileAttachment.objects.get(id=file_id)
@@ -343,20 +342,15 @@ def download_chat_file(request, file_id):
                 'error': 'Không có quyền truy cập file này'
             }, status=403)
         
-        # Kiểm tra file có tồn tại không
-        if not attachment.file or not os.path.exists(attachment.file.path):
-            raise Http404("File không tồn tại")
-        
-        # Tạo response để download
-        response = FileResponse(
-            open(attachment.file.path, 'rb'),
-            content_type=attachment.mime_type
-        )
-        
-        # Set filename cho download
-        response['Content-Disposition'] = f'attachment; filename="{attachment.original_name}"'
-        
-        return response
+        # Tạo presigned URL từ S3 và redirect
+        presigned_url = attachment.get_presigned_url()
+        if presigned_url:
+            return HttpResponseRedirect(presigned_url)
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Không thể tạo download link'
+            }, status=500)
         
     except FileAttachment.DoesNotExist:
         return JsonResponse({
@@ -392,6 +386,9 @@ def list_chat_files(request, session_id=None):
         
         files_data = []
         for attachment in attachments:
+            # Tạo presigned URL cho mỗi file
+            download_url = attachment.get_presigned_url()
+            
             files_data.append({
                 'id': attachment.id,
                 'name': attachment.original_name,
@@ -401,7 +398,8 @@ def list_chat_files(request, session_id=None):
                 'uploaded_at': attachment.uploaded_at.isoformat(),
                 'session_id': attachment.message.session.session_id,
                 'session_title': attachment.message.session.title,
-                'download_url': f'/chatbot/download-file/{attachment.id}/'
+                'download_url': download_url,
+                'file_url': download_url  # Thêm file_url để tương thích
             })
         
         return JsonResponse({
@@ -413,6 +411,46 @@ def list_chat_files(request, session_id=None):
         return JsonResponse({
             'success': False,
             'error': 'Session không tồn tại'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@login_required
+def test_download(request, file_id):
+    """Test view để kiểm tra presigned URL"""
+    try:
+        attachment = FileAttachment.objects.get(id=file_id)
+        
+        # Kiểm tra quyền truy cập
+        if not request.user.is_staff and attachment.message.session.user != request.user:
+            return JsonResponse({
+                'success': False,
+                'error': 'Không có quyền truy cập file này'
+            }, status=403)
+        
+        # Tạo presigned URL
+        presigned_url = attachment.get_presigned_url()
+        
+        return JsonResponse({
+            'success': True,
+            'file_info': {
+                'id': attachment.id,
+                'name': attachment.original_name,
+                'size': attachment.get_file_size_display(),
+                'type': attachment.file_type,
+                'mime_type': attachment.mime_type,
+                'presigned_url': presigned_url,
+                'file_path': attachment.file.name if attachment.file else None
+            }
+        })
+        
+    except FileAttachment.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'File không tồn tại'
         }, status=404)
     except Exception as e:
         return JsonResponse({

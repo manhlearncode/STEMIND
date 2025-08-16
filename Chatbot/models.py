@@ -3,6 +3,7 @@ from django.conf import settings
 import uuid
 import os
 import mimetypes
+import boto3
 
 def get_upload_path(instance, filename):
     """Generate upload path for chat files"""
@@ -67,6 +68,27 @@ class FileAttachment(models.Model):
     
     def __str__(self):
         return f"{self.original_name} ({self.file_type})"
+    
+    def get_presigned_url(self, expires_in=3600):
+        """Tạo presigned URL từ S3 để download file"""
+        try:
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_S3_REGION_NAME
+            )
+            return s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': self.file.name},
+                ExpiresIn=expires_in
+            )
+        except Exception as e:
+            print(f"Error generating presigned URL: {e}")
+            # Fallback về local file nếu có lỗi S3
+            if hasattr(self.file, 'url'):
+                return self.file.url
+            return None
     
     def get_file_size_display(self):
         """Return human readable file size"""

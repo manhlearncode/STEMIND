@@ -117,17 +117,17 @@ class RAGChatbotService:
             return None
 
     def _generate_with_openai(self, prompt: str):
-        """Sinh câu trả lời bằng OpenAI GPT-4o-mini"""
+        """Sinh câu trả lời bằng OpenAI GPT-4o"""
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
+            response = openai.chat.completions.create(
+                model="gpt-5",  # hoặc model bạn có quyền dùng
                 messages=[
                     {"role": "system", "content": "Bạn là trợ lý AI lĩnh vực STEM, luôn trả lời ngắn gọn, rõ ràng."},
                     {"role": "user", "content": prompt}
-                ],
-                temperature=0.2
+                ]
+                # Nếu model không hỗ trợ temperature, hãy bỏ hoặc đặt temperature=1
             )
-            return response.choices[0].message["content"].strip()
+            return response.choices[0].message.content.strip()
         except Exception as e:
             return f"Xin lỗi, có lỗi xảy ra khi xử lý: {str(e)}"
 
