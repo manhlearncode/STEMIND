@@ -174,25 +174,32 @@ def chatbot_api(request):
             is_file_creation = any(keyword in user_message.lower() for keyword in file_creation_keywords)
             
             if is_file_creation and AUTOGEN_AVAILABLE:
-                # Sử dụng AutoGen để tạo nội dung file
-                print(f"🤖 Sử dụng AutoGen cho: {user_message}")
+                # Sử dụng hệ thống hybrid AutoGen + RAG
+                print(f"🤖 Sử dụng hệ thống Hybrid cho: {user_message}")
                 enhanced_system = EnhancedEducationSystem()
-                result = enhanced_system.process_request(user_message, str(user_id) if user_id else None, use_autogen=True)
+                
+                # Sử dụng hybrid response để kết hợp AutoGen và RAG
+                result = enhanced_system.hybrid_response(user_message, str(user_id) if user_id else None)
                 
                 if result['success']:
                     bot_response = result['result']
                     # Thêm thông tin về loại AI được sử dụng
                     intent_display = {
+                        'hybrid_lecture': '🤖 Hybrid AI - Bài giảng nâng cao',
+                        'hybrid_exercise': '🤖 Hybrid AI - Bài tập nâng cao', 
+                        'hybrid_test': '🤖 Hybrid AI - Bài kiểm tra nâng cao',
+                        'hybrid_study': '🤖 Hybrid AI - Trợ lý học tập nâng cao',
                         'lecture': '📚 AI Agent - Tạo bài giảng',
                         'exercise': '📝 AI Agent - Tạo bài tập', 
                         'test': '📋 AI Agent - Tạo bài kiểm tra',
                         'study': '🧠 AI Agent - Trợ lý học tập',
+                        'rag_only': '🔍 RAG System - Thông tin từ cơ sở dữ liệu',
                     }
-                    display_intent = intent_display.get(result['intent'], f"🤖 AI Agent - {result['intent']}")
+                    display_intent = intent_display.get(result['intent'], f"🤖 AI System - {result['intent']}")
                     bot_response = f"[{display_intent}]\n\n{bot_response}"
                 else:
-                    # Fallback về RAG nếu AutoGen thất bại
-                    print("⚠️ AutoGen thất bại, fallback về RAG")
+                    # Fallback về RAG nếu hybrid thất bại
+                    print("⚠️ Hybrid system thất bại, fallback về RAG")
                     rag_service = RAGChatbotService()
                     if user_id:
                         bot_response = rag_service.answer_question_with_user_context(user_message, str(user_id))
@@ -329,9 +336,11 @@ def generate_content_file(user_message, bot_response, session):
         # Xử lý markdown để tạo HTML đơn giản, phù hợp cho in ấn
         formatted_response = bot_response
         
-        # Loại bỏ các tag AI intent nếu có (ví dụ: [📚 AI Agent - Tạo bài giảng])
+        # Loại bỏ các tag AI intent nếu có (ví dụ: [🤖 Hybrid AI - Bài giảng nâng cao])
         formatted_response = re.sub(r'\[.*?AI Agent.*?\]\n\n', '', formatted_response)
         formatted_response = re.sub(r'\[.*?RAG.*?\]\n\n', '', formatted_response)
+        formatted_response = re.sub(r'\[.*?Hybrid AI.*?\]\n\n', '', formatted_response)
+        formatted_response = re.sub(r'\[.*?AI System.*?\]\n\n', '', formatted_response)
 
         formatted_response = re.sub(r'#### (.*?)(?=\n|$)', lambda m: f'<h4 style="color: #000; font-size: 14pt; font-weight: bold; margin: 18px 0 12px 0; text-transform: uppercase;">{m.group(1).upper()}</h4>', formatted_response)
         # Xử lý headings ### (H3) - In hoa đầu mục phụ

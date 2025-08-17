@@ -368,7 +368,7 @@ class EnhancedEducationSystem:
     
     def __init__(self):
         self.autogen_system = EducationalMultiAgentSystem()
-        self.legacy_rag = RAGChatbotService()  # Giữ lại để fallback
+        self.rag_service = RAGChatbotService()  # Sử dụng RAG service chính
         
     def process_request(self, user_input: str, user_id: str = None, use_autogen: bool = True):
         """
@@ -376,26 +376,39 @@ class EnhancedEducationSystem:
         """
         try:
             if use_autogen:
-                return self.autogen_system.smart_route_request(user_input, user_id)
+                # Sử dụng AutoGen cho các tác vụ tạo nội dung
+                autogen_result = self.autogen_system.smart_route_request(user_input, user_id)
+                
+                # Nếu AutoGen thành công, bổ sung thông tin từ RAG
+                if autogen_result['success']:
+                    # Lấy context từ RAG để làm phong phú nội dung
+                    rag_context = self._get_rag_context(user_input, user_id)
+                    if rag_context:
+                        enhanced_result = autogen_result['result'] + f"\n\n---\n\n**Thông tin bổ sung từ hệ thống:**\n{rag_context}"
+                        autogen_result['result'] = enhanced_result
+                        autogen_result['intent'] = f"{autogen_result['intent']}_enhanced"
+                
+                return autogen_result
             else:
-                # Fallback về hệ thống cũ
+                # Sử dụng RAG cho chat thường
                 if user_id:
-                    result = self.legacy_rag.answer_question_with_user_context(user_input, user_id)
+                    result = self.rag_service.answer_question_with_user_context(user_input, user_id)
                 else:
-                    result = self.legacy_rag.answer_question(user_input)
+                    result = self.rag_service.answer_question(user_input)
                     
                 return {
-                    "intent": "legacy_rag",
+                    "intent": "rag_chat",
                     "result": result,
                     "success": True
                 }
         except Exception as e:
-            # Nếu AutoGen lỗi, fallback về RAG cũ
+            print(f"AutoGen error: {e}, falling back to RAG")
+            # Nếu AutoGen lỗi, fallback về RAG
             try:
                 if user_id:
-                    result = self.legacy_rag.answer_question_with_user_context(user_input, user_id)
+                    result = self.rag_service.answer_question_with_user_context(user_input, user_id)
                 else:
-                    result = self.legacy_rag.answer_question(user_input)
+                    result = self.rag_service.answer_question(user_input)
                     
                 return {
                     "intent": "fallback_rag", 
@@ -408,6 +421,62 @@ class EnhancedEducationSystem:
                     "result": f"Lỗi hệ thống: {str(fallback_error)}",
                     "success": False
                 }
+    
+    def _get_rag_context(self, user_input: str, user_id: str = None) -> str:
+        """
+        Lấy context từ RAG service để bổ sung cho AutoGen
+        """
+        try:
+            if user_id:
+                context = self.rag_service.answer_question_with_user_context(user_input, user_id)
+            else:
+                context = self.rag_service.answer_question(user_input)
+            
+            # Giới hạn độ dài context để tránh quá dài
+            if len(context) > 500:
+                context = context[:500] + "..."
+            
+            return context
+        except Exception as e:
+            print(f"Error getting RAG context: {e}")
+            return ""
+    
+    def hybrid_response(self, user_input: str, user_id: str = None) -> dict:
+        """
+        Tạo response kết hợp giữa AutoGen và RAG
+        """
+        try:
+            # Lấy response từ AutoGen
+            autogen_result = self.autogen_system.smart_route_request(user_input, user_id)
+            
+            # Lấy context từ RAG
+            rag_context = self._get_rag_context(user_input, user_id)
+            
+            # Kết hợp cả hai
+            if autogen_result['success'] and rag_context:
+                combined_result = f"{autogen_result['result']}\n\n---\n\n**Thông tin bổ sung:**\n{rag_context}"
+                return {
+                    "intent": f"hybrid_{autogen_result['intent']}",
+                    "result": combined_result,
+                    "success": True,
+                    "sources": ["autogen", "rag"]
+                }
+            elif autogen_result['success']:
+                return autogen_result
+            else:
+                # Fallback về RAG
+                return {
+                    "intent": "rag_only",
+                    "result": rag_context,
+                    "success": True,
+                    "sources": ["rag"]
+                }
+        except Exception as e:
+            return {
+                "intent": "error",
+                "result": f"Lỗi hệ thống hybrid: {str(e)}",
+                "success": False
+            }
 
 
 # Ví dụ sử dụng
