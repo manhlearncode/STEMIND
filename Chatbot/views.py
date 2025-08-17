@@ -217,7 +217,7 @@ def chatbot_api(request):
                 else:
                     # Chỉ sử dụng dữ liệu chung
                     bot_response = rag_service.answer_question(user_message)
-                    
+                        
                 bot_response = f"[🔍 RAG Chatbot]\n\n{bot_response}"
             
             # Create bot message
@@ -373,120 +373,308 @@ def generate_content_file(user_message, bot_response, session):
         # Xử lý xuống dòng
         formatted_response = formatted_response.replace('\n', '<br>')
         
-        # Create HTML content với style đơn giản, phù hợp cho in ấn
+        # Create HTML content với style đẹp mắt và màu sắc hấp dẫn
         html_content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{content_type} - STEMIND AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        body {{
-            font-family: 'Times New Roman', serif;
-            line-height: 1.6;
-            color: #000;
-            background: white;
-            margin: 0;
-            padding: 40px;
-            font-size: 12pt;
+        :root {{
+            --primary-color: #006056;
+            --secondary-color: #00897B;
+            --accent-color: #26A69A;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --background-light: #f8f9fa;
+            --border-color: #e9ecef;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
         }}
+
+        body {{
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.7;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 30px;
+            font-size: 14pt;
+        }}
+        
         .container {{
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 96, 86, 0.1);
+            overflow: hidden;
         }}
+        
         .header {{
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
             text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 20px;
+            padding: 40px 30px;
+            position: relative;
         }}
+        
+        .header::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="50" r="0.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }}
+        
         .title {{
-            color: #000;
-            font-size: 20pt;
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-family: 'Merriweather', serif;
+            font-size: 28pt;
+            font-weight: 700;
+            margin-bottom: 15px;
             text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
         }}
+        
         .subtitle {{
-            color: #666;
-            font-size: 12pt;
-            font-style: italic;
+            font-size: 14pt;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
         }}
+        
         .content {{
+            padding: 50px 40px;
             text-align: justify;
             line-height: 1.8;
+            background: white;
         }}
+        
         h1 {{
-            color: #000;
-            font-size: 18pt;
-            font-weight: bold;
-            margin: 25px 0 18px 0;
+            font-family: 'Merriweather', serif;
+            color: var(--primary-color);
+            font-size: 22pt;
+            font-weight: 700;
+            margin: 30px 0 20px 0;
             text-align: center;
             text-transform: uppercase;
-            border-bottom: 2px solid #000;
-            padding-bottom: 8px;
+            border-bottom: 3px solid var(--accent-color);
+            padding-bottom: 15px;
+            position: relative;
         }}
+        
+        h1::after {{
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+        }}
+        
         h2 {{
-            color: #000;
+            color: var(--secondary-color);
+            font-size: 18pt;
+            font-weight: 600;
+            margin: 25px 0 18px 0;
+            text-transform: uppercase;
+            border-left: 5px solid var(--accent-color);
+            padding-left: 20px;
+            background: linear-gradient(90deg, rgba(38, 166, 154, 0.1) 0%, transparent 100%);
+            padding: 12px 20px;
+            border-radius: 5px;
+        }}
+        
+        h3 {{
+            color: var(--primary-color);
             font-size: 16pt;
-            font-weight: bold;
+            font-weight: 500;
             margin: 20px 0 15px 0;
             text-transform: uppercase;
+            position: relative;
+            padding-left: 25px;
         }}
-        h3 {{
-            color: #000;
+        
+        h3::before {{
+            content: '●';
+            color: var(--accent-color);
+            font-size: 20pt;
+            position: absolute;
+            left: 0;
+            top: -2px;
+        }}
+        
+        h4 {{
+            color: var(--text-dark);
             font-size: 14pt;
-            font-weight: bold;
+            font-weight: 500;
             margin: 18px 0 12px 0;
             text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
         }}
+        
         ul, ol {{
-            margin: 15px 0;
-            padding-left: 30px;
+            margin: 20px 0;
+            padding-left: 0;
         }}
+        
         li {{
-            margin: 8px 0;
-            display: list-item;
+            margin: 12px 0;
+            padding: 8px 15px;
+            background: rgba(38, 166, 154, 0.05);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 5px;
+            list-style: none;
+            position: relative;
+            transition: all 0.3s ease;
         }}
-        /* Đảm bảo list items được hiển thị đúng */
-        .content li {{
-            margin: 8px 0;
-            padding-left: 10px;
-            list-style-position: outside;
+        
+        li::before {{
+            content: '▸';
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-right: 10px;
         }}
+        
+        li:hover {{
+            background: rgba(38, 166, 154, 0.1);
+            transform: translateX(5px);
+        }}
+        
+        .content > ul > li,
+        .content > ol > li {{
+            margin: 12px 0;
+            padding: 10px 20px;
+            background: linear-gradient(90deg, rgba(0, 96, 86, 0.05) 0%, transparent 100%);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 96, 86, 0.1);
+        }}
+        
         hr {{
             border: none;
-            border-top: 1px solid #000;
-            margin: 20px 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            margin: 30px 0;
+            border-radius: 1px;
         }}
+        
         .footer {{
-            margin-top: 40px;
+            background: var(--background-light);
+            margin-top: 0;
             text-align: center;
-            color: #666;
-            font-size: 10pt;
-            border-top: 1px solid #000;
-            padding-top: 20px;
+            color: var(--text-light);
+            font-size: 12pt;
+            padding: 30px;
+            border-top: 3px solid var(--primary-color);
+            position: relative;
         }}
+        
+        .footer::before {{
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
+        }}
+        
         strong {{
-            font-weight: bold;
+            font-weight: 600;
+            color: var(--primary-color);
         }}
+        
         em {{
             font-style: italic;
+            color: var(--secondary-color);
         }}
+        
+        /* Highlight boxes cho nội dung quan trọng */
+        .highlight-box {{
+            background: linear-gradient(135deg, rgba(0, 96, 86, 0.1) 0%, rgba(38, 166, 154, 0.05) 100%);
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 96, 86, 0.1);
+        }}
+        
+        /* Animation cho khi load trang */
+        @keyframes fadeInUp {{
+            from {{
+                opacity: 0;
+                transform: translateY(30px);
+            }}
+            to {{
+                opacity: 1;
+                transform: translateY(0);
+            }}
+        }}
+        
+        .content {{
+            animation: fadeInUp 0.8s ease-out;
+        }}
+        
         @media print {{
             body {{
-                padding: 20px;
+                background: white;
+                padding: 0;
                 font-size: 11pt;
             }}
             .container {{
-                max-width: none;
+                box-shadow: none;
+                border-radius: 0;
             }}
             .header {{
-                page-break-after: avoid;
+                background: var(--primary-color) !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }}
+            .header::before {{
+                display: none;
             }}
             h1, h2, h3 {{
                 page-break-after: avoid;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }}
+            li {{
+                page-break-inside: avoid;
+            }}
+        }}
+        
+        @media (max-width: 768px) {{
+            body {{
+                padding: 15px;
+                font-size: 12pt;
+            }}
+            .content {{
+                padding: 30px 20px;
+            }}
+            .title {{
+                font-size: 22pt;
+            }}
+            h1 {{
+                font-size: 18pt;
+            }}
+            h2 {{
+                font-size: 16pt;
             }}
         }}
     </style>
@@ -495,7 +683,6 @@ def generate_content_file(user_message, bot_response, session):
     <div class="container">
         <div class="header">
             <div class="title">{content_type}</div>
-            <div class="subtitle">{user_message}</div>
         </div>
         
         <div class="content">
@@ -503,16 +690,21 @@ def generate_content_file(user_message, bot_response, session):
         </div>
         
         <div class="footer">
-            <small>STEMIND cảm ơn bạn đã sử dụng dịch vụ của chúng tôi</small>
+            <strong>🌟 STEMIND AI Assistant</strong><br>
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Chỉ hiển thị alert khi không phải in
+        if (!window.location.search.includes('print')) {{
+            setTimeout(() => {{
+                if (confirm('Bạn muốn in tài liệu này ngay không?')) {{
+                    window.print();
+                }}
+            }}, 1000);
+        }}
+    </script>
 </body>
-<script>
-            alert('Nhấn tổ hợp phím Ctrl + P để in ra');
-            alert('Nhấn tổ hợp phím Ctrl + S để lưu file');
-</script>
 </html>"""
         
         # Create file object

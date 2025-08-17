@@ -646,6 +646,119 @@
                 grid-column: span 2;
             }
         }
+
+        /* CSS cho topic input message */
+        .topic-input-container {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .topic-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #006056;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            background: white;
+            color: #333;
+        }
+
+        .topic-input:focus {
+            outline: none;
+            border-color: #00897B;
+            box-shadow: 0 0 0 3px rgba(0, 96, 86, 0.1);
+            background: #ffffff;
+        }
+
+        .topic-input::placeholder {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .topic-buttons-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .topic-btn.flex-btn {
+            flex: 1;
+            min-width: 120px;
+            background: linear-gradient(135deg, #006056 0%, #00897B 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 96, 86, 0.2);
+        }
+
+        .topic-btn.flex-btn:hover {
+            background: linear-gradient(135deg, #00897B 0%, #26A69A 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 96, 86, 0.3);
+        }
+
+        .topic-btn.skip-btn {
+            flex: 1;
+            min-width: 120px;
+            background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.2);
+        }
+
+        .topic-btn.skip-btn:hover {
+            background: linear-gradient(135deg, #868e96 0%, #adb5bd 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .topic-send-btn {
+            background: linear-gradient(135deg, #006056 0%, #00897B 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+            box-shadow: 0 4px 15px rgba(0, 96, 86, 0.2);
+        }
+
+        .topic-send-btn:hover {
+            background: linear-gradient(135deg, #00897B 0%, #26A69A 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 96, 86, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .topic-buttons-row {
+                flex-direction: column;
+            }
+            
+            .topic-btn.flex-btn, .topic-btn.skip-btn {
+                flex: none;
+                width: 100%;
+            }
+            
+            .topic-input-container {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1081,7 +1194,7 @@
                 const button = document.createElement('button');
                 button.className = 'topic-btn';
                 button.textContent = subject;
-                button.onclick = () => sendSubjectMessage(topic, grade, subject);
+                button.onclick = () => addTopicInputMessage(topic, grade, subject);
                 buttonsDiv.appendChild(button);
             });
             
@@ -1099,11 +1212,79 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        function sendSubjectMessage(topic, grade, subject) {
+        function addTopicInputMessage(topic, grade, subject) {
+            // Add user message to UI
+            topic = topic.replace('Bạn muốn tạo ', 'Tôi muốn tạo ');
+            grade = grade.toLowerCase();
+            addMessageToUI(`${topic} cho môn ${subject} cho học sinh ${grade} chủ đề gì?`, 'user');
+            
+            const messagesContainer = document.getElementById('messagesContainer');
+            const typingIndicator = document.getElementById('typingIndicator');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            avatarDiv.innerHTML = '<i class="fas fa-robot"></i>';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const textDiv = document.createElement('div');
+            topic = topic.replace('Tôi muốn tạo ', 'Bạn muốn tạo ');
+            textDiv.innerHTML = `${topic} cho môn ${subject} cho học sinh ${grade} chủ đề gì?`;
+            
+            // Tạo input và nút gửi
+            const inputDiv = document.createElement('div');
+            inputDiv.style.marginTop = '20px';
+            inputDiv.className = 'topic-input-container';
+        
+            const input = document.createElement('input');
+            input.className = 'topic-input';
+            input.type = 'text';
+            input.placeholder = 'Nhập chủ đề...';
+        
+            // Khi nhấn Enter
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && input.value.trim() !== '') {
+                    sendSubjectMessage(topic, grade, subject, input.value.trim());
+                }
+            });
+        
+            // Nút gửi
+            const button = document.createElement('button');
+            button.textContent = 'Gửi';
+            button.className = 'topic-send-btn';
+            button.onclick = () => {
+                if (input.value.trim() !== '') {
+                    sendSubjectMessage(topic, grade, subject, input.value.trim());
+                }
+            };
+        
+            inputDiv.appendChild(input);
+            inputDiv.appendChild(button);
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = formatTime(new Date());
+            
+            contentDiv.appendChild(textDiv);
+            contentDiv.appendChild(inputDiv);
+            contentDiv.appendChild(timeDiv);
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            messagesContainer.insertBefore(messageDiv, typingIndicator);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+
+        function sendSubjectMessage(topic, grade, subject, specificTopic) {
             // Add user message to UI
             topic = topic.replace('Bạn muốn tạo ', 'Tôi muốn tạo ');
             subject = subject.toLowerCase();
-            addMessageToUI(`${topic} môn ${subject} cho học sinh ${grade}.`, 'user');
+            addMessageToUI(`${topic} môn ${subject} cho học sinh ${grade} chủ đề ${specificTopic}.`, 'user');
             
             // Show typing indicator
             showTypingIndicator();
@@ -1116,7 +1297,7 @@
                     'X-CSRFToken': getCookie('csrftoken')
                 },
                 body: JSON.stringify({
-                    message: `${topic} cho môn ${subject} của ${grade}.`,
+                    message: `${topic} cho môn ${subject} của ${grade} chủ đề ${specificTopic}.`,
                     session_id: currentSessionId
                 })
             })
@@ -1140,12 +1321,12 @@
                     addMessageToUI(botText, 'bot', botFiles);
                     
                     // Save to chat history
-                    saveChatToHistory(`${topic} cho môn ${subject} của ${grade}.`, response);
+                    saveChatToHistory(`${topic} cho môn ${subject} của ${grade} chủ đề ${specificTopic}.`, response);
                 } else {
                     addMessageToUI('Xin lỗi, có lỗi xảy ra: ' + data.error, 'bot');
                 }
             })
-            .catch(error => {
+            .catch(error => {   
                 hideTypingIndicator();
                 addMessageToUI('Lỗi kết nối tới server. Vui lòng thử lại.', 'bot');
                 console.error('Error:', error);
