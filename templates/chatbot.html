@@ -1262,11 +1262,26 @@
         }
 
         function formatMessage(content) {
-            // Convert markdown-like formatting to HTML
+            // Convert markdown-like formatting to HTML (PDF style)
             return content
+                // Đầu mục số La Mã (I., II., III., IV., ...)
+                .replace(/^([IVX]+)\.\s+(.*?)(?=\n|$)/gm, '<h2 style="font-weight: bold; text-transform: uppercase; margin: 15px 0 10px 0; font-size: 1.1em;">$1. $2</h2>')
+                // Đầu mục số (1., 2., 3., ...)
+                .replace(/^(\d+)\.\s+(.*?)(?=\n|$)/gm, '<h3 style="font-weight: bold; text-transform: uppercase; margin: 12px 0 8px 0; font-size: 1.05em;">$1. $2</h3>')
+                // Đầu mục chữ cái (a., b., c., ...)
+                .replace(/^([a-z])\.\s+(.*?)(?=\n|$)/gm, '<h4 style="font-weight: bold; margin: 10px 0 6px 20px; font-size: 1em;">$1. $2</h4>')
+                // Markdown headings
+                .replace(/^### (.*?)(?=\n|$)/gm, '<h4 style="font-weight: bold; margin: 10px 0 6px 0;">$1</h4>')
+                .replace(/^## (.*?)(?=\n|$)/gm, '<h3 style="font-weight: bold; margin: 12px 0 8px 0; text-transform: capitalize;">$1</h3>')
+                .replace(/^# (.*?)(?=\n|$)/gm, '<h2 style="font-weight: bold; margin: 15px 0 10px 0; text-transform: uppercase; text-align: center;">$1</h2>')
+                // Text formatting
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/•/g, '•')
+                // Bullet points
+                .replace(/^[-•] (.*?)(?=\n|$)/gm, '<li style="margin: 3px 0;">$1</li>')
+                // Dấu gạch ngang
+                .replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid #ccc; margin: 15px 0;">')
+                // Xuống dòng
                 .replace(/\n/g, '<br>');
         }
 

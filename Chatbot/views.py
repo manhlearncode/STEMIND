@@ -182,10 +182,10 @@ def chatbot_api(request):
                     bot_response = result['result']
                     # Thêm thông tin về loại AI được sử dụng
                     intent_display = {
-                        'lecture': '📚 AI Agent - Tạo bài giảng',
-                        'exercise': '📝 AI Agent - Tạo bài tập', 
-                        'test': '📋 AI Agent - Tạo bài kiểm tra',
-                        'study': '🧠 AI Agent - Trợ lý học tập',
+                        'lecture': '📚Bài giảng',
+                        'exercise': '📝Bài tập', 
+                        'test': '📋Bài kiểm tra',
+                        'study': '🧠Trợ lý học tập',
                     }
                     display_intent = intent_display.get(result['intent'], f"🤖 AI Agent - {result['intent']}")
                     bot_response = f"[{display_intent}]\n\n{bot_response}"
@@ -325,187 +325,203 @@ def generate_content_file(user_message, bot_response, session):
             icon_class = 'fas fa-file-alt'
             color_class = 'info'
         
+        # Xử lý nội dung theo format PDF chuẩn
+        import re
+        formatted_response = bot_response
+        
+        # Xử lý các đầu mục số La Mã (I., II., III., IV., ...)
+        formatted_response = re.sub(r'^([IVX]+)\.\s+(.*?)(?=\n|$)', r'<h1 class="roman-heading">\1. \2</h1>', formatted_response, flags=re.MULTILINE)
+        
+        # Xử lý các đầu mục số (1., 2., 3., ...)
+        formatted_response = re.sub(r'^(\d+)\.\s+(.*?)(?=\n|$)', r'<h2 class="number-heading">\1. \2</h2>', formatted_response, flags=re.MULTILINE)
+        
+        # Xử lý các đầu mục chữ cái (a., b., c., ...)
+        formatted_response = re.sub(r'^([a-z])\.\s+(.*?)(?=\n|$)', r'<h3 class="letter-heading">\1. \2</h3>', formatted_response, flags=re.MULTILINE)
+        
+        # Xử lý markdown headings (###, ##, #)
+        formatted_response = re.sub(r'^### (.*?)(?=\n|$)', r'<h3 class="markdown-h3">\1</h3>', formatted_response, flags=re.MULTILINE)
+        formatted_response = re.sub(r'^## (.*?)(?=\n|$)', r'<h2 class="markdown-h2">\1</h2>', formatted_response, flags=re.MULTILINE)
+        formatted_response = re.sub(r'^# (.*?)(?=\n|$)', r'<h1 class="markdown-h1">\1</h1>', formatted_response, flags=re.MULTILINE)
+        
+        # Xử lý bullet points và danh sách
+        formatted_response = re.sub(r'^- (.*?)(?=\n|$)', r'<li>\1</li>', formatted_response, flags=re.MULTILINE)
+        formatted_response = re.sub(r'^• (.*?)(?=\n|$)', r'<li>\1</li>', formatted_response, flags=re.MULTILINE)
+        
+        # Xử lý text in đậm và in nghiêng
+        formatted_response = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', formatted_response)
+        formatted_response = re.sub(r'\*(.*?)\*', r'<em>\1</em>', formatted_response)
+        
+        # Xử lý dấu gạch ngang
+        formatted_response = formatted_response.replace('---', '<hr>')
+        
+        # Xử lý xuống dòng
+        formatted_response = formatted_response.replace('\n', '<br>')
+        
         # Create HTML content with beautiful styling
         html_content = f"""<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{content_type} - STEMIND AI</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }}
-        .container {{
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 102, 86, 0.15);
-            overflow: hidden;
-            border: 2px solid #e8f5f3;
-        }}
-        .header {{
-            background: linear-gradient(135deg, #006056 0%, #008069 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }}
-        .header::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.2"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.4;
-        }}
-        .header h1 {{
-            margin: 0;
-            font-size: 2.5rem;
-            font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            position: relative;
-            z-index: 1;
-        }}
-        .header .icon {{
-            font-size: 3rem;
-            margin-bottom: 15px;
-            display: block;
-            position: relative;
-            z-index: 1;
-        }}
-        .content {{
-            padding: 40px;
-            background: #fafbfc;
-        }}
-        .section {{
-            margin-bottom: 30px;
-            padding: 25px;
-            border-radius: 15px;
-            border-left: 5px solid #006056;
-            background: white;
-            box-shadow: 0 5px 15px rgba(0, 102, 86, 0.08);
-            border: 1px solid #e8f5f3;
-        }}
-        .section h3 {{
-            color: #006056;
-            margin-bottom: 15px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }}
-        .section h3 i {{
-            color: #006056;
-        }}
-        .user-message {{
-            background: linear-gradient(135deg, #f0f9f7 0%, #e8f5f3 100%);
-            border-left-color: #006056;
-            border: 1px solid #d4edda;
-        }}
-        .bot-response {{
-            background: linear-gradient(135deg, #f8fcfb 0%, #f0f9f7 100%);
-            border-left-color: #006056;
-            border: 1px solid #d1ecf1;
-        }}
-        .footer {{
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            border-top: 1px solid #e8f5f3;
-            color: #6c757d;
-        }}
-        .footer .logo {{
-            font-weight: bold;
-            color: #006056;
-        }}
-        .timestamp {{
-            background: #e8f5f3;
-            padding: 10px 15px;
-            border-radius: 25px;
-            display: inline-block;
-            font-size: 0.9rem;
-            color: #006056;
-            border: 1px solid #d4edda;
-        }}
-        .badge {{
-            background: linear-gradient(135deg, #006056 0%, #008069 100%);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 2px 8px rgba(0, 102, 86, 0.3);
-        }}
-        @media print {{
-            body {{
-                background: white;
-                padding: 0;
-            }}
-            .container {{
-                box-shadow: none;
-                border-radius: 0;
-                border: none;
-            }}
-            .header {{
-                background: #fff !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-                color: #006056;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <i class="{icon_class} icon"></i>
-            <h1>{content_type}</h1>
-            <div class="badge">STEMIND AI</div>
-        </div>
-        
-        <div class="content">
-            <div class="section user-message">
-                <h3><i class="fas fa-user"></i> Câu hỏi của bạn</h3>
-                <p>{user_message}</p>
+        <html lang="vi">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{content_type} - STEMIND AI</title>
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+            <style>
+                /* CSS cho format PDF chuẩn */
+                body {{
+                    font-family: 'Times New Roman', Times, serif;
+                    line-height: 1.5;
+                    color: #000000;
+                    background: white;
+                    margin: 0;
+                    padding: 30px;
+                    font-size: 12pt;
+                }}
+                .container {{
+                    max-width: 210mm; /* A4 width */
+                    margin: 0 auto;
+                    background: white;
+                    padding: 20mm;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                }}
+                .header {{
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #000000;
+                    padding-bottom: 20px;
+                }}
+                .header h1 {{
+                    font-size: 18pt;
+                    font-weight: bold;
+                    margin: 0 0 10px 0;
+                    text-transform: uppercase;
+                }}
+                .badge {{
+                    font-size: 10pt;
+                    font-style: italic;
+                    margin-top: 10px;
+                }}
+                .content {{
+                    text-align: justify;
+                }}
+                
+                /* Đầu mục số La Mã (I., II., ...) */
+                .roman-heading {{
+                    font-size: 14pt;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    margin: 20px 0 15px 0;
+                    text-align: center;
+                    border-bottom: 1px solid #000000;
+                    padding-bottom: 5px;
+                }}
+                
+                /* Đầu mục số (1., 2., ...) */
+                .number-heading {{
+                    font-size: 13pt;
+                    font-weight: bold;
+                    margin: 18px 0 12px 0;
+                    text-transform: uppercase;
+                }}
+                
+                /* Đầu mục chữ cái (a., b., ...) */
+                .letter-heading {{
+                    font-size: 12pt;
+                    font-weight: bold;
+                    margin: 15px 0 10px 20px;
+                    text-transform: capitalize;
+                }}
+                
+                /* Markdown headings */
+                .markdown-h1 {{
+                    font-size: 16pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin: 25px 0 20px 0;
+                    text-transform: uppercase;
+                }}
+                .markdown-h2 {{
+                    font-size: 14pt;
+                    font-weight: bold;
+                    margin: 20px 0 15px 0;
+                    text-transform: capitalize;
+                }}
+                .markdown-h3 {{
+                    font-size: 13pt;
+                    font-weight: bold;
+                    margin: 15px 0 10px 0;
+                }}
+                
+                /* Danh sách */
+                ul, ol {{
+                    margin: 10px 0;
+                    padding-left: 40px;
+                }}
+                li {{
+                    margin: 5px 0;
+                    text-align: justify;
+                }}
+                
+                /* Text formatting */
+                strong {{
+                    font-weight: bold;
+                }}
+                em {{
+                    font-style: italic;
+                }}
+                
+                /* Đường kẻ ngang */
+                hr {{
+                    border: none;
+                    border-top: 1px solid #000000;
+                    margin: 20px 0;
+                }}
+                
+                .footer {{
+                    margin-top: 30px;
+                    border-top: 1px solid #000000;
+                    padding-top: 15px;
+                    text-align: center;
+                    font-size: 10pt;
+                    font-style: italic;
+                }}
+                
+                /* Print styles */
+                @media print {{
+                    body {{
+                        margin: 0;
+                        padding: 0;
+                    }}
+                    .container {{
+                        box-shadow: none;
+                        margin: 0;
+                        padding: 15mm;
+                    }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>{content_type}</h1>
+                    <div class="badge">{user_message}</div>
+                </div>
+                
+                <div class="content">
+                    {formatted_response}
+                </div>
+                
+                <div class="footer">
+                    <small>STEMIND - Hệ thống trí tuệ nhân tạo giáo dục</small>
+                </div>
             </div>
-            
-            <div class="section bot-response">
-                <h3><i class="fas fa-robot"></i> Nội dung được tạo</h3>
-                <div>{bot_response.replace(chr(10), '<br>')}</div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <div class="timestamp">
-                <i class="fas fa-clock"></i> Được tạo vào: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
-            </div>
-            <br>
-            <div class="logo">STEMIND AI Assistant</div>
-            <small>Hệ thống trí tuệ nhân tạo giáo dục</small>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-<script>
-    alert('Nhấn tổ hợp phím Ctrl + P để in ra');
-    alert('Nhấn tổ hợp phím Ctrl + S để lưu file');
-</script>
-</html>"""
+        </body>
+        <script>
+            window.onload = function() {{
+                // Tự động focus vào trang để có thể in ngay
+                window.focus();
+            }}
+        </script>
+        </html>"""
         
         # Create file object
         file_obj = ContentFile(html_content.encode('utf-8'))
