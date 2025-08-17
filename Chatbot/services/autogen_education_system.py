@@ -31,7 +31,7 @@ class EducationalMultiAgentSystem:
         # Cấu hình LLM
         self.llm_config = {
             "config_list": [{
-                "model": "gpt-4",  # hoặc gpt-3.5-turbo để tiết kiệm
+                "model": "gpt-4.1-mini",  # hoặc gpt-3.5-turbo để tiết kiệm
                 "api_key": self.api_key,
                 "temperature": 0.7
             }],

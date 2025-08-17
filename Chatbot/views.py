@@ -12,6 +12,12 @@ from datetime import datetime
 import io
 from .models import ChatSession, ChatMessage, FileAttachment
 from .services.rag_chatbot_service import RAGChatbotService
+try:
+    from .services.autogen_education_system import EnhancedEducationSystem
+    AUTOGEN_AVAILABLE = True
+except ImportError:
+    AUTOGEN_AVAILABLE = False
+    print("AutoGen not available, using RAG only")
 
 def chatbot_view(request):
     """View chính cho chatbot"""
@@ -160,16 +166,51 @@ def chatbot_api(request):
                 if attachment.message.content.startswith('[File uploaded:'):
                     attachment.message.delete()
         
-        # Sử dụng RAG chatbot từ Chatbot app
+        # Phân biệt giữa sinh file và chat thường
         try:
-            rag_service = RAGChatbotService()
+            # Kiểm tra xem có phải yêu cầu tạo file không
+            file_creation_keywords = ['tạo bài giảng', 'tạo bài tập', 'tạo bài kiểm tra', 'tạo đề thi', 'tạo lesson', 'tạo exercise', 'tạo test']
+            is_file_creation = any(keyword in user_message.lower() for keyword in file_creation_keywords)
             
-            if user_id:
-                # Sử dụng cả dữ liệu cá nhân và chung
-                bot_response = rag_service.answer_question_with_user_context(user_message, str(user_id))
+            if is_file_creation and AUTOGEN_AVAILABLE:
+                # Sử dụng AutoGen để tạo nội dung file
+                print(f"🤖 Sử dụng AutoGen cho: {user_message}")
+                enhanced_system = EnhancedEducationSystem()
+                result = enhanced_system.process_request(user_message, str(user_id) if user_id else None, use_autogen=True)
+                
+                if result['success']:
+                    bot_response = result['result']
+                    # Thêm thông tin về loại AI được sử dụng
+                    intent_display = {
+                        'lecture': '📚 AI Agent - Tạo bài giảng',
+                        'exercise': '📝 AI Agent - Tạo bài tập', 
+                        'test': '📋 AI Agent - Tạo bài kiểm tra',
+                        'study': '🧠 AI Agent - Trợ lý học tập',
+                    }
+                    display_intent = intent_display.get(result['intent'], f"🤖 AI Agent - {result['intent']}")
+                    bot_response = f"[{display_intent}]\n\n{bot_response}"
+                else:
+                    # Fallback về RAG nếu AutoGen thất bại
+                    print("⚠️ AutoGen thất bại, fallback về RAG")
+                    rag_service = RAGChatbotService()
+                    if user_id:
+                        bot_response = rag_service.answer_question_with_user_context(user_message, str(user_id))
+                    else:
+                        bot_response = rag_service.answer_question(user_message)
+                    bot_response = f"[⚠️ RAG Fallback]\n\n{bot_response}"
             else:
-                # Chỉ sử dụng dữ liệu chung
-                bot_response = rag_service.answer_question(user_message)
+                # Sử dụng RAG cho chat thường
+                print(f"🔍 Sử dụng RAG cho: {user_message}")
+                rag_service = RAGChatbotService()
+                
+                if user_id:
+                    # Sử dụng cả dữ liệu cá nhân và chung
+                    bot_response = rag_service.answer_question_with_user_context(user_message, str(user_id))
+                else:
+                    # Chỉ sử dụng dữ liệu chung
+                    bot_response = rag_service.answer_question(user_message)
+                
+                bot_response = f"[🔍 RAG Chatbot]\n\n{bot_response}"
             
             # Create bot message
             bot_msg = ChatMessage.objects.create(
@@ -180,8 +221,8 @@ def chatbot_api(request):
             
             # Check if response contains file creation request
             generated_files = []
-            if any(keyword in bot_response.lower() for keyword in ['bài giảng', 'bài tập', 'bài kiểm tra', 'tạo file', 'xuất file']):
-                # Simulate file generation (you can replace this with actual file generation logic)
+            if is_file_creation:
+                # Tạo file từ nội dung AutoGen hoặc RAG
                 generated_file = generate_content_file(user_message, bot_response, session)
                 if generated_file:
                     generated_files.append({
@@ -196,7 +237,7 @@ def chatbot_api(request):
                 'success': True,
                 'response': {
                     'text': bot_response,
-                    'type': 'rag_response',
+                    'type': 'autogen_response' if is_file_creation and AUTOGEN_AVAILABLE else 'rag_response',
                     'files': generated_files
                 },
                 'session_id': session_id,
@@ -507,11 +548,19 @@ def download_chat_file(request, file_id):
         # Lấy file attachment
         attachment = FileAttachment.objects.get(id=file_id)
         
-        # Kiểm tra quyền truy cập (chỉ user upload hoặc admin mới được download)
-        if not request.user.is_staff and attachment.message.session.user != request.user:
+        # Kiểm tra quyền truy cập - Cho phép tất cả user đã đăng nhập download file
+        session = attachment.message.session
+        
+        # Admin có thể truy cập tất cả files
+        if request.user.is_staff:
+            pass
+        # User đã đăng nhập có thể download file
+        elif request.user.is_authenticated:
+            pass
+        else:
             return JsonResponse({
                 'success': False,
-                'error': 'Không có quyền truy cập file này'
+                'error': 'Cần đăng nhập để download file'
             }, status=403)
         
         # Tạo presigned URL từ S3 và redirect
@@ -534,7 +583,7 @@ def download_chat_file(request, file_id):
             'success': False,
             'error': str(e)
         }, status=500)
-
+        
 @login_required
 def list_chat_files(request, session_id=None):
     """Liệt kê files trong chat session"""
@@ -542,19 +591,18 @@ def list_chat_files(request, session_id=None):
         if session_id:
             # Lấy files của session cụ thể
             session = ChatSession.objects.get(session_id=session_id)
-            if not request.user.is_staff and session.user != request.user:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Không có quyền truy cập session này'
-                }, status=403)
+            
+            # Cho phép tất cả user đã đăng nhập xem files
+            pass
             
             attachments = FileAttachment.objects.filter(message__session=session)
         else:
-            # Lấy tất cả files của user
+            # Lấy tất cả files - Cho phép user thường xem tất cả files
             if request.user.is_staff:
                 attachments = FileAttachment.objects.all()
             else:
-                attachments = FileAttachment.objects.filter(message__session__user=request.user)
+                # User thường có thể xem tất cả files
+                attachments = FileAttachment.objects.all()
         
         files_data = []
         for attachment in attachments:
