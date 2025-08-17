@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 import json
 import os
 import mimetypes
+import re
 from datetime import datetime
 import io
 from .models import ChatSession, ChatMessage, FileAttachment
@@ -182,10 +183,10 @@ def chatbot_api(request):
                     bot_response = result['result']
                     # Thêm thông tin về loại AI được sử dụng
                     intent_display = {
-                        'lecture': '📚Bài giảng',
-                        'exercise': '📝Bài tập', 
-                        'test': '📋Bài kiểm tra',
-                        'study': '🧠Trợ lý học tập',
+                        'lecture': '📚 AI Agent - Tạo bài giảng',
+                        'exercise': '📝 AI Agent - Tạo bài tập', 
+                        'test': '📋 AI Agent - Tạo bài kiểm tra',
+                        'study': '🧠 AI Agent - Trợ lý học tập',
                     }
                     display_intent = intent_display.get(result['intent'], f"🤖 AI Agent - {result['intent']}")
                     bot_response = f"[{display_intent}]\n\n{bot_response}"
@@ -209,7 +210,7 @@ def chatbot_api(request):
                 else:
                     # Chỉ sử dụng dữ liệu chung
                     bot_response = rag_service.answer_question(user_message)
-                
+                    
                 bot_response = f"[🔍 RAG Chatbot]\n\n{bot_response}"
             
             # Create bot message
@@ -325,203 +326,185 @@ def generate_content_file(user_message, bot_response, session):
             icon_class = 'fas fa-file-alt'
             color_class = 'info'
         
-        # Xử lý nội dung theo format PDF chuẩn
-        import re
+        # Xử lý markdown để tạo HTML đơn giản, phù hợp cho in ấn
         formatted_response = bot_response
         
-        # Xử lý các đầu mục số La Mã (I., II., III., IV., ...)
-        formatted_response = re.sub(r'^([IVX]+)\.\s+(.*?)(?=\n|$)', r'<h1 class="roman-heading">\1. \2</h1>', formatted_response, flags=re.MULTILINE)
+        # Loại bỏ các tag AI intent nếu có (ví dụ: [📚 AI Agent - Tạo bài giảng])
+        formatted_response = re.sub(r'\[.*?AI Agent.*?\]\n\n', '', formatted_response)
+        formatted_response = re.sub(r'\[.*?RAG.*?\]\n\n', '', formatted_response)
+
+        formatted_response = re.sub(r'#### (.*?)(?=\n|$)', lambda m: f'<h4 style="color: #000; font-size: 14pt; font-weight: bold; margin: 18px 0 12px 0; text-transform: uppercase;">{m.group(1).upper()}</h4>', formatted_response)
+        # Xử lý headings ### (H3) - In hoa đầu mục phụ
+        formatted_response = re.sub(r'### (.*?)(?=\n|$)', lambda m: f'<h3 style="color: #000; font-size: 14pt; font-weight: bold; margin: 18px 0 12px 0; text-transform: uppercase;">{m.group(1).upper()}</h3>', formatted_response)
         
-        # Xử lý các đầu mục số (1., 2., 3., ...)
-        formatted_response = re.sub(r'^(\d+)\.\s+(.*?)(?=\n|$)', r'<h2 class="number-heading">\1. \2</h2>', formatted_response, flags=re.MULTILINE)
+        # Xử lý headings ## (H2) - In hoa đầu mục chính 
+        formatted_response = re.sub(r'## (.*?)(?=\n|$)', lambda m: f'<h2 style="color: #000; font-size: 16pt; font-weight: bold; margin: 20px 0 15px 0; text-transform: uppercase;">{m.group(1).upper()}</h2>', formatted_response)
         
-        # Xử lý các đầu mục chữ cái (a., b., c., ...)
-        formatted_response = re.sub(r'^([a-z])\.\s+(.*?)(?=\n|$)', r'<h3 class="letter-heading">\1. \2</h3>', formatted_response, flags=re.MULTILINE)
+        # Xử lý headings # (H1) - In hoa tiêu đề chính
+        formatted_response = re.sub(r'# (.*?)(?=\n|$)', lambda m: f'<h1 style="color: #000; font-size: 18pt; font-weight: bold; margin: 25px 0 18px 0; text-align: center; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 8px;">{m.group(1).upper()}</h1>', formatted_response)
         
-        # Xử lý markdown headings (###, ##, #)
-        formatted_response = re.sub(r'^### (.*?)(?=\n|$)', r'<h3 class="markdown-h3">\1</h3>', formatted_response, flags=re.MULTILINE)
-        formatted_response = re.sub(r'^## (.*?)(?=\n|$)', r'<h2 class="markdown-h2">\1</h2>', formatted_response, flags=re.MULTILINE)
-        formatted_response = re.sub(r'^# (.*?)(?=\n|$)', r'<h1 class="markdown-h1">\1</h1>', formatted_response, flags=re.MULTILINE)
+        # Xử lý các đầu mục số La Mã (I., II., III., IV., V.) - Cải thiện regex
+        formatted_response = re.sub(r'^\s*(I{1,3}V?|IV|V|VI{0,3}|IX|X)\.?\s+(.*?)(?=\n|$)', lambda m: f'<h2 style="color: #000; font-size: 14pt; font-weight: bold; margin: 20px 0 12px 0; text-transform: uppercase;">{m.group(1).upper()}. {m.group(2).upper()}</h2>', formatted_response, flags=re.MULTILINE)
         
-        # Xử lý bullet points và danh sách
-        formatted_response = re.sub(r'^- (.*?)(?=\n|$)', r'<li>\1</li>', formatted_response, flags=re.MULTILINE)
-        formatted_response = re.sub(r'^• (.*?)(?=\n|$)', r'<li>\1</li>', formatted_response, flags=re.MULTILINE)
+        # Xử lý các đầu mục số (1., 2., 3., ...) - Cải thiện regex để xử lý khoảng trắng
+        formatted_response = re.sub(r'^\s*(\d+)\.?\s+(.*?)(?=\n|$)', lambda m: f'<h3 style="color: #000; font-size: 12pt; font-weight: bold; margin: 15px 0 10px 0; text-transform: uppercase;">{m.group(1)}. {m.group(2).upper()}</h3>', formatted_response, flags=re.MULTILINE)
         
-        # Xử lý text in đậm và in nghiêng
-        formatted_response = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', formatted_response)
-        formatted_response = re.sub(r'\*(.*?)\*', r'<em>\1</em>', formatted_response)
+        # Xử lý các đầu mục có dấu gạch đầu dòng (-) - Thêm format này
+        formatted_response = re.sub(r'^\s*-\s+(.*?)(?=\n|$)', lambda m: f'<li style="margin: 8px 0; padding-left: 10px; list-style-type: disc;">{m.group(1)}</li>', formatted_response, flags=re.MULTILINE)
+        
+        # Xử lý các đầu mục có dấu chấm (•) - Thêm format này
+        formatted_response = re.sub(r'^\s*•\s+(.*?)(?=\n|$)', lambda m: f'<li style="margin: 8px 0; padding-left: 10px; list-style-type: circle;">{m.group(1)}</li>', formatted_response, flags=re.MULTILINE)
+        
+        # Bọc các list items trong ul tags
+        formatted_response = re.sub(r'(<li.*?</li>)(?=\s*<li|$)', r'<ul>\1</ul>', formatted_response, flags=re.DOTALL)
         
         # Xử lý dấu gạch ngang
-        formatted_response = formatted_response.replace('---', '<hr>')
+        formatted_response = formatted_response.replace('---', '<hr style="border: none; border-top: 1px solid #000; margin: 20px 0;">')
         
         # Xử lý xuống dòng
         formatted_response = formatted_response.replace('\n', '<br>')
         
-        # Create HTML content with beautiful styling
+        # Create HTML content với style đơn giản, phù hợp cho in ấn
         html_content = f"""<!DOCTYPE html>
-        <html lang="vi">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{content_type} - STEMIND AI</title>
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-            <style>
-                /* CSS cho format PDF chuẩn */
-                body {{
-                    font-family: 'Times New Roman', Times, serif;
-                    line-height: 1.5;
-                    color: #000000;
-                    background: white;
-                    margin: 0;
-                    padding: 30px;
-                    font-size: 12pt;
-                }}
-                .container {{
-                    max-width: 210mm; /* A4 width */
-                    margin: 0 auto;
-                    background: white;
-                    padding: 20mm;
-                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                }}
-                .header {{
-                    text-align: center;
-                    margin-bottom: 30px;
-                    border-bottom: 2px solid #000000;
-                    padding-bottom: 20px;
-                }}
-                .header h1 {{
-                    font-size: 18pt;
-                    font-weight: bold;
-                    margin: 0 0 10px 0;
-                    text-transform: uppercase;
-                }}
-                .badge {{
-                    font-size: 10pt;
-                    font-style: italic;
-                    margin-top: 10px;
-                }}
-                .content {{
-                    text-align: justify;
-                }}
-                
-                /* Đầu mục số La Mã (I., II., ...) */
-                .roman-heading {{
-                    font-size: 14pt;
-                    font-weight: bold;
-                    text-transform: uppercase;
-                    margin: 20px 0 15px 0;
-                    text-align: center;
-                    border-bottom: 1px solid #000000;
-                    padding-bottom: 5px;
-                }}
-                
-                /* Đầu mục số (1., 2., ...) */
-                .number-heading {{
-                    font-size: 13pt;
-                    font-weight: bold;
-                    margin: 18px 0 12px 0;
-                    text-transform: uppercase;
-                }}
-                
-                /* Đầu mục chữ cái (a., b., ...) */
-                .letter-heading {{
-                    font-size: 12pt;
-                    font-weight: bold;
-                    margin: 15px 0 10px 20px;
-                    text-transform: capitalize;
-                }}
-                
-                /* Markdown headings */
-                .markdown-h1 {{
-                    font-size: 16pt;
-                    font-weight: bold;
-                    text-align: center;
-                    margin: 25px 0 20px 0;
-                    text-transform: uppercase;
-                }}
-                .markdown-h2 {{
-                    font-size: 14pt;
-                    font-weight: bold;
-                    margin: 20px 0 15px 0;
-                    text-transform: capitalize;
-                }}
-                .markdown-h3 {{
-                    font-size: 13pt;
-                    font-weight: bold;
-                    margin: 15px 0 10px 0;
-                }}
-                
-                /* Danh sách */
-                ul, ol {{
-                    margin: 10px 0;
-                    padding-left: 40px;
-                }}
-                li {{
-                    margin: 5px 0;
-                    text-align: justify;
-                }}
-                
-                /* Text formatting */
-                strong {{
-                    font-weight: bold;
-                }}
-                em {{
-                    font-style: italic;
-                }}
-                
-                /* Đường kẻ ngang */
-                hr {{
-                    border: none;
-                    border-top: 1px solid #000000;
-                    margin: 20px 0;
-                }}
-                
-                .footer {{
-                    margin-top: 30px;
-                    border-top: 1px solid #000000;
-                    padding-top: 15px;
-                    text-align: center;
-                    font-size: 10pt;
-                    font-style: italic;
-                }}
-                
-                /* Print styles */
-                @media print {{
-                    body {{
-                        margin: 0;
-                        padding: 0;
-                    }}
-                    .container {{
-                        box-shadow: none;
-                        margin: 0;
-                        padding: 15mm;
-                    }}
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>{content_type}</h1>
-                    <div class="badge">{user_message}</div>
-                </div>
-                
-                <div class="content">
-                    {formatted_response}
-                </div>
-                
-                <div class="footer">
-                    <small>STEMIND - Hệ thống trí tuệ nhân tạo giáo dục</small>
-                </div>
-            </div>
-        </body>
-        <script>
-            window.onload = function() {{
-                // Tự động focus vào trang để có thể in ngay
-                window.focus();
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{content_type} - STEMIND AI</title>
+    <style>
+        body {{
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            color: #000;
+            background: white;
+            margin: 0;
+            padding: 40px;
+            font-size: 12pt;
+        }}
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+        }}
+        .header {{
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }}
+        .title {{
+            color: #000;
+            font-size: 20pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }}
+        .subtitle {{
+            color: #666;
+            font-size: 12pt;
+            font-style: italic;
+        }}
+        .content {{
+            text-align: justify;
+            line-height: 1.8;
+        }}
+        h1 {{
+            color: #000;
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 25px 0 18px 0;
+            text-align: center;
+            text-transform: uppercase;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+        }}
+        h2 {{
+            color: #000;
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 20px 0 15px 0;
+            text-transform: uppercase;
+        }}
+        h3 {{
+            color: #000;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 18px 0 12px 0;
+            text-transform: uppercase;
+        }}
+        ul, ol {{
+            margin: 15px 0;
+            padding-left: 30px;
+        }}
+        li {{
+            margin: 8px 0;
+            display: list-item;
+        }}
+        /* Đảm bảo list items được hiển thị đúng */
+        .content li {{
+            margin: 8px 0;
+            padding-left: 10px;
+            list-style-position: outside;
+        }}
+        hr {{
+            border: none;
+            border-top: 1px solid #000;
+            margin: 20px 0;
+        }}
+        .footer {{
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 10pt;
+            border-top: 1px solid #000;
+            padding-top: 20px;
+        }}
+        strong {{
+            font-weight: bold;
+        }}
+        em {{
+            font-style: italic;
+        }}
+        @media print {{
+            body {{
+                padding: 20px;
+                font-size: 11pt;
             }}
-        </script>
-        </html>"""
+            .container {{
+                max-width: none;
+            }}
+            .header {{
+                page-break-after: avoid;
+            }}
+            h1, h2, h3 {{
+                page-break-after: avoid;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">{content_type}</div>
+            <div class="subtitle">{user_message}</div>
+        </div>
+        
+        <div class="content">
+            {formatted_response}
+        </div>
+        
+        <div class="footer">
+            <small>STEMIND cảm ơn bạn đã sử dụng dịch vụ của chúng tôi</small>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+<script>
+            alert('Nhấn tổ hợp phím Ctrl + P để in ra');
+            alert('Nhấn tổ hợp phím Ctrl + S để lưu file');
+</script>
+</html>"""
         
         # Create file object
         file_obj = ContentFile(html_content.encode('utf-8'))
@@ -599,7 +582,7 @@ def download_chat_file(request, file_id):
             'success': False,
             'error': str(e)
         }, status=500)
-        
+
 @login_required
 def list_chat_files(request, session_id=None):
     """Liệt kê files trong chat session"""
