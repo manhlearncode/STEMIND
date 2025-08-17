@@ -1,15 +1,29 @@
 import asyncio
 import os
+import sys
 from typing import List, Dict, Any, Optional
-from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
-from autogen.agentchat.contrib.retrieve_assistant_agent import RetrieveAssistantAgent
-from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
 import openai
 from dotenv import load_dotenv
 
 # Import existing services
 from .rag_chatbot_service import RAGChatbotService
 from .user_embedding_service import UserEmbeddingService
+
+# Try to import autogen with fallback
+try:
+    from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
+    from autogen.agentchat.contrib.retrieve_assistant_agent import RetrieveAssistantAgent
+    from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
+    AUTOGEN_AVAILABLE = True
+    print("✅ AutoGen imported successfully")
+except ImportError as e:
+    AUTOGEN_AVAILABLE = False
+    print(f"⚠️ AutoGen not available: {e}")
+    # Create dummy classes for fallback
+    class DummyAgent:
+        def __init__(self, **kwargs):
+            pass
+    AssistantAgent = UserProxyAgent = GroupChat = GroupChatManager = RetrieveAssistantAgent = RetrieveUserProxyAgent = DummyAgent
 
 load_dotenv()
 
@@ -22,11 +36,16 @@ class EducationalMultiAgentSystem:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY not found in environment variables")
+            print("⚠️ OPENAI_API_KEY not found, using fallback mode")
+            self.api_key = "dummy_key"  # Fallback key
         
         # Khởi tạo các service hiện có
         self.rag_service = RAGChatbotService()
-        self.user_embedding_service = UserEmbeddingService()
+        try:
+            self.user_embedding_service = UserEmbeddingService()
+        except Exception as e:
+            print(f"⚠️ UserEmbeddingService error: {e}")
+            self.user_embedding_service = None
         
         # Cấu hình LLM
         self.llm_config = {
@@ -38,8 +57,19 @@ class EducationalMultiAgentSystem:
             "timeout": 120,
         }
         
-        # Khởi tạo các agent
-        self._initialize_agents()
+        # Kiểm tra AutoGen availability
+        if not AUTOGEN_AVAILABLE:
+            print("⚠️ AutoGen not available, using RAG fallback mode")
+            self.autogen_available = False
+        else:
+            self.autogen_available = True
+            # Khởi tạo các agent
+            try:
+                self._initialize_agents()
+                print("✅ AutoGen agents initialized successfully")
+            except Exception as e:
+                print(f"⚠️ AutoGen initialization error: {e}")
+                self.autogen_available = False
         
     def _initialize_agents(self):
         """Khởi tạo tất cả các agent chuyên biệt"""
@@ -319,6 +349,22 @@ class EducationalMultiAgentSystem:
         Định tuyến thông minh yêu cầu của người dùng
         """
         try:
+            # Kiểm tra AutoGen availability
+            if not self.autogen_available:
+                print("⚠️ AutoGen not available, falling back to RAG")
+                # Fallback về RAG
+                if user_id:
+                    result = self.rag_service.answer_question_with_user_context(user_input, user_id)
+                else:
+                    result = self.rag_service.answer_question(user_input)
+                
+                return {
+                    "intent": "rag_fallback",
+                    "result": result,
+                    "success": True,
+                    "source": "rag"
+                }
+            
             # Phân tích ý định người dùng
             intent_keywords = {
                 "lecture": ["bài giảng", "giảng dạy", "thuyết trình", "slide", "lesson"],
@@ -337,26 +383,44 @@ class EducationalMultiAgentSystem:
             
             # Thực hiện theo ý định được phát hiện
             result = ""
-            if detected_intent == "lecture":
-                result = self.create_lecture(user_input, user_id)
-            elif detected_intent == "exercise":
-                result = self.create_exercises(user_input, user_id)
-            elif detected_intent == "test":
-                result = self.create_test(user_input, user_id)
-            else:
-                result = self.study_assistant(user_input, user_id)
-            
-            return {
-                "intent": detected_intent,
-                "result": result,
-                "success": True
-            }
+            try:
+                if detected_intent == "lecture":
+                    result = self.create_lecture(user_input, user_id)
+                elif detected_intent == "exercise":
+                    result = self.create_exercises(user_input, user_id)
+                elif detected_intent == "test":
+                    result = self.create_test(user_input, user_id)
+                else:
+                    result = self.study_assistant(user_input, user_id)
+                
+                return {
+                    "intent": detected_intent,
+                    "result": result,
+                    "success": True,
+                    "source": "autogen"
+                }
+            except Exception as autogen_error:
+                print(f"⚠️ AutoGen execution error: {autogen_error}, falling back to RAG")
+                # Fallback về RAG nếu AutoGen lỗi
+                if user_id:
+                    result = self.rag_service.answer_question_with_user_context(user_input, user_id)
+                else:
+                    result = self.rag_service.answer_question(user_input)
+                
+                return {
+                    "intent": f"{detected_intent}_rag_fallback",
+                    "result": result,
+                    "success": True,
+                    "source": "rag"
+                }
             
         except Exception as e:
+            print(f"❌ Critical error in smart_route_request: {e}")
             return {
-                "intent": "unknown",
-                "result": f"Lỗi: {str(e)}",
-                "success": False
+                "intent": "error",
+                "result": f"Lỗi hệ thống: {str(e)}",
+                "success": False,
+                "source": "error"
             }
 
 
@@ -446,37 +510,68 @@ class EnhancedEducationSystem:
         Tạo response kết hợp giữa AutoGen và RAG
         """
         try:
-            # Lấy response từ AutoGen
+            # Lấy response từ AutoGen system
             autogen_result = self.autogen_system.smart_route_request(user_input, user_id)
             
-            # Lấy context từ RAG
-            rag_context = self._get_rag_context(user_input, user_id)
-            
-            # Kết hợp cả hai
-            if autogen_result['success'] and rag_context:
-                combined_result = f"{autogen_result['result']}\n\n---\n\n**Thông tin bổ sung:**\n{rag_context}"
-                return {
-                    "intent": f"hybrid_{autogen_result['intent']}",
-                    "result": combined_result,
-                    "success": True,
-                    "sources": ["autogen", "rag"]
-                }
-            elif autogen_result['success']:
+            # Kiểm tra source của result
+            if autogen_result.get('source') == 'rag':
+                print("🔄 AutoGen system returned RAG result, using directly")
                 return autogen_result
+            
+            # Nếu AutoGen thành công, lấy context từ RAG để bổ sung
+            if autogen_result['success'] and autogen_result.get('source') == 'autogen':
+                try:
+                    rag_context = self._get_rag_context(user_input, user_id)
+                    if rag_context:
+                        combined_result = f"{autogen_result['result']}\n\n---\n\n**Thông tin bổ sung:**\n{rag_context}"
+                        return {
+                            "intent": f"hybrid_{autogen_result['intent']}",
+                            "result": combined_result,
+                            "success": True,
+                            "sources": ["autogen", "rag"],
+                            "source": "hybrid"
+                        }
+                except Exception as rag_error:
+                    print(f"⚠️ RAG context error: {rag_error}, using AutoGen only")
+                
+                # Trả về AutoGen result nếu không thể lấy RAG context
+                return {
+                    "intent": autogen_result['intent'],
+                    "result": autogen_result['result'],
+                    "success": True,
+                    "sources": ["autogen"],
+                    "source": "autogen"
+                }
             else:
                 # Fallback về RAG
+                print("🔄 Using RAG fallback")
+                rag_context = self._get_rag_context(user_input, user_id)
                 return {
                     "intent": "rag_only",
                     "result": rag_context,
                     "success": True,
-                    "sources": ["rag"]
+                    "sources": ["rag"],
+                    "source": "rag"
                 }
         except Exception as e:
-            return {
-                "intent": "error",
-                "result": f"Lỗi hệ thống hybrid: {str(e)}",
-                "success": False
-            }
+            print(f"❌ Hybrid response error: {e}")
+            # Final fallback
+            try:
+                rag_context = self._get_rag_context(user_input, user_id)
+                return {
+                    "intent": "rag_final_fallback",
+                    "result": rag_context,
+                    "success": True,
+                    "sources": ["rag"],
+                    "source": "rag"
+                }
+            except Exception as final_error:
+                return {
+                    "intent": "error",
+                    "result": f"Lỗi hệ thống hybrid: {str(e)}",
+                    "success": False,
+                    "source": "error"
+                }
 
 
 # Ví dụ sử dụng
