@@ -745,6 +745,29 @@
             box-shadow: 0 6px 20px rgba(0, 96, 86, 0.3);
         }
 
+        .topic-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .topic-send-btn:disabled:hover {
+            transform: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .topic-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+
+        .topic-input:disabled::placeholder {
+            color: #adb5bd;
+        }
+
         @media (max-width: 768px) {
             .topic-buttons-row {
                 flex-direction: column;
@@ -1245,9 +1268,22 @@
             input.type = 'text';
             input.placeholder = 'Nhập chủ đề...';
         
+            // Hàm để disable input và button
+            const disableInput = () => {
+                input.disabled = true;
+                input.style.opacity = '0.6';
+                input.style.cursor = 'not-allowed';
+                button.disabled = true;
+                button.style.opacity = '0.6';
+                button.style.cursor = 'not-allowed';
+                button.textContent = 'Đã gửi ✓';
+                button.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+            };
+        
             // Khi nhấn Enter
             input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && input.value.trim() !== '') {
+                if (e.key === 'Enter' && input.value.trim() !== '' && !input.disabled) {
+                    disableInput();
                     sendSubjectMessage(topic, grade, subject, input.value.trim());
                 }
             });
@@ -1257,7 +1293,8 @@
             button.textContent = 'Gửi';
             button.className = 'topic-send-btn';
             button.onclick = () => {
-                if (input.value.trim() !== '') {
+                if (input.value.trim() !== '' && !input.disabled) {
+                    disableInput();
                     sendSubjectMessage(topic, grade, subject, input.value.trim());
                 }
             };
