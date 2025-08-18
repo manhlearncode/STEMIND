@@ -695,17 +695,16 @@ def generate_content_file(user_message, bot_response, session):
             <strong>🌟 STEMIND AI Assistant</strong><br>
         </div>
     </div>
-    
-    <script>
-        // Chỉ hiển thị alert khi không phải in
-        if (!window.location.search.includes('print')) {{
-            setTimeout(() => {{
-                if (confirm('Bạn muốn in tài liệu này ngay không?')) {{
-                    window.print();
-                }}
-            }}, 1000);
-        }}
-    </script>
+    # <script>
+    #     // Chỉ hiển thị alert khi không phải in
+    #     if (!window.location.search.includes('print')) {{
+    #         setTimeout(() => {{
+    #             if (confirm('Bạn muốn in tài liệu này ngay không?')) {{
+    #                 window.print();
+    #             }}
+    #         }}, 1000);
+    #     }}
+    # </script>
 </body>
 </html>"""
         
