@@ -47,14 +47,20 @@ class EducationalMultiAgentSystem:
             print(f"⚠️ UserEmbeddingService error: {e}")
             self.user_embedding_service = None
         
-        # Cấu hình LLM
+        # Cấu hình LLM (đọc từ .env nếu có)
+        autogen_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4.1-mini")
+        autogen_temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
+        autogen_timeout = int(os.getenv("OPENAI_TIMEOUT", "120"))
+        autogen_max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", "2048"))
+
         self.llm_config = {
             "config_list": [{
-                "model": "gpt-4.1-mini",
+                "model": autogen_model,
                 "api_key": self.api_key,
-                "temperature": 0.7
+                "temperature": autogen_temperature,
+                "max_tokens": autogen_max_tokens,
             }],
-            "timeout": 120,
+            "timeout": autogen_timeout,
         }
         
         # Kiểm tra AutoGen availability
