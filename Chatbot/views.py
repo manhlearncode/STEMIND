@@ -844,36 +844,6 @@ def convert_html_to_pdf_content(html_content, filename):
     except Exception as e:
         print(f"Playwright PDF failed: {e}")
 
-    # 2) Fallback: WeasyPrint
-    try:
-        import weasyprint
-        from io import BytesIO
-
-        pdf_file = BytesIO()
-        weasyprint.HTML(string=html_content).write_pdf(pdf_file)
-        pdf_file.seek(0)
-        return pdf_file.getvalue()
-    except Exception as e:
-        print(f"WeasyPrint failed: {e}")
-
-    # 3) Fallback: pdfkit (wkhtmltopdf)
-    try:
-        import pdfkit
-
-        options = {
-            'page-size': 'A4',
-            'margin-top': '0.75in',
-            'margin-right': '0.75in',
-            'margin-bottom': '0.75in',
-            'margin-left': '0.75in',
-            'encoding': 'UTF-8',
-            'no-outline': None,
-            'enable-local-file-access': None,
-        }
-        return pdfkit.from_string(html_content, False, options=options)
-    except Exception as e:
-        print(f"pdfkit failed: {e}")
-        return None
 
 @login_required
 def list_chat_files(request, session_id=None):

@@ -11,6 +11,10 @@ from .user_embedding_service import UserEmbeddingService
 
 load_dotenv()
 
+# Thiết lập tham số truy hồi mặc định từ .env
+SIM_THRESHOLD = float(os.getenv("RAG_SIM_THRESHOLD", "0.5"))
+DEFAULT_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
+
 class UserEmbeddingService:
     def __init__(self):
         self._ensure_event_loop()
@@ -48,7 +52,7 @@ class UserEmbeddingService:
             query_embedding = np.array(query_embedding).reshape(1, -1)
             similarities = cosine_similarity(query_embedding, embeddings)[0]
             top_indices = np.argsort(similarities)[-top_k:][::-1]
-            relevant_chunks = [chunks[i] for i in top_indices if similarities[i] > 0.3]
+            relevant_chunks = [chunks[i] for i in top_indices if similarities[i] >= SIM_THRESHOLD]
             return relevant_chunks
         except Exception as e:
             print(f"Lỗi khi tìm context cho user {user_id}: {e}")
@@ -91,6 +95,7 @@ class RAGChatbotService:
         self.max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", "2048"))
         self.temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
         self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4.1-mini")
+        self.top_k = DEFAULT_TOP_K
         self.embeddings_file = embeddings_file
         self.chunks = []
         self.embeddings = []
@@ -121,12 +126,23 @@ class RAGChatbotService:
             return None
 
     def _generate_with_openai(self, prompt: str):
-        """Sinh câu trả lời bằng OpenAI GPT-4o"""
+        """Sinh câu trả lời bằng OpenAI với system prompt chặt chẽ để giảm ảo giác"""
         try:
             response = openai.chat.completions.create(
                 model=self.chat_model,  # hoặc model bạn có quyền dùng
                 messages=[
-                    {"role": "system", "content": "Bạn là trợ lý AI lĩnh vực STEM, luôn trả lời ngắn gọn, rõ ràng."},
+                    {
+                        "role": "system",
+                        "content": (
+                            "Bạn là trợ lý RAG tiếng Việt cho lĩnh vực STEM. \n"
+                            "QUY ĐỊNH: \n"
+                            "- ƯU TIÊN dùng đúng nội dung từ 'Ngữ liệu' được cung cấp (nếu có). \n"
+                            "- Nếu ngữ liệu không đủ, nói rõ 'Chưa đủ ngữ liệu' và chỉ trả lời kiến thức nền ở mức tổng quát, tránh bịa đặt. \n"
+                            "- Trình bày súc tích, có cấu trúc, dùng tiêu đề/ngắt đoạn, bullet khi phù hợp. \n"
+                            "- Nêu rõ giả định (nếu có). \n"
+                            "- Trả lời hoàn toàn bằng tiếng Việt."
+                        ),
+                    },
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=self.max_tokens,
@@ -137,23 +153,24 @@ class RAGChatbotService:
         except Exception as e:
             return f"Xin lỗi, có lỗi xảy ra khi xử lý: {str(e)}"
 
-    def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = 3):
+    def answer_question_with_user_context(self, query: str, user_id: str, top_k: int = None):
+        if top_k is None:
+            top_k = self.top_k
         try:
             user_chunks = self.user_embedding_service.get_user_context(user_id, query, top_k)
             global_chunks = self.get_global_context(query, top_k)
             all_chunks = user_chunks + global_chunks
 
             if not all_chunks:
-                print("⚠️ Không có dữ liệu user hoặc global. Sử dụng OpenAI trực tiếp.")
-                return self._generate_with_openai(query)
+                print("⚠️ Không có dữ liệu user hoặc global. Trả lời tổng quát kèm lưu ý thiếu ngữ liệu.")
+                return self._generate_with_openai(self._build_prompt(query, []))
 
-            context = "\n".join(all_chunks)
-            prompt = f"""Dựa trên các đoạn tài liệu sau (bao gồm cả dữ liệu cá nhân và dữ liệu chung) và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+            prompt = self._build_prompt(query, all_chunks)
             answer = self._generate_with_openai(prompt)
 
             if not answer or len(answer.strip()) < 50:
-                print("⚠️ Trả lời không hợp lệ. Sử dụng OpenAI trực tiếp.")
-                return self._generate_with_openai(query)
+                print("⚠️ Trả lời không hợp lệ. Sinh lại trả lời tổng quát.")
+                return self._generate_with_openai(self._build_prompt(query, []))
             
             BAD_PHRASES = [
                 "tôi không tìm thấy", 
@@ -162,36 +179,37 @@ class RAGChatbotService:
                 "tài liệu không đề cập"
             ]
             if any(phrase in answer.lower() for phrase in BAD_PHRASES):
-                print("⚠️ Trả lời không hợp lệ. Sử dụng OpenAI trực tiếp.")
-                return self._generate_with_openai(query)
+                print("⚠️ Trả lời không hợp lệ. Sinh lại trả lời tổng quát.")
+                return self._generate_with_openai(self._build_prompt(query, []))
             
             return answer
         except Exception as e:
             print(f"Lỗi trong RAG với user context: {e}")
-            return self._generate_with_openai(query)
+            return self._generate_with_openai(self._build_prompt(query, []))
 
-    def answer_question(self, query, top_k=3):
+    def answer_question(self, query, top_k: int = None):
+        if top_k is None:
+            top_k = self.top_k
         try:
             query_embedding = self.get_openai_embedding(query)
             if not query_embedding:
-                return self._generate_with_openai(query)
+                return self._generate_with_openai(self._build_prompt(query, []))
 
             query_embedding = np.array(query_embedding).reshape(1, -1)
             similarities = cosine_similarity(query_embedding, self.embeddings)[0]
             top_indices = np.argsort(similarities)[-top_k:][::-1]
-            relevant_chunks = [self.chunks[i] for i in top_indices if similarities[i] > 0.3]
+            relevant_chunks = [self.chunks[i] for i in top_indices if similarities[i] >= SIM_THRESHOLD]
 
             if not relevant_chunks:
-                print("⚠️ Không tìm được chunk nào phù hợp. Sử dụng OpenAI trực tiếp.")
-                return self._generate_with_openai(query)
+                print("⚠️ Không tìm được chunk phù hợp. Trả lời tổng quát.")
+                return self._generate_with_openai(self._build_prompt(query, []))
 
-            context = "\n".join(relevant_chunks)
-            prompt = f"""Dựa trên tài liệu sau và kiến thức bạn biết, hãy trả lời câu hỏi: {query}\n\nTài liệu:\n{context}\n\nTrả lời:"""
+            prompt = self._build_prompt(query, relevant_chunks)
             answer = self._generate_with_openai(prompt)
 
             if not answer or len(answer.strip()) < 50:
-                print("⚠️ Trả lời không hợp lệ. Sử dụng OpenAI trực tiếp.")
-                return self._generate_with_openai(query)
+                print("⚠️ Trả lời không hợp lệ. Trả lời tổng quát.")
+                return self._generate_with_openai(self._build_prompt(query, []))
             
             BAD_PHRASES = [
                 "tôi không tìm thấy", 
@@ -200,14 +218,16 @@ class RAGChatbotService:
                 "tài liệu không đề cập"
             ]
             if any(phrase in answer.lower() for phrase in BAD_PHRASES):
-                return self._generate_with_openai(query)
+                return self._generate_with_openai(self._build_prompt(query, []))
             
             return answer
         except Exception as e:
             print(f"Lỗi trong RAG: {e}")
-            return self._generate_with_openai(query)
+            return self._generate_with_openai(self._build_prompt(query, []))
 
-    def get_global_context(self, query: str, top_k: int = 3):
+    def get_global_context(self, query: str, top_k: int = None):
+        if top_k is None:
+            top_k = self.top_k
         if not self.chunks or len(self.embeddings) == 0:
             return []
         try:
@@ -217,10 +237,28 @@ class RAGChatbotService:
             query_embedding = np.array(query_embedding).reshape(1, -1)
             similarities = cosine_similarity(query_embedding, self.embeddings)[0]
             top_indices = np.argsort(similarities)[-top_k:][::-1]
-            return [self.chunks[i] for i in top_indices if similarities[i] > 0.3]
+            return [self.chunks[i] for i in top_indices if similarities[i] >= SIM_THRESHOLD]
         except Exception as e:
             print(f"Lỗi khi lấy global context: {e}")
             return []
+
+    def _build_prompt(self, query: str, context_chunks: List[str]) -> str:
+        """Xây prompt rõ ràng, giảm ảo giác và tăng cấu trúc câu trả lời."""
+        context_block = "\n".join([f"- {c}" for c in context_chunks]) if context_chunks else "(Không có ngữ liệu phù hợp)"
+        guidance = (
+            "YÊU CẦU TRẢ LỜI:\n"
+            "1) Trả lời ngắn gọn, có cấu trúc (tiêu đề, mục, bullet khi cần).\n"
+            "2) Dựa trên 'Ngữ liệu' nếu có. Nếu không đủ, nói rõ 'Chưa đủ ngữ liệu' và đưa gợi ý tổng quát, tránh bịa đặt.\n"
+            "3) Nêu giả định (nếu có).\n"
+            "4) Tiếng Việt, dễ hiểu cho giáo viên/học sinh."
+        )
+        prompt = (
+            f"CÂU HỎI: {query}\n\n"
+            f"NGỮ LIỆU:\n{context_block}\n\n"
+            f"{guidance}\n\n"
+            f"HÃY TRẢ LỜI:"
+        )
+        return prompt
 
     def get_user_profile(self, user_id: str):
         return self.user_embedding_service.get_user_profile(user_id)
