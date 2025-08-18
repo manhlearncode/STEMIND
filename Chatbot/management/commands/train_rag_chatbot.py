@@ -55,7 +55,8 @@ class Command(BaseCommand):
         self.user_service = UserEmbeddingService()
 
         # Khởi tạo OpenAI embeddings (chỉ 1 lần)
-        self.embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
+        embedding_model_name = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+        self.embeddings_model = OpenAIEmbeddings(model=embedding_model_name)
 
         if all_users:
             self.stdout.write("Tạo embeddings cho tất cả users...")
@@ -97,14 +98,14 @@ class Command(BaseCommand):
         all_embeddings = []
         
         try:
-            files = File.objects.filter(author__id=user_id)
+            # Files
+            files = File.objects.all()
             for file in files:
-                text = f"File: {file.title}\n"
-                if file.file_description:
-                    text += f"Mô tả: {file.file_description}\n"
-                text += f"Danh mục: {file.category.category_name}\n"
-                text += f"Tác giả: {file.author.username}\n"
-                
+                if not self._belongs_to_user(file, user_id):
+                    continue
+                text = self._build_file_text(file)
+                if not text:
+                    continue
                 chunks = self.chunk_text(text, chunk_size)
                 for chunk in chunks:
                     embedding = self.get_openai_embedding(chunk)
@@ -112,9 +113,14 @@ class Command(BaseCommand):
                         all_chunks.append(chunk)
                         all_embeddings.append(embedding)
             
-            posts = Post.objects.filter(author__id=user_id)
+            # Posts
+            posts = Post.objects.all()
             for post in posts:
-                text = f"Post từ {post.author.username}: {post.content}\n"
+                if not self._belongs_to_user(post, user_id):
+                    continue
+                text = self._build_post_text(post)
+                if not text:
+                    continue
                 chunks = self.chunk_text(text, chunk_size)
                 for chunk in chunks:
                     embedding = self.get_openai_embedding(chunk)
@@ -122,9 +128,14 @@ class Command(BaseCommand):
                         all_chunks.append(chunk)
                         all_embeddings.append(embedding)
             
-            comments = Comment.objects.filter(user__id=user_id)
+            # Comments
+            comments = Comment.objects.all()
             for comment in comments:
-                text = f"Comment từ {comment.user.username}: {comment.content}\n"
+                if not self._belongs_to_user(comment, user_id):
+                    continue
+                text = self._build_comment_text(comment)
+                if not text:
+                    continue
                 chunks = self.chunk_text(text, chunk_size)
                 for chunk in chunks:
                     embedding = self.get_openai_embedding(chunk)
@@ -157,14 +168,12 @@ class Command(BaseCommand):
         all_embeddings = []
         
         try:
+            # Files
             files = File.objects.all()
             for file in files:
-                text = f"File: {file.title}\n"
-                if file.file_description:
-                    text += f"Mô tả: {file.file_description}\n"
-                text += f"Danh mục: {file.category.category_name}\n"
-                text += f"Tác giả: {file.author.username}\n"
-                
+                text = self._build_file_text(file)
+                if not text:
+                    continue
                 chunks = self.chunk_text(text, chunk_size)
                 for chunk in chunks:
                     embedding = self.get_openai_embedding(chunk)
@@ -172,9 +181,12 @@ class Command(BaseCommand):
                         all_chunks.append(chunk)
                         all_embeddings.append(embedding)
             
+            # Posts
             posts = Post.objects.all()
             for post in posts:
-                text = f"Post từ {post.author.username}: {post.content}\n"
+                text = self._build_post_text(post)
+                if not text:
+                    continue
                 chunks = self.chunk_text(text, chunk_size)
                 for chunk in chunks:
                     embedding = self.get_openai_embedding(chunk)
@@ -182,9 +194,12 @@ class Command(BaseCommand):
                         all_chunks.append(chunk)
                         all_embeddings.append(embedding)
             
+            # Comments
             comments = Comment.objects.all()
             for comment in comments:
-                text = f"Comment từ {comment.user.username}: {comment.content}\n"
+                text = self._build_comment_text(comment)
+                if not text:
+                    continue
                 chunks = self.chunk_text(text, chunk_size)
                 for chunk in chunks:
                     embedding = self.get_openai_embedding(chunk)
@@ -206,6 +221,74 @@ class Command(BaseCommand):
                 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Lỗi khi tạo embeddings từ database: {e}"))
+
+    # -------- Helpers để trích xuất nội dung an toàn --------
+    def _get_first_attr(self, obj, names):
+        for name in names:
+            if hasattr(obj, name):
+                return getattr(obj, name)
+        return None
+
+    def _get_display_name(self, user_obj):
+        if not user_obj:
+            return ""
+        return (
+            self._get_first_attr(user_obj, ["username", "email", "name"]) \
+            or str(user_obj)
+        )
+
+    def _belongs_to_user(self, obj, user_id: str) -> bool:
+        owner = self._get_first_attr(obj, ["author", "user", "owner", "created_by"])
+        if not owner:
+            return False
+        owner_id = getattr(owner, "id", None)
+        return str(owner_id) == str(user_id)
+
+    def _build_file_text(self, file_obj) -> str:
+        title = self._get_first_attr(file_obj, ["title", "name"]) or ""
+        description = self._get_first_attr(file_obj, ["file_description", "description", "summary"]) or ""
+        category_obj = self._get_first_attr(file_obj, ["category", "categories"])  # có thể None
+        if category_obj and isinstance(category_obj, (list, tuple)):
+            cat_name = ", ".join([self._get_first_attr(c, ["category_name", "name", "title"]) or str(c) for c in category_obj])
+        else:
+            cat_name = self._get_first_attr(category_obj, ["category_name", "name", "title"]) if category_obj else ""
+        author = self._get_first_attr(file_obj, ["author", "user", "owner", "created_by"]) or None
+        author_name = self._get_display_name(author)
+        parts = []
+        if title:
+            parts.append(f"File: {title}")
+        if description:
+            parts.append(f"Mô tả: {description}")
+        if cat_name:
+            parts.append(f"Danh mục: {cat_name}")
+        if author_name:
+            parts.append(f"Tác giả: {author_name}")
+        return "\n".join(parts)
+
+    def _build_post_text(self, post_obj) -> str:
+        author = self._get_first_attr(post_obj, ["author", "user", "owner", "created_by"]) or None
+        author_name = self._get_display_name(author)
+        content = self._get_first_attr(post_obj, ["content", "body", "text"]) or ""
+        title = self._get_first_attr(post_obj, ["title"]) or ""
+        parts = []
+        if title:
+            parts.append(f"Tiêu đề: {title}")
+        if content:
+            parts.append(f"Nội dung: {content}")
+        if author_name:
+            parts.append(f"Tác giả: {author_name}")
+        return "\n".join(parts)
+
+    def _build_comment_text(self, comment_obj) -> str:
+        user = self._get_first_attr(comment_obj, ["user", "author"]) or None
+        user_name = self._get_display_name(user)
+        content = self._get_first_attr(comment_obj, ["content", "body", "text"]) or ""
+        parts = []
+        if content:
+            parts.append(f"Comment: {content}")
+        if user_name:
+            parts.append(f"Người dùng: {user_name}")
+        return "\n".join(parts)
     
     def chunk_text(self, text, max_chunk_size=500):
         words = text.split()
