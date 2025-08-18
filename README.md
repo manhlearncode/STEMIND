@@ -78,6 +78,16 @@ pip install -r requirements.txt
 pip list
 ```
 
+### 3.1. Cài đặt trình duyệt cho Playwright (bắt buộc cho chức năng xuất PDF)
+
+```bash
+# Windows/macOS/Linux
+python -m playwright install chromium
+
+# (Linux thường) Cài thêm system deps nếu thiếu
+# python -m playwright install-deps
+```
+
 ### 4. Cấu hình môi trường
 
 ```bash
@@ -111,7 +121,7 @@ REDIS_URL=redis://localhost:6379/0
 AWS_ACCESS_KEY_ID=your-access-key
 AWS_SECRET_ACCESS_KEY=your-secret-key
 AWS_STORAGE_BUCKET_NAME=your-bucket-name
-AWS_S3_REGION_NAME=ap-southeast-1
+AWS_S3_REGION_NAME=us-east-1
 
 # OpenAI (cho chatbot)
 OPENAI_API_KEY=your-openai-api-key
@@ -238,6 +248,21 @@ python manage.py runserver 8000
 # Hoặc cho phép truy cập từ mạng
 python manage.py runserver 0.0.0.0:8000
 ```
+
+### 11. Huấn luyện Embeddings cho Chatbot (tùy chọn nhưng khuyến nghị)
+
+```bash
+# Tạo embeddings chung từ dữ liệu (files, posts, comments)
+python manage.py train_rag_chatbot --embeddings-file stem_embeddings.json
+
+# Tạo embeddings cá nhân cho một user cụ thể
+python manage.py train_rag_chatbot --user-id <USER_ID>
+
+# Tạo embeddings cho tất cả users
+python manage.py train_rag_chatbot --all-users
+```
+
+Khai báo biến môi trường `OPENAI_API_KEY` trong file `.env` trước khi chạy.
 
 ## 🌐 Truy cập ứng dụng
 
