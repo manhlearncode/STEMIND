@@ -1433,8 +1433,50 @@
                         margin-top: 2px;
                     `;
                     
+                    // Tạo container cho các nút
+                    const buttonsContainer = document.createElement('div');
+                    buttonsContainer.style.cssText = `
+                        display: flex;
+                        gap: 6px;
+                        align-items: center;
+                    `;
+                    
+                    // Nút Preview (chỉ hiển thị cho HTML files)
+                    if (attachment.is_html || (attachment.type === 'document' && attachment.name.endsWith('.html'))) {
+                        const previewBtn = document.createElement('button');
+                        previewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                        previewBtn.title = 'Xem trước';
+                        previewBtn.style.cssText = `
+                            background: #17a2b8;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            padding: 6px 10px;
+                            cursor: pointer;
+                            font-size: 12px;
+                            transition: all 0.3s ease;
+                        `;
+                        previewBtn.onclick = () => previewFile(attachment.id, attachment.name);
+                        previewBtn.onmouseover = () => {
+                            previewBtn.style.background = '#138496';
+                            previewBtn.style.transform = 'scale(1.05)';
+                        };
+                        previewBtn.onmouseout = () => {
+                            previewBtn.style.background = '#17a2b8';
+                            previewBtn.style.transform = 'scale(1)';
+                        };
+                        buttonsContainer.appendChild(previewBtn);
+                    }
+                    
+                    // Nút Download
                     const downloadBtn = document.createElement('button');
-                    downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+                    if (attachment.is_html || (attachment.type === 'document' && attachment.name.endsWith('.html'))) {
+                        downloadBtn.innerHTML = '<i class="fas fa-file-pdf"></i>';
+                        downloadBtn.title = 'Tải xuống PDF';
+                    } else {
+                        downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+                        downloadBtn.title = 'Tải xuống';
+                    }
                     downloadBtn.style.cssText = `
                         background: #006065;
                         color: white;
@@ -1454,12 +1496,13 @@
                         downloadBtn.style.background = '#006065';
                         downloadBtn.style.transform = 'scale(1)';
                     };
+                    buttonsContainer.appendChild(downloadBtn);
                     
                     fileInfo.appendChild(fileName);
                     fileInfo.appendChild(fileSize);
                     fileDiv.appendChild(fileIcon);
                     fileDiv.appendChild(fileInfo);
-                    fileDiv.appendChild(downloadBtn);
+                    fileDiv.appendChild(buttonsContainer);
                     attachmentsDiv.appendChild(fileDiv);
                 });
                 
@@ -1504,6 +1547,17 @@
                 'other': 'fas fa-file'
             };
             return icons[fileType] || icons['other'];
+        }
+
+        function previewFile(fileId, fileName) {
+            const previewUrl = `/chatbot/preview-html/${fileId}/`;
+            
+            // Mở preview trong tab mới
+            const previewWindow = window.open(previewUrl, '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+            
+            if (!previewWindow) {
+                alert('Vui lòng cho phép popup để xem preview file');
+            }
         }
 
         function downloadFile(fileId) {
@@ -1583,7 +1637,15 @@
                     background: #f9f9f9;
                 `;
                 
-                fileDiv.innerHTML = `
+                // Tạo nội dung cho file item
+                const fileContent = document.createElement('div');
+                fileContent.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                `;
+                
+                fileContent.innerHTML = `
                     <i class="${getFileIcon(file.type)}" style="margin-right: 12px; color: #006065; font-size: 18px;"></i>
                     <div style="flex: 1;">
                         <div style="font-weight: 600; color: #333;">${file.name}</div>
@@ -1591,10 +1653,62 @@
                             ${file.size} • ${file.type} • ${new Date(file.uploaded_at).toLocaleDateString('vi-VN')}
                         </div>
                     </div>
-                    <button onclick="downloadFile(${file.id})" style="background: #006065; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 12px;">
-                        <i class="fas fa-download"></i> Tải xuống
-                    </button>
                 `;
+                
+                // Tạo container cho các nút
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.style.cssText = `
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                `;
+                
+                // Nút Preview cho HTML files
+                if (file.is_html || (file.type === 'document' && file.name.endsWith('.html'))) {
+                    const previewBtn = document.createElement('button');
+                    previewBtn.innerHTML = '<i class="fas fa-eye"></i> Xem';
+                    previewBtn.style.cssText = `
+                        background: #17a2b8; 
+                        color: white; 
+                        border: none; 
+                        border-radius: 6px; 
+                        padding: 8px 12px; 
+                        cursor: pointer; 
+                        font-size: 12px;
+                        transition: all 0.3s ease;
+                    `;
+                    previewBtn.onclick = () => previewFile(file.id, file.name);
+                    previewBtn.onmouseover = () => previewBtn.style.background = '#138496';
+                    previewBtn.onmouseout = () => previewBtn.style.background = '#17a2b8';
+                    buttonsContainer.appendChild(previewBtn);
+                }
+                
+                // Nút Download
+                const downloadBtn = document.createElement('button');
+                if (file.is_html || (file.type === 'document' && file.name.endsWith('.html'))) {
+                    downloadBtn.innerHTML = '<i class="fas fa-file-pdf"></i> PDF';
+                    downloadBtn.title = 'Tải xuống PDF';
+                } else {
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Tải';
+                    downloadBtn.title = 'Tải xuống';
+                }
+                downloadBtn.style.cssText = `
+                    background: #006065; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 6px; 
+                    padding: 8px 12px; 
+                    cursor: pointer; 
+                    font-size: 12px;
+                    transition: all 0.3s ease;
+                `;
+                downloadBtn.onclick = () => downloadFile(file.id);
+                downloadBtn.onmouseover = () => downloadBtn.style.background = '#00897B';
+                downloadBtn.onmouseout = () => downloadBtn.style.background = '#006065';
+                buttonsContainer.appendChild(downloadBtn);
+                
+                fileContent.appendChild(buttonsContainer);
+                fileDiv.appendChild(fileContent);
                 
                 fileList.appendChild(fileDiv);
             });

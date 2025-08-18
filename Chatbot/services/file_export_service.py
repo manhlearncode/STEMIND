@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+import re
 from datetime import datetime
 from botocore.exceptions import ClientError
 from django.conf import settings
@@ -17,145 +18,7 @@ class FileExportService:
         )
         self.bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 
-    def create_html_content(self, content: str, title: str = "STEMIND Document") -> str:
-        """Tạo nội dung HTML với styling đẹp"""
-        
-        html_template = f"""
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
-    <style>
-        body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }}
-        .container {{
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }}
-        .header {{
-            text-align: center;
-            border-bottom: 3px solid #17a2b8;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }}
-        .header h1 {{
-            color: #17a2b8;
-            font-size: 2.5em;
-            margin: 0;
-            font-weight: bold;
-        }}
-        .header .subtitle {{
-            color: #666;
-            font-size: 1.2em;
-            margin-top: 10px;
-        }}
-        .metadata {{
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 30px;
-            border-left: 4px solid #17a2b8;
-        }}
-        .metadata p {{
-            margin: 5px 0;
-            font-size: 0.9em;
-        }}
-        .content {{
-            font-size: 1.1em;
-            line-height: 1.8;
-        }}
-        .content h2 {{
-            color: #17a2b8;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 10px;
-            margin-top: 30px;
-        }}
-        .content h3 {{
-            color: #495057;
-            margin-top: 25px;
-        }}
-        .content ul, .content ol {{
-            padding-left: 20px;
-        }}
-        .content li {{
-            margin-bottom: 8px;
-        }}
-        .footer {{
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #e9ecef;
-            text-align: center;
-            color: #666;
-            font-size: 0.9em;
-        }}
-        .highlight {{
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #ffc107;
-            margin: 20px 0;
-        }}
-        .step {{
-            background-color: #e7f3ff;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-            border-left: 4px solid #17a2b8;
-        }}
-        .step-number {{
-            font-weight: bold;
-            color: #17a2b8;
-        }}
-        @media print {{
-            body {{
-                background-color: white;
-            }}
-            .container {{
-                box-shadow: none;
-                padding: 20px;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎓 STEMIND</h1>
-            <div class="subtitle">Nền tảng Giáo dục STEM</div>
-        </div>
-        
-        <div class="metadata">
-            <p><strong>Tiêu đề:</strong> {title}</p>
-            <p><strong>Thời gian tạo:</strong> {datetime.now().strftime('%d/%m/%Y lúc %H:%M:%S')}</p>
-            <p><strong>Được tạo bởi:</strong> STEMIND AI Assistant</p>
-        </div>
-        
-        <div class="content">
-            {content}
-        </div>
-        
-        <div class="footer">
-            <p>🌐 Nền tảng STEMIND - Nơi chia sẻ tri thức STEM</p>
-            <p>📧 Hỗ trợ: support@stemind.edu.vn</p>
-            <p>🌟 Version: 1.0 - {datetime.now().strftime('%Y')}</p>
-        </div>
-    </div>
-</body>
-</html>
-        """
-        
-        return html_template
+
 
     def save_html_to_s3(self, html_content: str, filename: str) -> str:
         """Lưu file HTML lên AWS S3"""

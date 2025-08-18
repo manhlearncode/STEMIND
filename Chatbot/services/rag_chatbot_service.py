@@ -87,6 +87,10 @@ class RAGChatbotService:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
 
         openai.api_key = self.api_key
+        # Runtime generation settings
+        self.max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", "2048"))
+        self.temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
+        self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4.1-mini")
         self.embeddings_file = embeddings_file
         self.chunks = []
         self.embeddings = []
@@ -120,12 +124,14 @@ class RAGChatbotService:
         """Sinh câu trả lời bằng OpenAI GPT-4o"""
         try:
             response = openai.chat.completions.create(
-                model="gpt-5",  # hoặc model bạn có quyền dùng
+                model=self.chat_model,  # hoặc model bạn có quyền dùng
                 messages=[
                     {"role": "system", "content": "Bạn là trợ lý AI lĩnh vực STEM, luôn trả lời ngắn gọn, rõ ràng."},
                     {"role": "user", "content": prompt}
-                ]
-                # Nếu model không hỗ trợ temperature, hãy bỏ hoặc đặt temperature=1
+                ],
+                max_tokens=self.max_tokens,
+                temperature=self.temperature
+                # Nếu model không hỗ trợ temperature/max_tokens, thư viện sẽ xử lý ngoại lệ
             )
             return response.choices[0].message.content.strip()
         except Exception as e:

@@ -238,7 +238,9 @@ def chatbot_api(request):
                         'name': generated_file.original_name,
                         'size': generated_file.get_file_size_display(),
                         'type': generated_file.file_type,
-                        'download_url': f'/chatbot/download-file/{generated_file.id}/'
+                        'download_url': f'/chatbot/download-file/{generated_file.id}/',
+                        'preview_url': f'/chatbot/preview-html/{generated_file.id}/',
+                        'is_html': generated_file.is_html() or (generated_file.file_type == 'document' and generated_file.mime_type == 'text/html')
                     })
             
             return JsonResponse({
@@ -740,9 +742,9 @@ def chatbot_page(request):
 
 @login_required
 def download_chat_file(request, file_id):
-    """Download file từ chatbot sử dụng S3 presigned URL"""
+    """Download file từ chatbot - Convert HTML to PDF nếu cần"""
     try:
-        from django.http import HttpResponseRedirect, JsonResponse
+        from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
         from django.conf import settings
         
         # Lấy file attachment
@@ -763,7 +765,39 @@ def download_chat_file(request, file_id):
                 'error': 'Cần đăng nhập để download file'
             }, status=403)
         
-        # Tạo presigned URL từ S3 và redirect
+        # Nếu là HTML file, convert thành PDF
+        if attachment.mime_type == 'text/html' and attachment.file_type == 'document':
+            try:
+                # Đọc nội dung HTML
+                if hasattr(attachment.file, 'read'):
+                    attachment.file.seek(0)
+                    html_content = attachment.file.read().decode('utf-8')
+                    
+                    # Sử dụng FileExportService để convert HTML to PDF
+                    from .services.file_export_service import FileExportService
+                    export_service = FileExportService()
+                    
+                    # Tạo tên file PDF
+                    pdf_filename = attachment.original_name.replace('.html', '.pdf')
+                    
+                    # Convert HTML to PDF content
+                    pdf_content = convert_html_to_pdf_content(html_content, pdf_filename)
+                    
+                    if pdf_content:
+                        # Trả về PDF file
+                        response = HttpResponse(pdf_content, content_type='application/pdf')
+                        response['Content-Disposition'] = f'attachment; filename="{pdf_filename}"'
+                        return response
+                    else:
+                        # Fallback về HTML nếu convert PDF thất bại
+                        pass
+                        
+            except Exception as e:
+                print(f"Error converting HTML to PDF: {e}")
+                # Fallback về HTML file gốc
+                pass
+        
+        # Tạo presigned URL từ S3 và redirect cho các file khác
         presigned_url = attachment.get_presigned_url()
         if presigned_url:
             return HttpResponseRedirect(presigned_url)
@@ -783,6 +817,64 @@ def download_chat_file(request, file_id):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+def convert_html_to_pdf_content(html_content, filename):
+    """Convert HTML content to PDF bytes
+
+    Ưu tiên dùng Playwright (Chromium) nếu có; fallback sang WeasyPrint, rồi pdfkit.
+    """
+    # 1) Thử dùng Playwright (Chromium headless)
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            context = browser.new_context()
+            page = context.new_page()
+            # Render trực tiếp HTML string
+            page.set_content(html_content, wait_until="load")
+            pdf_bytes = page.pdf(
+                format="A4",
+                print_background=True,
+                margin={"top": "0.75in", "right": "0.75in", "bottom": "0.75in", "left": "0.75in"},
+            )
+            context.close()
+            browser.close()
+            return pdf_bytes
+    except Exception as e:
+        print(f"Playwright PDF failed: {e}")
+
+    # 2) Fallback: WeasyPrint
+    try:
+        import weasyprint
+        from io import BytesIO
+
+        pdf_file = BytesIO()
+        weasyprint.HTML(string=html_content).write_pdf(pdf_file)
+        pdf_file.seek(0)
+        return pdf_file.getvalue()
+    except Exception as e:
+        print(f"WeasyPrint failed: {e}")
+
+    # 3) Fallback: pdfkit (wkhtmltopdf)
+    try:
+        import pdfkit
+
+        options = {
+            'page-size': 'A4',
+            'margin-top': '0.75in',
+            'margin-right': '0.75in',
+            'margin-bottom': '0.75in',
+            'margin-left': '0.75in',
+            'encoding': 'UTF-8',
+            'no-outline': None,
+            'enable-local-file-access': None,
+        }
+        return pdfkit.from_string(html_content, False, options=options)
+    except Exception as e:
+        print(f"pdfkit failed: {e}")
+        return None
 
 @login_required
 def list_chat_files(request, session_id=None):
@@ -811,7 +903,7 @@ def list_chat_files(request, session_id=None):
             
             # Thêm preview URL cho HTML files
             preview_url = None
-            if attachment.is_html():
+            if attachment.is_html() or (attachment.file_type == 'document' and attachment.mime_type == 'text/html'):
                 preview_url = f'/chatbot/preview-html/{attachment.id}/'
             
             files_data.append({
@@ -826,7 +918,7 @@ def list_chat_files(request, session_id=None):
                 'download_url': download_url,
                 'file_url': download_url,  # Thêm file_url để tương thích
                 'preview_url': preview_url,  # Thêm preview URL cho HTML files
-                'is_html': attachment.is_html(),  # Thêm flag để frontend biết
+                                        'is_html': attachment.is_html() or (attachment.file_type == 'document' and attachment.mime_type == 'text/html'),  # Thêm flag để frontend biết
             })
         
         return JsonResponse({
@@ -894,15 +986,11 @@ def preview_html_file(request, file_id):
         # Lấy file attachment
         attachment = FileAttachment.objects.get(id=file_id)
         
-        # Kiểm tra quyền truy cập
-        if not request.user.is_staff and attachment.message.session.user != request.user:
-            return JsonResponse({
-                'success': False,
-                'error': 'Không có quyền truy cập file này'
-            }, status=403)
+        # Cho phép mọi user đã đăng nhập preview (đã có @login_required)
+        # Nếu muốn hạn chế theo session owner thì có thể bổ sung kiểm tra tại đây
         
         # Kiểm tra xem có phải HTML file không
-        if not attachment.is_html():
+        if not (attachment.is_html() or (attachment.file_type == 'document' and attachment.mime_type == 'text/html')):
             return JsonResponse({
                 'success': False,
                 'error': 'Chỉ có thể preview HTML files'
