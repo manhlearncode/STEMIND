@@ -1,6 +1,0 @@
-playwright==1.46.0
-weasyprint==61.2
-pdfkit==1.0.0
-
-# Nếu dùng pdfkit thì cần cài thêm wkhtmltopdf của hệ điều hành
-
