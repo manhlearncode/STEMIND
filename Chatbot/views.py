@@ -779,8 +779,8 @@ def download_chat_file(request, file_id):
                     # Tạo tên file PDF
                     pdf_filename = attachment.original_name.replace('.html', '.pdf')
                     
-                    # Convert HTML to PDF content
-                    pdf_content = convert_html_to_pdf_content(html_content, pdf_filename)
+                    # Convert HTML to PDF content sử dụng service
+                    pdf_content = export_service.convert_html_to_pdf_content(html_content, pdf_filename)
                     
                     if pdf_content:
                         # Trả về PDF file
@@ -789,6 +789,7 @@ def download_chat_file(request, file_id):
                         return response
                     else:
                         # Fallback về HTML nếu convert PDF thất bại
+                        print("⚠️ Không thể convert HTML to PDF, fallback về HTML")
                         pass
                         
             except Exception as e:
@@ -816,33 +817,6 @@ def download_chat_file(request, file_id):
             'success': False,
             'error': str(e)
         }, status=500)
-
-
-def convert_html_to_pdf_content(html_content, filename):
-    """Convert HTML content to PDF bytes
-
-    Ưu tiên dùng Playwright (Chromium) nếu có; fallback sang WeasyPrint, rồi pdfkit.
-    """
-    # 1) Thử dùng Playwright (Chromium headless)
-    try:
-        from playwright.sync_api import sync_playwright
-
-        with sync_playwright() as p:
-            browser = p.chromium.launch()
-            context = browser.new_context()
-            page = context.new_page()
-            # Render trực tiếp HTML string
-            page.set_content(html_content, wait_until="load")
-            pdf_bytes = page.pdf(
-                format="A4",
-                print_background=True,
-                margin={"top": "0.75in", "right": "0.75in", "bottom": "0.75in", "left": "0.75in"},
-            )
-            context.close()
-            browser.close()
-            return pdf_bytes
-    except Exception as e:
-        print(f"Playwright PDF failed: {e}")
 
 
 @login_required
