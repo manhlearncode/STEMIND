@@ -17,13 +17,13 @@ STEMIND là nền tảng chia sẻ tài liệu giáo dục STEM hàng đầu Vi�
 
 ## 🛠️ Công nghệ sử dụng
 
-- **Backend**: Django 5.2.3+, Python 3.8+
-- **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5
-- **Database**: PostgreSQL, MySQL, SQLite
-- **AI/ML**: OpenAI, LangChain, ChromaDB, PyTorch
-- **Cloud**: AWS S3, Redis, Celery
-- **Authentication**: Django Allauth, JWT
-- **Real-time**: Django Channels, WebSocket
+- Backend: Python 3.8+, Django 5.2.x, python-dotenv
+- AI/RAG: OpenAI (`openai`), LangChain OpenAI (`langchain-openai`), NumPy (`numpy`), scikit-learn
+- Lưu trữ tệp & media: AWS S3 (`boto3`, `django-storages`), Pillow
+- Xuất PDF: Playwright (Chromium)
+- Cơ sở dữ liệu: SQLite (mặc định dự án)
+- Frontend: HTML5, CSS3, JavaScript; Bootstrap 5 (CDN), Font Awesome (CDN), SweetAlert2 (CDN)
+- Triển khai (production): Gunicorn (Linux)
 
 ## 📋 Yêu cầu hệ thống
 
