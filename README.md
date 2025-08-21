@@ -1,4 +1,4 @@
-# 🚀 STEMIND - Nền tảng chia sẻ tài liệu giáo dục STEM
+# 🚀 STEMIND - Nền tảng hỗ trợ giáo viên STEM
 
 [![Django](https://img.shields.io/badge/Django-5.2.3+-green.svg)](https://www.djangoproject.com/)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
